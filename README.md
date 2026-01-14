@@ -1,4 +1,4 @@
-# DBBE Backups
+# DBBE Archiver
 
 This repository was developed to facilitate the periodic archival of data from the live DBBE instance to Zenodo in SQLite format. 
 It integrates data originating from Elasticsearch with complementary information stored in PostgreSQL, producing a comprehensive and internally consistent SQLite database.
