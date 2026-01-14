@@ -14,7 +14,7 @@ The repository contains the initial tests stored in a notebook, and the producti
 
 ## Prerequisites
 - Launch a virtual environment in Python3.11
-- Make sure the DBBE services are running ()
+- Make sure the DBBE services are running (https://github.com/GhentCDH/dbbe)
 
 ## Running locally
 - Clone the repository
