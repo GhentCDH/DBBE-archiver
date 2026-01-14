@@ -6,6 +6,8 @@ from migrate_types import migrate_types
 from migrate_occurrences import migrate_occurrences
 from migrate_manuscripts import migrate_manuscripts
 from migrate_bibliographies import migrate_bibliographies
+from zenodo_upload import upload_sqlite_files_to_zenodo
+import os
 
 def run_migration():
 
@@ -28,5 +30,10 @@ def run_migration():
             print(f"Migration failed at step {i}")
             sys.exit(1)
 
+
 if __name__ == "__main__":
-    run_migration()
+    # run_migration()
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    data_folder = os.path.join(BASE_DIR, 'data')
+    upload_sqlite_files_to_zenodo(data_folder)
