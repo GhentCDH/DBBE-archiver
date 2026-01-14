@@ -12,6 +12,9 @@ By consolidating and normalizing data across heterogeneous storage systems, this
 
 The repository contains the initial tests stored in a notebook, and the production-ready version of this code in the ```/app``` folder.
 
+## Config
+Use the .env file to configure the paths to the current Postgres and Elastic servers, and provide a key and URL for Zenodo uploads. The default configured in this repository uses the Zenodo sandbox URL, which should be replaced on production.
+
 ## Prerequisites
 - Launch a virtual environment in Python3.11
 - Make sure the DBBE services are running (https://github.com/GhentCDH/dbbe)
