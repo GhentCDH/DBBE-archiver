@@ -14,6 +14,7 @@ The repository contains the initial tests stored in a notebook, and the producti
 
 ## Prerequisites
 - Launch a virtual environment in Python3.11
+- Make sure the DBBE services are running ()
 
 ## Running locally
 - Clone the repository
@@ -24,7 +25,7 @@ The repository contains the initial tests stored in a notebook, and the producti
 
 ## Running from Docker
 - ```docker build es-migration .```
-- ```
+```
 docker run
 --network host
 --env-file .env
