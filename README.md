@@ -32,3 +32,5 @@ docker run
 -v "$(pwd)/data:/app/data"  
 es-migration
 ```
+- Resulting SQLite files are written to app/data
+- Modify the .env file for running on machines other than localhost
