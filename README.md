@@ -41,7 +41,7 @@ es-migration
 ----
 
 ## Database schema
-This database is built from six primary Elasticsearch indices:
+This SQLite database is built from six primary Elasticsearch indices:
 
 - verses
 - occurrences
@@ -58,7 +58,7 @@ The database uses a normalized schema with many-to-many, many-to-one, and lookup
 
 #### **1. Occurrences**
 
-Stores individual occurrences (= short epigrams or poems, literally how they've been found in a manuscript)
+Stores individual occurrences (= short epigrams or poems, literally how they've been found in a manuscript, so including marks for gaps and missing text.)
 
 Columns include:
 ```id, created, modified, public_comment, private_comment, incipit, text_stemmer, text_original, location_in_ms, date_floor_year, date_ceiling_year, palaeographical_info, contextual_info, manuscript_id, title, is_dbbe.```
@@ -91,8 +91,9 @@ Related tables:
 - ```Type_subject```
 - ```Type_related_types (linked via type_relation_definitions)```
 - ```Type_tags```
-- ```Type_occurrences```
-- ```Type_editorial_status```
+- ```Type_occurrences```: Occurrences linked to this type
+- ```Type_editorial_status```: editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
+
 
 
 #### **3. Manuscripts**
@@ -106,7 +107,8 @@ Related tables:
 - ```Manuscript_identification```
 - ```Manuscript_management```: Internal information. For example: To do's in the processing of this manuscript
 - ```Manuscript_origin```
-- ```Manuscript_person_roles```
+- ```Manuscript_person_roles```: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...
+
 
 
 #### **4. Persons**
@@ -118,12 +120,8 @@ Related tables:
 - ```Person_acknowledgement```: Plain text shout out to people who helped in the publication of the information on this (historical) person. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a person_person_roles table which would be confusing._
 - ```person_identification```
 - ```person_management```: Internal information. For example: To do's in the processing of this person
-- ```person_offices```
-- ```person_self_designations```
-- ```occurrence_person_roles```
-- ```manuscript_person_roles```
-- ```bibliography_person_roles```
-- ```type_person_roles```
+- ```person_self_designations```: How a scribe describes himself
+- ```person_offices```: the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
 
 
 #### **5. Bibliographies**
@@ -140,9 +138,10 @@ Related tables:
 Contains verse-level data for occurrences and manuscripts.
 
 Columns include ```id, occurrence_id, manuscript_id, text, order_in_occurrence, verse_group_id.```
-verse_groups table allows grouping of related verses.
 
-#### **Lookup / Metadata Tables**
+Verse_groups table allows grouping of related verses. For now, we made a separate table for it because it seems like something that could receive additional metadata in a later phase (descriptions about this verse group?). However, currently verse groups have nothing else than IDs.
+
+### **Lookup / Metadata Tables**
 
 - ```roles``` — defines role types for persons.
 - ```text_statuses``` — textual status of occurrences or types.
@@ -160,4 +159,4 @@ verse_groups table allows grouping of related verses.
 - ```libraries``` — library metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```collections``` — collection metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```biblio_category``` — categories for bibliographies.
-
+- ```content``` - the content of a manuscript.  **To do**: This is currently flattened (ex. Biblica > Novum Testamentum > Evangeliarium), we might want to split this up and add a hierarchy.
