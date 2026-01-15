@@ -25,7 +25,7 @@ jobs:
         include:
           - target: dbbe-archiver
             image: ghentcdh/dbbe-archiver
-            dockerfile: apps/Dockerfile
+            dockerfile: app/Dockerfile
 
     steps:
       - name: Checkout repository
