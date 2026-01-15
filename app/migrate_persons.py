@@ -128,7 +128,7 @@ def migrate_persons():
             private_comment = excluded.private_comment
         """, (
             person_id,
-            source.get('full_name'),
+            source.get('name'),
             source.get('born_date_floor_year'),
             source.get('born_date_ceiling_year'),
             source.get('death_date_floor_year'),
