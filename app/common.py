@@ -17,7 +17,7 @@ ROLE_FIELD_TO_ROLE_NAME = {
     "patron": "Patron",
     "related": "Related",
     "scribe": "Scribe",
-    "content": "Content",
+    "person_content": "Content",
     "author": "Author",
     "supervisor": "Supervisor",
     "editor": "Editor",
@@ -100,3 +100,50 @@ def get_or_create_role(cursor, role_name):
 def get_dbbe_indices(es):
     indices = es.cat.indices(format="json")
     return [idx['index'] for idx in indices if idx['index'].startswith("dbbe_dev")]
+
+def insert_many_to_many(
+    cursor,
+    source: dict,
+    source_key: str,
+    entity_table: str,
+    join_table: str,
+    parent_id_col: str,
+    entity_id_col: str,
+    parent_id: str,
+):
+    for item in source.get(source_key, []):
+        item_id = str(item.get("id", ""))
+        item_name = item.get("name", "")
+        if not item_id or not item_name:
+            continue
+
+        cursor.execute(
+            f"INSERT OR IGNORE INTO {entity_table} (id, name) VALUES (?, ?)",
+            (item_id, item_name),
+        )
+
+        cursor.execute(
+            f"""
+            INSERT OR IGNORE INTO {join_table}
+            ({parent_id_col}, {entity_id_col})
+            VALUES (?, ?)
+            """,
+            (parent_id, item_id),
+        )
+
+def insert_many_to_one(cursor, entity_name, table_name, manuscript_id, entity_data):
+    if not entity_data:
+        return
+
+    entity_id = str(entity_data.get("id", ""))
+    entity_name_val = entity_data.get("name", "")
+
+    if entity_id and entity_name_val:
+        cursor.execute(
+            f"INSERT OR IGNORE INTO {table_name} (id, name) VALUES (?, ?)",
+            (entity_id, entity_name_val)
+        )
+        cursor.execute(
+            f"UPDATE manuscripts SET {entity_name}_id = ? WHERE id = ?",
+            (entity_id, manuscript_id)
+        )
