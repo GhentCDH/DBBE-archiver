@@ -1,3 +1,5 @@
 export_data.sqlite
 export_data_mapping.sqlite
 *.tsv
+*.sqlite
+app/*.sqlite
