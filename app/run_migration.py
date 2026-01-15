@@ -9,6 +9,9 @@ from migrate_bibliographies import migrate_bibliographies
 from zenodo_upload import upload_sqlite_files_to_zenodo
 import os
 
+def str_to_bool(value: str) -> bool:
+    return value.lower() in {"1", "true", "yes", "on"}
+
 def run_migration():
 
     steps = [
@@ -32,8 +35,15 @@ def run_migration():
 
 
 if __name__ == "__main__":
-    # run_migration()
+    run_migration()
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    data_folder = os.path.join(BASE_DIR, 'data')
-    upload_sqlite_files_to_zenodo(data_folder)
+    enable_zenodo_upload = str_to_bool(
+        os.getenv("ENABLE_ZENODO_UPLOAD", "false")
+    )
+
+    if enable_zenodo_upload:
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        data_folder = os.path.join(BASE_DIR, 'data')
+        upload_sqlite_files_to_zenodo(data_folder)
+    else:
+        print("Zenodo upload not enabled")

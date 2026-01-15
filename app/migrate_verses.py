@@ -2,19 +2,13 @@ from common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices, add_column_if_missing
 )
 
-
 def create_verse_tables(cursor):
-    """
-    Create all verse-related tables.
-    """
-    # Verse groups
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS verse_groups (
         id TEXT PRIMARY KEY
     )
     """)
 
-    # Add missing columns to verses table
     verse_columns = {
         "text": "TEXT",
         "occurrence_id": "TEXT",
@@ -24,7 +18,6 @@ def create_verse_tables(cursor):
     }
     for col, col_type in verse_columns.items():
         add_column_if_missing(cursor, "verses", col, col_type)
-
 
 def migrate_verses():
     es = get_es_client()
@@ -76,7 +69,6 @@ def migrate_verses():
                 (group_id,)
             )
 
-        # Insert verse
         cursor.execute("""
             INSERT OR IGNORE INTO verses (
                 id, text, occurrence_id, manuscript_id, order_in_occurrence, verse_group_id
@@ -91,7 +83,6 @@ def migrate_verses():
     cursor.execute("COMMIT")
     conn.close()
     print(f"Verse migration completed: {batch_count} verses inserted")
-
 
 if __name__ == "__main__":
     migrate_verses()

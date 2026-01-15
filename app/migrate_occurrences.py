@@ -1,17 +1,40 @@
-"""
-Migrate occurrences data from Elasticsearch to SQLite.
-"""
 from common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME
+    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME,
+    insert_many_to_many, get_postgres_connection
 )
 
+def get_related_occurrences(occ_id, pg_cursor):
+    pg_cursor.execute("""
+        SELECT b.idoriginal_poem
+        FROM data.original_poem_verse a
+        INNER JOIN data.original_poem_verse b ON a.idgroup = b.idgroup
+        WHERE a.idoriginal_poem = %s AND b.idoriginal_poem <> a.idoriginal_poem
+        GROUP BY b.idoriginal_poem
+
+        UNION
+
+        SELECT fb.subject_identity
+        FROM data.factoid fa
+        INNER JOIN data.factoid_type fta ON fa.idfactoid_type = fta.idfactoid_type
+        INNER JOIN data.factoid fb ON fa.object_identity = fb.object_identity
+        INNER JOIN data.factoid_type ftb ON fb.idfactoid_type = ftb.idfactoid_type
+        WHERE fa.subject_identity = %s
+        AND fta.type = 'reconstruction of'
+        AND ftb.type = 'reconstruction of'
+        AND fb.subject_identity <> fa.subject_identity
+        AND fb.subject_identity NOT IN (
+            SELECT b.idoriginal_poem
+            FROM data.original_poem_verse a
+            INNER JOIN data.original_poem_verse b ON a.idgroup = b.idgroup
+            WHERE a.idoriginal_poem = %s
+            AND b.idoriginal_poem <> a.idoriginal_poem
+            GROUP BY b.idoriginal_poem
+        )
+    """, (occ_id, occ_id, occ_id))
+    return [row[0] for row in pg_cursor.fetchall()]
 
 def create_occurrence_tables(cursor):
-    """
-    Create all occurrence-related tables.
-    """
-    # Add columns to occurrences table
     occurrence_columns = [
         ("created", "TEXT"),
         ("modified", "TEXT"),
@@ -21,7 +44,7 @@ def create_occurrence_tables(cursor):
         ("incipit", "TEXT"),
         ("text_stemmer", "TEXT"),
         ("text_original", "TEXT"),
-        ("location", "TEXT"),
+        ("location_in_ms", "TEXT"),
         ("date_floor_year", "TEXT"),
         ("date_ceiling_year", "TEXT"),
         ("palaeographical_info", "TEXT"),
@@ -32,8 +55,7 @@ def create_occurrence_tables(cursor):
     
     for col, col_type in occurrence_columns:
         add_column_if_missing(cursor, "occurrences", col, col_type)
-    
-    # Create junction tables
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS occurrence_person_roles (
         occurrence_id TEXT NOT NULL,
@@ -119,7 +141,6 @@ def create_occurrence_tables(cursor):
     )
     """)
     
-    # Insert relation definitions
     cursor.execute("""
     INSERT OR IGNORE INTO occurrence_relation_definitions (id, definition) VALUES
     ('0', 'verse_related'),
@@ -128,26 +149,20 @@ def create_occurrence_tables(cursor):
 
 
 def migrate_occurrences():
-    """
-    Migrate occurrences from Elasticsearch to SQLite.
-    """
     es = get_es_client()
     conn, cursor = get_db_connection()
-    
-    # DISABLE FOREIGN KEY CONSTRAINTS FOR BULK IMPORT
+    pg_conn, pg_cursor = get_postgres_connection()
+
     cursor.execute("PRAGMA foreign_keys = OFF")
     print("Foreign key constraints disabled for migration")
 
-    # Create occurrence tables
     create_occurrence_tables(cursor)
 
-    # Get indices
     indices = get_dbbe_indices(es)
     occ_index = next((idx for idx in indices if idx.endswith("occurrences")), None)
 
     if not occ_index:
         print("No occurrence index found")
-        # Re-enable foreign keys before closing
         cursor.execute("PRAGMA foreign_keys = ON")
         conn.close()
         return
@@ -164,12 +179,11 @@ def migrate_occurrences():
         occ_id = str(source.get('id', hit['_id']))
         manuscript_id = str(source.get('manuscript', {}).get('id', ''))
 
-        # Update occurrence main fields
         cursor.execute("""
         UPDATE occurrences SET
             created=?, modified=?, public_comment=?, private_comment=?,
             is_dbbe=?, incipit=?, text_stemmer=?, text_original=?,
-            location=?, date_floor_year=?, date_ceiling_year=?,
+            location_in_ms=?, date_floor_year=?, date_ceiling_year=?,
             palaeographical_info=?, contextual_info=?, manuscript_id=?, title=?
         WHERE id=?
         """, (
@@ -177,7 +191,7 @@ def migrate_occurrences():
             source.get('modified', ''),
             source.get('public_comment', ''),
             source.get('private_comment', ''),
-            bool(source.get('is_dbbe', False)),
+            bool(source.get('dbbe', False)),
             source.get('incipit', ''),
             source.get('text_stemmer', ''),
             source.get('text_original', ''),
@@ -191,67 +205,52 @@ def migrate_occurrences():
             occ_id
         ))
 
-        # Genres
-        for genre in source.get('genre', []):
-            genre_id = str(genre.get('id', ''))
-            if genre_id:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO genres (id, name) VALUES (?, ?)",
-                    (genre_id, genre.get('name', ''))
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO occurrence_genres (occurrence_id, genre_id) VALUES (?, ?)",
-                    (occ_id, genre_id)
-                )
+        OCCURRENCE_M2M = [
+            {
+                "source_key": "genre",
+                "entity_table": "genres",
+                "join_table": "occurrence_genres",
+                "parent_id_col": "occurrence_id",
+                "entity_id_col": "genre_id",
+            },
+            {
+                "source_key": "metre",
+                "entity_table": "metres",
+                "join_table": "occurrence_metres",
+                "parent_id_col": "occurrence_id",
+                "entity_id_col": "metre_id",
+            },
+            {
+                "source_key": "acknowledgement",
+                "entity_table": "acknowledgements",
+                "join_table": "occurrence_acknowledgement",
+                "parent_id_col": "occurrence_id",
+                "entity_id_col": "acknowledgement_id",
+            },
+            {
+                "source_key": "management",
+                "entity_table": "management",
+                "join_table": "occurrence_management",
+                "parent_id_col": "occurrence_id",
+                "entity_id_col": "management_id",
+            },
+            {
+                "source_key": "subject",
+                "entity_table": "subjects",
+                "join_table": "occurrence_subject",
+                "parent_id_col": "occurrence_id",
+                "entity_id_col": "subject_id",
+            },
+        ]
 
-        # Metres
-        for metre in source.get('metre', []):
-            metre_id = str(metre.get('id', ''))
-            if metre_id:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO metres (id, name) VALUES (?, ?)",
-                    (metre_id, metre.get('name', ''))
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO occurrence_metres (occurrence_id, metre_id) VALUES (?, ?)",
-                    (occ_id, metre_id)
-                )
-
-        # Acknowledgements
-        for ack in source.get('acknowledgement', []):
-            ack_id = str(ack.get('id', ''))
-            ack_name = ack.get('name', '')
-            if ack_id and ack_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO acknowledgements (id, name) VALUES (?, ?)",
-                    (ack_id, ack_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO occurrence_acknowledgement (occurrence_id, acknowledgement_id) VALUES (?, ?)",
-                    (occ_id, ack_id)
-                )
-
-        # Subjects
-        subjects = source.get('subject', [])
-        seen_subject_ids = set()
-
-        for subj in subjects:
-            subj_id = str(subj.get('id', ''))
-            subj_name = subj.get('name', '')
-            if not subj_id or subj_id in seen_subject_ids:
-                continue
-
-            seen_subject_ids.add(subj_id)
-            cursor.execute(
-                "INSERT OR IGNORE INTO subjects (id, name) VALUES (?, ?)",
-                (subj_id, subj_name)
-            )
-            cursor.execute(
-                "INSERT OR IGNORE INTO occurrence_subject (occurrence_id, subject_id) VALUES (?, ?)",
-                (occ_id, subj_id)
+        for cfg in OCCURRENCE_M2M:
+            insert_many_to_many(
+                cursor=cursor,
+                source=source,
+                parent_id=occ_id,
+                **cfg
             )
 
-        # Text status
         ts = source.get('text_status')
         if isinstance(ts, dict):
             ts_id = str(ts.get('id', ''))
@@ -263,24 +262,8 @@ def migrate_occurrences():
                 )
                 cursor.execute(
                     "INSERT OR IGNORE INTO occurrence_text_statuses (occurrence_id, text_status_id) VALUES (?, ?)",
-                    (occ_id, ts_id)
-                )
+                    (occ_id, ts_id))
 
-        # Management
-        for mgmt in source.get('management', []):
-            mgmt_id = str(mgmt.get('id', ''))
-            mgmt_name = mgmt.get('name', '')
-            if mgmt_id and mgmt_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO management (id, name) VALUES (?, ?)",
-                    (mgmt_id, mgmt_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO occurrence_management (occurrence_id, management_id) VALUES (?, ?)",
-                    (occ_id, mgmt_id)
-                )
-
-        # Person roles
         for role_field, role_name_in_table in ROLE_FIELD_TO_ROLE_NAME.items():
             role_id = get_role_id(cursor, role_name_in_table)
             if not role_id:
@@ -295,13 +278,20 @@ def migrate_occurrences():
             for p in persons:
                 person_id = str(p.get('id', ''))
                 if person_id:
-                    # With foreign keys disabled, we can insert the relationship
-                    # even if the person doesn't exist yet (they'll be added later)
                     cursor.execute(
                         "INSERT OR IGNORE INTO occurrence_person_roles (occurrence_id, person_id, role_id) VALUES (?, ?, ?)",
                         (occ_id, person_id, role_id)
                     )
 
+
+        related_ids = get_related_occurrences(occ_id, pg_cursor)
+        if related_ids:
+            related_rows = [(occ_id, rid, '0') for rid in related_ids]
+            cursor.executemany("""
+                INSERT OR IGNORE INTO occurrence_related_occurrences
+                (occurrence_id, related_occurrence_id, relation_definition_id)
+                VALUES (?, ?, ?)
+            """, related_rows)
 
         batch_count += 1
         if batch_count % 1000 == 0:
@@ -311,14 +301,12 @@ def migrate_occurrences():
 
     cursor.execute("COMMIT")
 
-    # RE-ENABLE FOREIGN KEY CONSTRAINTS
     cursor.execute("PRAGMA foreign_keys = ON")
     print("Foreign key constraints re-enabled")
 
     conn.close()
 
     print(f"Occurrences migration completed: {batch_count} occurrences updated")
-
 
 if __name__ == "__main__":
     migrate_occurrences()
