@@ -1,20 +1,21 @@
-
 import uuid
 from common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME
+    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, insert_many_to_one
 )
 
-
 def create_manuscript_tables(cursor):
-    # Add columns to manuscripts table
     manuscript_columns = [
         ("name", "TEXT"),
         ("date_floor_year", "INTEGER"),
         ("date_ceiling_year", "INTEGER"),
         ("created", "TEXT"),
         ("modified", "TEXT"),
-        ("number_of_occurrences", "INTEGER")
+        ("number_of_occurrences", "INTEGER"),
+        ("shelf", "TEXT"),
+        ("city_id", "INTEGER"),
+        ("library_id", "INTEGER"),
+        ("collection_id", "INTEGER")
     ]
     
     for col, col_type in manuscript_columns:
@@ -72,6 +73,16 @@ def create_manuscript_tables(cursor):
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS manuscript_origin (
+        manuscript_id TEXT NOT NULL,
+        origin_id TEXT NOT NULL,
+        PRIMARY KEY (manuscript_id, origin_id),
+        FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
+        FOREIGN KEY (origin_id) REFERENCES origins(id)
+    )
+    """)
+
 
 def migrate_manuscripts():
     es = get_es_client()
@@ -100,16 +111,17 @@ def migrate_manuscripts():
         cursor.execute("""
         INSERT INTO manuscripts (
             id, name, date_floor_year, date_ceiling_year,
-            created, modified, number_of_occurrences
+            created, modified, number_of_occurrences, shelf
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
             name = excluded.name,
             date_floor_year = excluded.date_floor_year,
             date_ceiling_year = excluded.date_ceiling_year,
             created = excluded.created,
             modified = excluded.modified,
-            number_of_occurrences = excluded.number_of_occurrences
+            number_of_occurrences = excluded.number_of_occurrences,
+            shelf = excluded.shelf
         """, (
             manuscript_id,
             source.get('name'),
@@ -117,7 +129,8 @@ def migrate_manuscripts():
             source.get('date_ceiling_year'),
             source.get('created'),
             source.get('modified'),
-            source.get('number_of_occurrences')
+            source.get('number_of_occurrences'),
+            source.get('shelf')
         ))
 
         for role_field, role_name_in_table in ROLE_FIELD_TO_ROLE_NAME.items():
@@ -141,48 +154,49 @@ def migrate_manuscripts():
                             (manuscript_id, person_id, role_id)
                         )
 
-        for mgmt in source.get('management', []):
-            mgmt_id = str(mgmt.get('id', ''))
-            mgmt_name = mgmt.get('name', '')
-            if mgmt_id and mgmt_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO management (id, name) VALUES (?, ?)",
-                    (mgmt_id, mgmt_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO manuscript_management (manuscript_id, management_id) VALUES (?, ?)",
-                    (manuscript_id, mgmt_id)
-                )
-        
-        # Acknowledgements
-        for ack in source.get('acknowledgement', []):
-            ack_id = str(ack.get('id', ''))
-            ack_name = ack.get('name', '')
-            if ack_id and ack_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO acknowledgements (id, name) VALUES (?, ?)",
-                    (ack_id, ack_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO manuscript_acknowledgement (manuscript_id, acknowledgement_id) VALUES (?, ?)",
-                    (manuscript_id, ack_id)
-                )
-        
-        # Content
-        for content in source.get('content', []):
-            content_id = str(content.get('id', ''))
-            content_name = content.get('name', '')
-            if content_id and content_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO content (id, name) VALUES (?, ?)",
-                    (content_id, content_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO manuscript_content (manuscript_id, content_id) VALUES (?, ?)",
-                    (manuscript_id, content_id)
-                )
-        
-        # Identifications (e.g., Diktyon)
+        MANUSCRIPT_M2M = [
+            {
+                "source_key": "management",
+                "entity_table": "management",
+                "join_table": "manuscript_management",
+                "parent_id_col": "manuscript_id",
+                "entity_id_col": "management_id",
+            },
+            {
+                "source_key": "acknowledgement",
+                "entity_table": "acknowledgements",
+                "join_table": "manuscript_acknowledgement",
+                "parent_id_col": "manuscript_id",
+                "entity_id_col": "acknowledgement_id",
+            },
+            {
+                "source_key": "content",
+                "entity_table": "content",
+                "join_table": "manuscript_content",
+                "parent_id_col": "manuscript_id",
+                "entity_id_col": "content_id",
+            },
+            {
+                "source_key": "origin",
+                "entity_table": "origins",
+                "join_table": "manuscript_origin",
+                "parent_id_col": "manuscript_id",
+                "entity_id_col": "origin_id",
+            },
+        ]
+
+        for cfg in MANUSCRIPT_M2M:
+            insert_many_to_many(
+                cursor=cursor,
+                source=source,
+                parent_id=manuscript_id,
+                **cfg,
+            )
+
+        insert_many_to_one(cursor, "city", "cities", manuscript_id, source.get("city"))
+        insert_many_to_one(cursor, "library", "libraries", manuscript_id, source.get("library"))
+        insert_many_to_one(cursor, "collection", "collections", manuscript_id, source.get("collection"))
+
         MANUSCRIPT_IDENT_TYPE_MAP = {
             "diktyon": "diktyon"
         }
@@ -191,7 +205,6 @@ def migrate_manuscripts():
             for identifier in source.get(es_field, []):
                 if not identifier:
                     continue
-                
                 ident_id = str(uuid.uuid4())
                 cursor.execute(
                     "INSERT OR IGNORE INTO identifications (id, type, identifier_value) VALUES (?, ?, ?)",
