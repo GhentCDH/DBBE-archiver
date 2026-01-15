@@ -3,9 +3,9 @@ import requests
 from dotenv import load_dotenv
 
 load_dotenv()
-ZENODO_TOKEN = os.environ["ZENODO_TOKEN"]
-ZENODO_API_URL = os.environ["ZENODO_API_URL"]
-DEPOSITION_TITLE = os.environ["DEPOSITION_TITLE"]
+ZENODO_TOKEN =os.getenv("ZENODO_TOKEN", "")
+ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
+DEPOSITION_TITLE = os.getenv("DEPOSITION_TITLE", "DBBE SQLite Backup")
 
 def upload_sqlite_files_to_zenodo(folder_path, publish=False):
 

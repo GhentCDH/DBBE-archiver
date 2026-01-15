@@ -56,6 +56,15 @@ def get_postgres_connection():
 
 def get_es_client():
     es_host = os.getenv("ES_HOST", "http://localhost:19200")
+    es_user = os.getenv("ES_USERNAME", "")
+    es_pass = os.getenv("ES_PASSWORD", "")
+
+    if es_user and es_pass:
+        return Elasticsearch(
+            es_host,
+            basic_auth=(es_user, es_pass),
+        )
+
     return Elasticsearch(es_host)
 
 def scroll_all(es, index, query=None, size=1000):
