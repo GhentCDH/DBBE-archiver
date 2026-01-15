@@ -1,17 +1,27 @@
-"""
-Migrate types data from Elasticsearch to SQLite.
-"""
 from common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME
+    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, get_postgres_connection
 )
+
+def fetch_type_relations(pg_conn):
+    pg_cursor = pg_conn.cursor()
+    pg_cursor.execute("""
+        SELECT
+            f.subject_identity,
+            f.object_identity,
+            ft.idfactoid_type,
+            ft.type
+        FROM data.factoid f
+        JOIN data.factoid_type ft
+            ON f.idfactoid_type = ft.idfactoid_type
+        WHERE ft.group = 'reconstructed_poem_related_to_reconstructed_poem'
+    """)
+    relations = pg_cursor.fetchall()
+    pg_cursor.close()
+    return relations
 
 
 def create_type_tables(cursor):
-    """
-    Create all type-related tables.
-    """
-    # Add columns to types table
     type_columns = {
         "text_stemmer": "TEXT",
         "text_original": "TEXT",
@@ -27,8 +37,7 @@ def create_type_tables(cursor):
     
     for col, col_type in type_columns.items():
         add_column_if_missing(cursor, "types", col, col_type)
-    
-    # Create junction tables
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_management (
         type_id TEXT NOT NULL,
@@ -144,18 +153,33 @@ def create_type_tables(cursor):
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS type_relation_definitions (
+        id TEXT PRIMARY KEY,
+        definition TEXT NOT NULL UNIQUE
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS type_related_types (
+        type_id TEXT NOT NULL,
+        related_type_id TEXT NOT NULL,
+        relation_definition_id TEXT NOT NULL,
+        PRIMARY KEY (type_id, related_type_id, relation_definition_id),
+        FOREIGN KEY (type_id) REFERENCES types(id),
+        FOREIGN KEY (related_type_id) REFERENCES types(id),
+        FOREIGN KEY (relation_definition_id) REFERENCES type_relation_definitions(id),
+        CHECK (type_id <> related_type_id)
+    )
+    """)
 
 def migrate_types():
-    """
-    Migrate types from Elasticsearch to SQLite.
-    """
     es = get_es_client()
     conn, cursor = get_db_connection()
-    
-    # Create type tables
+    pg_conn, pg_cursor = get_postgres_connection()
+
     create_type_tables(cursor)
     
-    # Get indices
     indices = get_dbbe_indices(es)
     type_index = next((idx for idx in indices if idx.endswith("types")), None)
     
@@ -174,16 +198,14 @@ def migrate_types():
     for hit in hits:
         source = hit['_source']
         type_id = str(source.get('id', hit['_id']))
-        
-        # Get verses from occurrences
+
         verses = []
         for occ in source.get('occurrence', []):
             if isinstance(occ, dict) and 'verse' in occ:
                 verses.extend(occ.get('verse', []))
         
         number_of_verses = len(verses) if verses else None
-        
-        # Insert or update type
+
         cursor.execute("""
         INSERT INTO types (
             id, text_stemmer, text_original, lemma, incipit,
@@ -214,8 +236,7 @@ def migrate_types():
             source.get('title_original'),
             number_of_verses
         ))
-        
-        # Tags
+
         for tag in source.get('tag', []):
             tag_id = str(tag.get('id', ''))
             tag_name = tag.get('name', '')
@@ -228,64 +249,7 @@ def migrate_types():
                     "INSERT OR IGNORE INTO type_tags (type_id, tag_id) VALUES (?, ?)",
                     (type_id, tag_id)
                 )
-        
-        # Management
-        for mgmt in source.get('management', []):
-            mgmt_id = str(mgmt.get('id', ''))
-            mgmt_name = mgmt.get('name', '')
-            if mgmt_id and mgmt_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO management (id, name) VALUES (?, ?)",
-                    (mgmt_id, mgmt_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO type_management (type_id, management_id) VALUES (?, ?)",
-                    (type_id, mgmt_id)
-                )
-        
-        # Acknowledgements
-        for ack in source.get('acknowledgement', []):
-            ack_id = str(ack.get('id', ''))
-            ack_name = ack.get('name', '')
-            if ack_id and ack_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO acknowledgements (id, name) VALUES (?, ?)",
-                    (ack_id, ack_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO type_acknowledgement (type_id, acknowledgement_id) VALUES (?, ?)",
-                    (type_id, ack_id)
-                )
-        
-        # Genres
-        for genre in source.get('genre', []):
-            genre_id = str(genre.get('id', ''))
-            genre_name = genre.get('name', '')
-            if genre_id:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO genres (id, name) VALUES (?, ?)",
-                    (genre_id, genre_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO type_genre (type_id, genre_id) VALUES (?, ?)",
-                    (type_id, genre_id)
-                )
-        
-        # Metres
-        for metre in source.get('metre', []):
-            metre_id = str(metre.get('id', ''))
-            metre_name = metre.get('name', '')
-            if metre_id:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO metres (id, name) VALUES (?, ?)",
-                    (metre_id, metre_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO type_metre (type_id, metre_id) VALUES (?, ?)",
-                    (type_id, metre_id)
-                )
-        
-        # Editorial/critical status
+
         cs = source.get('critical_status')
         if isinstance(cs, dict):
             cs_id = str(cs.get('id', ''))
@@ -299,8 +263,7 @@ def migrate_types():
                     "INSERT OR IGNORE INTO type_editorial_status (type_id, editorial_status_id) VALUES (?, ?)",
                     (type_id, cs_id)
                 )
-        
-        # Text status
+
         ts = source.get('text_status')
         if isinstance(ts, dict):
             ts_id = str(ts.get('id', ''))
@@ -314,22 +277,53 @@ def migrate_types():
                     "INSERT OR IGNORE INTO type_text_statuses (type_id, text_status_id) VALUES (?, ?)",
                     (type_id, ts_id)
                 )
-        
-        # Subjects
-        for subj in source.get('subject', []):
-            subj_id = str(subj.get('id', ''))
-            subj_name = subj.get('name', '')
-            if subj_id:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO subjects (id, name) VALUES (?, ?)",
-                    (subj_id, subj_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO type_subject (type_id, subject_id) VALUES (?, ?)",
-                    (type_id, subj_id)
-                )
-        
-        # Occurrences
+
+        TYPES_M2M = [
+            {
+                "source_key": "genre",
+                "entity_table": "genres",
+                "join_table": "type_genre",
+                "parent_id_col": "type_id",
+                "entity_id_col": "genre_id",
+            },
+            {
+                "source_key": "metre",
+                "entity_table": "metres",
+                "join_table": "type_metre",
+                "parent_id_col": "type_id",
+                "entity_id_col": "metre_id",
+            },
+            {
+                "source_key": "acknowledgement",
+                "entity_table": "acknowledgements",
+                "join_table": "type_acknowledgement",
+                "parent_id_col": "type_id",
+                "entity_id_col": "acknowledgement_id",
+            },
+            {
+                "source_key": "management",
+                "entity_table": "management",
+                "join_table": "type_management",
+                "parent_id_col": "type_id",
+                "entity_id_col": "management_id",
+            },
+            {
+                "source_key": "subject",
+                "entity_table": "subjects",
+                "join_table": "type_subject",
+                "parent_id_col": "type_id",
+                "entity_id_col": "subject_id",
+            },
+        ]
+
+        for cfg in TYPES_M2M:
+            insert_many_to_many(
+                cursor=cursor,
+                source=source,
+                parent_id=type_id,
+                **cfg
+            )
+
         for occ in source.get('occurrence', []):
             occ_id = str(occ.get('id', ''))
             if occ_id:
@@ -337,8 +331,7 @@ def migrate_types():
                     "INSERT OR IGNORE INTO type_occurrences (type_id, occurrence_id) VALUES (?, ?)",
                     (type_id, occ_id)
                 )
-        
-        # Person roles
+
         for role_field, role_name_in_table in ROLE_FIELD_TO_ROLE_NAME.items():
             role_id = get_role_id(cursor, role_name_in_table)
             if not role_id:
@@ -371,8 +364,33 @@ def migrate_types():
             print(f"Processed {batch_count} types...")
     
     cursor.execute("COMMIT")
+
+
+    relations = fetch_type_relations(pg_conn)
+    cursor.execute("BEGIN TRANSACTION")
+
+    for _, _, rel_def_id, rel_code in relations:
+        cursor.execute("""
+            INSERT OR IGNORE INTO type_relation_definitions (id, definition)
+            VALUES (?, ?)
+        """, (str(rel_def_id), rel_code))
+
+    for type_id, related_type_id, rel_def_id, _ in relations:
+        cursor.execute("""
+            INSERT OR IGNORE INTO type_related_types
+            (type_id, related_type_id, relation_definition_id)
+            VALUES (?, ?, ?)
+        """, (
+            str(type_id),
+            str(related_type_id),
+            str(rel_def_id)
+        ))
+
+    cursor.execute("COMMIT")
+    pg_conn.close()
     conn.close()
-    
+
+
     print(f"Types migration completed: {batch_count} types inserted")
 
 
