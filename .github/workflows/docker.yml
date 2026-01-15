@@ -58,7 +58,7 @@ jobs:
       - name: Build and push Docker image - ${{ matrix.target }}
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./app
           file: ${{ matrix.dockerfile }}
           #          target: ${{ matrix.target }}
           push: ${{ github.event_name != 'pull_request' }}
