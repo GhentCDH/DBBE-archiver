@@ -148,6 +148,7 @@ def create_type_tables(cursor):
         PRIMARY KEY (type_id, related_type_id, relation_definition_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (related_type_id) REFERENCES types(id),
+        FOREIGN KEY (related_type_id) REFERENCES types(id),
         FOREIGN KEY (relation_definition_id) REFERENCES type_relation_definitions(id),
         CHECK (type_id <> related_type_id)
     )
@@ -324,13 +325,20 @@ def migrate_types():
                 **cfg
             )
 
-        for occ in source.get('occurrence', []):
-            occ_id = str(occ.get('id', ''))
-            if occ_id:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO type_occurrences (type_id, occurrence_id) VALUES (?, ?)",
-                    (type_id, occ_id)
-                )
+        for occ_id in source.get('occurrence_ids', []):
+            occ_id = str(occ_id)
+
+            cursor.execute(
+                "SELECT 1 FROM occurrences WHERE id=?",
+                (occ_id,)
+            )
+            if cursor.fetchone() is None:
+                continue
+
+            cursor.execute(
+                "INSERT OR IGNORE INTO type_occurrences (type_id, occurrence_id) VALUES (?, ?)",
+                (type_id, occ_id)
+            )
 
         for role_field, role_name_in_table in ROLE_FIELD_TO_ROLE_NAME.items():
             role_id = get_role_id(cursor, role_name_in_table)
