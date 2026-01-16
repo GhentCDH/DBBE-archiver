@@ -60,6 +60,7 @@ def get_es_client():
     es_pass = os.getenv("ES_PASSWORD", "")
 
     if es_user and es_pass:
+        print("Connecting to host:", es_host)
         return Elasticsearch(
             es_host,
             basic_auth=(es_user, es_pass),
