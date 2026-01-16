@@ -20,8 +20,8 @@ def run_migration():
         ("Migrating persons", migrate_persons),
         ("Migrating manuscripts", migrate_manuscripts),
         ("Migrating bibliographies", migrate_bibliographies),
-        ("Migrating types", migrate_types),
         ("Migrating occurrences", migrate_occurrences),
+        ("Migrating types", migrate_types)
     ]
     
     for i, (step_name, step_func) in enumerate(steps, 1):

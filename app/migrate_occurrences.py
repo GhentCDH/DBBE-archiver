@@ -180,6 +180,11 @@ def migrate_occurrences():
         manuscript_id = str(source.get('manuscript', {}).get('id', ''))
 
         cursor.execute("""
+            INSERT OR IGNORE INTO occurrences (id)
+            VALUES (?)
+        """, (occ_id,))
+
+        cursor.execute("""
         UPDATE occurrences SET
             created=?, modified=?, public_comment=?, private_comment=?,
             is_dbbe=?, incipit=?, text_stemmer=?, text_original=?,
