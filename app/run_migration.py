@@ -41,10 +41,10 @@ if __name__ == "__main__":
         os.getenv("ENABLE_ZENODO_UPLOAD", "1")
     )
     print(enable_zenodo_upload)
-
-    if enable_zenodo_upload:
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        data_folder = os.path.join(BASE_DIR, 'data')
-        upload_sqlite_files_to_zenodo(data_folder)
-    else:
-        print("Zenodo upload not enabled")
+    #
+    # if enable_zenodo_upload:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    data_folder = os.path.join(BASE_DIR, 'data')
+    upload_sqlite_files_to_zenodo(data_folder)
+    # else:
+    #     print("Zenodo upload not enabled")
