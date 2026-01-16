@@ -38,8 +38,9 @@ if __name__ == "__main__":
     run_migration()
 
     enable_zenodo_upload = str_to_bool(
-        os.getenv("ENABLE_ZENODO_UPLOAD", "true")
+        os.getenv("ENABLE_ZENODO_UPLOAD", "1")
     )
+    print(enable_zenodo_upload)
 
     if enable_zenodo_upload:
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
