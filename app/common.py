@@ -41,6 +41,7 @@ def get_postgres_connection():
     pg_connection_string = os.getenv("PG_CONNECTION_STRING")
 
     if pg_connection_string:
+        print('Trying connection string.')
         pg_conn = psycopg2.connect(pg_connection_string)
     else:
         pg_host = os.getenv("PG_HOST", "localhost")
