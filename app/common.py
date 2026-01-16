@@ -38,18 +38,23 @@ def get_db_connection(db_path=MAIN_DB_PATH):
     return conn, cursor
 
 def get_postgres_connection():
-    pg_host = os.getenv("PG_HOST", "localhost")
-    pg_port = os.getenv("PG_PORT", 15432)
-    pg_user = os.getenv("PG_USER", "db_dbbe_dev")
-    pg_password = os.getenv("PG_PASSWORD", "db_dbbe_dev")
-    pg_db = os.getenv("PG_DB", "db_dbbe_dev")
-    pg_conn = psycopg2.connect(
-        host=pg_host,
-        port=pg_port,
-        dbname=pg_db,
-        user=pg_user,
-        password=pg_password
-    )
+    pg_connection_string = os.getenv("PG_CONNECTION_STRING")
+
+    if pg_connection_string:
+        pg_conn = psycopg2.connect(pg_connection_string)
+    else:
+        pg_host = os.getenv("PG_HOST", "localhost")
+        pg_port = os.getenv("PG_PORT", 15432)
+        pg_user = os.getenv("PG_USER", "db_dbbe_dev")
+        pg_password = os.getenv("PG_PASSWORD", "db_dbbe_dev")
+        pg_db = os.getenv("PG_DB", "db_dbbe_dev")
+        pg_conn = psycopg2.connect(
+            host=pg_host,
+            port=pg_port,
+            dbname=pg_db,
+            user=pg_user,
+            password=pg_password
+        )
     pg_cursor = pg_conn.cursor()
     return pg_conn, pg_cursor
 
