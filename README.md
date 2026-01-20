@@ -160,3 +160,11 @@ Verse_groups table allows grouping of related verses. For now, we made a separat
 - ```collections``` — collection metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```biblio_category``` — categories for bibliographies.
 - ```content``` - the content of a manuscript.  **To do**: This is currently flattened (ex. Biblica > Novum Testamentum > Evangeliarium), we might want to split this up and add a hierarchy.
+
+----
+
+## Zenodo
+
+This repository uses the Zenodo API for the automatic publication of datasets. Full API docs can be found on <a href="https://developers.zenodo.org/#rest-api">https://developers.zenodo.org/#rest-api</a>. You can do all of these calls to <a href="https://sandbox.zenodo.org/">https://sandbox.zenodo.org/</a> as well. This environment functions in the exact same way as production so it's perfect for testing.  
+
+In order to use the API, you need an access token, which you can generate by creating a Zenodo account and going to "My Account" > "Applications".
