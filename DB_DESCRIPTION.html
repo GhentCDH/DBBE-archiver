@@ -1,0 +1,146 @@
+<p>v2 This dataset provides structured access to the data behind <a href="https://dbbe.ugent.be">dbbe.ugent.be</a>, enabling intuitive exploration and reuse. It is based on production PostgreSQL and Elasticsearch instances and is organized around six core concepts. The data is updated weekly to reflect the latest research and additions.</p>
+
+<ul>
+  <li><strong>Occurrences:</strong> Individual epigrams reproduced as faithfully as possible from manuscripts, preserving orthography, punctuation, and textual idiosyncrasies, with sources clearly indicated.</li>
+
+  <li><strong>Types:</strong> Normalized or critically established texts linked to one or more Occurrences, enabling comparison across similar epigrams and providing interpretive metadata such as translations, author, and subject.</li>
+
+  <li><strong>Verses:</strong> Lines of epigrams, grouped in Verse Variant records to visualize textual parallels and deviations across Occurrences.</li>
+
+  <li><strong>Manuscripts:</strong> Metadata on the physical and historical context of manuscripts, including provenance and related documentation.</li>
+
+  <li><strong>Persons:</strong> Information on authors, scribes, editors, and other historical or modern contributors linked to Occurrences, Types, or Manuscripts.</li>
+
+  <li><strong>Bibliographies:</strong> Structured references connecting literature and publications to the relevant entities in the corpus, supporting traceable scholarship.</li>
+</ul>
+
+<p>This release facilitates computational analysis, corpus browsing, and transparent reuse of the DBBE epigram collection.</p>
+
+<h2>Exploring the Dataset</h2>
+
+<p>The dataset can be explored and analyzed in multiple ways, accommodating both non-technical and advanced users:</p>
+
+<ul>
+  <li><strong>Web-based viewing:</strong> Tools such as <a href="https://sqliteviewer.app/#/" target="_blank">SQLite Viewer</a> allow users to simply upload the SQLite file and inspect its contents directly in the browser, requiring no technical setup.</li>
+
+  <li><strong>Graphical interface and export:</strong> <a href="https://sqlitebrowser.org/" target="_blank">DB Browser for SQLite</a> offers an intuitive interface for browsing the data and exporting tables to CSV for further analysis, making it accessible to users without programming experience.</li>
+
+  <li><strong>AI-assisted semantic querying:</strong> The database file—or selected columns from it—can be uploaded to a large language model for natural language queries. For example, one could ask: <em>"Give me five occurrences from the eleventh century discussing harbours."</em> To protect sensitive data, consider using self-hosted models or paid, secure AI services rather than free online tools.</li>
+
+  <li><strong>Custom development:</strong> The well-structured SQLite format provides a robust foundation for programmatic analysis, integration with other tools like <a href="https://datasette.io/">datasette</a>, or the development of custom applications tailored to specific research questions.</li>
+</ul>
+
+
+
+<h2>Database schema</h2>
+
+For a full visual of the database schema, please visit <a href="https://www.yworks.com/yed-live/?file=https://gist.githubusercontent.com/PaulienLem/3cac2a338071a907f976a57008549939/raw/dcab7e67ac8dd3232e7a09521678349ff4d7d685/Imported%20Document">yED live</a>.
+
+<h3>1. Occurrences</h3>
+
+<p>The main occurrences table stores individual occurrences (= short epigrams or poems, literally how they've been found in a manuscript, so including marks for gaps and missing text.)</p>
+
+<p>Columns include:<br>
+<code>id</code>, <code>created</code>, <code>modified</code>, <code>public_comment</code>, <code>private_comment</code>, <code>incipit</code>, <code>text_stemmer</code>, <code>text_original</code>, <code>location_in_ms</code>, <code>date_floor_year</code>, <code>date_ceiling_year</code>, <code>palaeographical_info</code>, <code>contextual_info</code>, <code>manuscript_id</code>, <code>title</code>, <code>is_dbbe</code>.</p>
+
+<p>Related tables:</p>
+
+<ul>
+<li><code>occurrence_person_roles</code>: Any possible role a person could play in the publication of this occurrence. Example: Scribe ( = historical person), transcriber (=modern person), contributor (=modern person)...</li>
+<li><code>occurrence_genres</code>: Genres attributed to this occurrence (Can be more than 1)</li>
+<li><code>occurrence_metres</code>: Metres attributed to this occurrence (Can be more than 1)</li>
+<li><code>occurrence_management</code>: Internal information. For example: To do's in the processing of this occurrence</li>
+<li><code>occurrence_acknowledgement</code>: Plain text shout out to people who helped in the publication of this occurrence. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>occurrence_person_roles</code>.</li>
+<li><code>occurrence_text_statuses</code>: An occurrence text can be partially/completely (un)known</li>
+<li><code>occurrence_subject</code>: This one is tricky: Persons can have a Role "Subject" in an Occurrence, implying they are mentioned in that occurrence. However, an Occurrence also has a "Subject" , which could (but not has to be) be a person (in which case both the Subjects table and the Persons table refer to the same person). Homer for example appears both in the Subjects and in the Persons table. He has the same ID in both but they are not linked. To be analyzed (and discussed).</li>
+<li><code>occurrence_related_occurrences</code>and <code>occurrence_relation_definitions</code>: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in <code>occurrence_relation_definitions</code></li>
+</ul>
+
+<h3>2. Types</h3>
+
+<p>These are prototypes of occurrences. A lot of occurrences have a high level of similarity. DBBE proposes prototypes for every group of similar occurrences.</p>
+
+<p>Related tables:</p>
+
+<ul>
+<li><code>Type_person_roles</code>: Any possible role a person could play in the construction and publication of this Type.</li>
+<li><code>Type_genre</code>: Genres attributed to this Type. More than 1 Genre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.</li>
+<li><code>Type_metre</code>: Metres attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.</li>
+<li><code>Type_management</code>: Internal information. For example: To do's in the processing of this Type</li>
+<li><code>Type_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Type. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>type_person_roles</code>.</li>
+<li><code>Type_text_statuses</code></li>
+<li><code>Type_subject</code></li>
+<li><code>Type_related_types</code>(linked via <code>type_relation_definitions</code>)</li>
+<li><code>Type_tags</code></li>
+<li><code>Type_occurrences</code>: Occurrences linked to this type</li>
+<li><code>Type_editorial_status</code>: editorial states for types. Currently only (not) a critical text. This might become just a boolean value but since it's not sure yet, we stored it like this</li>
+</ul>
+
+<h3>3. Manuscripts</h3>
+
+<p>Contains metadata about manuscripts.</p>
+
+<p>Related tables:</p>
+
+<ul>
+<li><code>Manuscript_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Acknowledgement. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>manuscript_person_roles</code>.</li>
+<li><code>Manuscript_content</code></li>
+<li><code>Manuscript_identification</code></li>
+<li><code>Manuscript_management</code>: Internal information. For example: To do's in the processing of this manuscript</li>
+<li><code>Manuscript_origin</code></li>
+<li><code>Manuscript_person_roles</code>: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...</li>
+</ul>
+
+<h3>4. Persons</h3>
+
+<p>Contains metadata about persons involved (authors, editors, patrons, etc.).</p>
+
+<p>Related tables:</p>
+
+<ul>
+<li><code>Person_acknowledgement</code>: Plain text shout out to people who helped in the publication of the information on this (historical) person. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a <code>person_person_roles</code>table which would be confusing.</li>
+<li><code>person_identification</code></li>
+<li><code>person_management</code>: Internal information. For example: To do's in the processing of this person</li>
+<li><code>person_self_designations</code>: How a scribe describes himself</li>
+<li><code>person_offices</code>: the official title of a person. To do: These are currently stored entirely separate from <code>self designation</code>, even tho a person could describe himself using his official title too...</li>
+</ul>
+
+<h3>5. Bibliographies</h3>
+
+<p>Contains bibliographic entries. Important to do: Use the postgres to link bibliographical information to the entities they are linked to.</p>
+
+<p>Related tables:</p>
+
+<ul>
+<li><code>bibliography_management</code>: Internal information. For example: To do's in the processing of this bibliography</li>
+<li><code>bibliography_person_roles</code></li>
+</ul>
+
+<h3>6. Verses</h3>
+
+<p>Contains verse-level data for occurrences and manuscripts.<br>
+
+Columns include <code>id</code>, <code>occurrence_id</code>, <code>manuscript_id</code>, <code>text</code>, <code>order_in_occurrence</code>, <code>verse_group_id</code>.<br>
+<code>Verse_groups</code>table allows grouping of related verses. For now, we made a separate table for it because it seems like something that could receive additional metadata in a later phase (descriptions about this verse group?). However, currently verse groups have nothing else than IDs.</p>
+
+<h3>7. Lookup / Metadata Tables</h3>
+
+<ul>
+<li><code>roles</code>: defines role types for persons.</li>
+<li><code>text_statuses</code>: textual status of occurrences or types.</li>
+<li><code>subjects</code>: subjects for occurrences and types.</li>
+<li><code>tags</code>: tags for types: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.</li>
+<li><code>metres</code>: metre classification.</li>
+<li><code>genres</code>: genre classification.</li>
+<li><code>management</code>: administrative metadata.</li>
+<li><code>acknowledgements</code>: acknowledgements linked to occurrences, manuscripts, types, or persons.</li>
+<li><code>editorial_statuses</code>: editorial states for types. Currently only (not) a critical text. This might become just a boolean value but since it's not sure yet, we stored it like this</li>
+<li><code>self_designations</code>: how a scribe describes himself</li>
+<li><code>offices</code>: the official title of a person. To do: These are currently stored entirely separate from <code>self designation</code>, even tho a person could describe himself using his official title too...</li>
+<li><code>origins</code>: geographical or institutional origins for manuscripts. To do: because of the elasticsearch, these are flattened. For example, an origin name could be Asia Minor &lt; Turkey, but also Turkey. We might want to add some hierarchy here.</li>
+<li><code>cities</code>: city metadata. To do: This seems conceptually related to origins. We should probably revise how geographical info is stored.</li>
+<li><code>libraries</code>: library metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>
+<li><code>collections</code>: collection metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>
+<li><code>biblio_category</code>: categories for bibliographies.</li>
+<li><code>content</code>- the content of a manuscript. To do: This is currently flattened (ex. Biblica &gt; Novum Testamentum &gt; Evangeliarium), we might want to split this up and add a hierarchy.</li>
+</ul>
