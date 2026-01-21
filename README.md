@@ -1,4 +1,4 @@
-# DBBE Archiver
+# Database of Byzantine Book Epigrams (DBBE) - Archiver
 
 This repository was developed to facilitate the periodic archival of data from the live DBBE instance to Zenodo in SQLite format. 
 It integrates data originating from Elasticsearch with complementary information stored in PostgreSQL, producing a comprehensive and internally consistent SQLite database.
@@ -12,28 +12,36 @@ By consolidating and normalizing data across heterogeneous storage systems, this
 
 The repository contains the initial tests stored in a notebook, and the production-ready version of this code in the ```/app``` folder.
 
-## Config
-Use the .env file to configure the paths to the current Postgres and Elastic servers, and provide a key and URL for Zenodo uploads. The default configured in this repository uses the Zenodo sandbox URL, which should be replaced on production.
-
 ## Prerequisites
 - Launch a virtual environment in Python3.11
 - Make sure the DBBE services are running (https://github.com/GhentCDH/dbbe)
+
+## Config
+Use the .env file to configure the paths to the current Postgres and Elastic servers, and provide a key and URL for Zenodo uploads. The default configured in this repository uses the Zenodo sandbox URL, which should be replaced on production.
 
 ## Running locally
 - Clone the repository
 - ```cd app```
 - ```pip install .```
 - ```python run_migration.py ```
-- Resulting SQLite files are written to app/data
+
+Resulting SQLite files are written to app/data and published as draft to a new Zenodo deposit. 
+Configure Zenodo uploads by setting these variables in your `.env` file for other behaviour:
+
+- **`ENABLE_ZENODO_UPLOAD`** : Master switch for Zenodo upload functionality  (`"false"`,  `"true"`)
+- **`PUBLISH_DRAFT`** : Controls whether to publish the (new version of the) deposition or leave as draft (`"false"`,  `"true"`)
+- **`DEPOSITION_ID`**: ID of existing Zenodo deposition (for creating new versions)
+    - `None`: Creates a brand new deposition
+    - `<existing_id>`: Creates a new version of that deposition, deletes old `export_data.sqlite`, updates metadata, and uploads new file
 
 ## Running from Docker
-- ```docker build es-migration .```
+- ```docker build dbbe-archive .```
 ```
 docker run
 --network host
 --env-file .env
 -v "$(pwd)/data:/app/data"  
-es-migration
+dbbe-archive
 ```
 - Resulting SQLite files are written to app/data
 - Modify the .env file for running on machines other than localhost
@@ -50,9 +58,10 @@ This SQLite database is built from six primary Elasticsearch indices:
 - persons
 - bibliographies
 
-These indices provide the foundational data. From these, we construct the relational database in SQLite, building supporting tables to handle relationships, metadata, and controlled vocabularies.
+These indices provide the foundational data, which are complemented with data from Postgres. 
+From these, we construct the relational database in SQLite, building supporting tables to handle relationships, metadata, and controlled vocabularies.
 
-The database uses a normalized schema with many-to-many, many-to-one, and lookup tables to ensure data consistency and relational integrity.
+For a full visual of the database schema, please visit <a href="https://www.yworks.com/yed-live/?file=https://gist.githubusercontent.com/PaulienLem/3cac2a338071a907f976a57008549939/raw/dcab7e67ac8dd3232e7a09521678349ff4d7d685/Imported%20Document">yED live</a>.
 
 ### Core Tables
 
@@ -103,7 +112,7 @@ Contains metadata about manuscripts.
 Related tables:
 
 - ```Manuscript_acknowledgement```: Plain text shout out to people who helped in the publication of this Acknowledgement. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to manuscript_person_roles._
-- ```Manuscript_content```
+- ```Manuscript_content```: Explains what the manuscript is about. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
 - ```Manuscript_identification```
 - ```Manuscript_management```: Internal information. For example: To do's in the processing of this manuscript
 - ```Manuscript_origin```
