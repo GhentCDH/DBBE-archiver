@@ -1,7 +1,8 @@
 import uuid
 from common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, insert_many_to_one
+    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, insert_many_to_one,
+    get_postgres_connection
 )
 
 def create_manuscript_tables(cursor):
@@ -83,10 +84,77 @@ def create_manuscript_tables(cursor):
     )
     """)
 
+def migrate_manuscript_content():
+    conn, cursor = get_db_connection()
+    pg_conn, pg_cursor = get_postgres_connection()
+
+    cursor.execute("PRAGMA foreign_keys = OFF")
+    print("Foreign key constraints disabled for content migration")
+
+    # Step 1: fetch only content nodes
+    pg_cursor.execute("""
+        SELECT idgenre, idparentgenre, genre
+        FROM data.genre
+        WHERE is_content = TRUE
+    """)
+
+    rows = pg_cursor.fetchall()
+    print(f"Fetched {len(rows)} content nodes from Postgres (is_content=True)")
+
+    cursor.execute("BEGIN")
+
+    # Step 2: insert all nodes first
+    for idgenre, _, genre in rows:
+        cursor.execute("""
+            INSERT OR IGNORE INTO content (id, name)
+            VALUES (?, ?)
+        """, (str(idgenre), genre))
+
+    # Step 3: wire up parent relationships
+    for idgenre, idparentgenre, _ in rows:
+        if idparentgenre is not None:
+            cursor.execute("""
+                UPDATE content
+                SET parent_id = ?
+                WHERE id = ?
+            """, (str(idparentgenre), str(idgenre)))
+
+    cursor.execute("COMMIT")
+    cursor.execute("PRAGMA foreign_keys = ON")
+    print("Foreign key constraints re-enabled")
+
+    conn.close()
+    pg_conn.close()
+    print("Content migration completed")
+
+
+
+def get_deepest_leaf_from_postgres(pg_cursor, content_ids):
+    if not content_ids:
+        return []
+
+    content_ids = [int(cid) for cid in content_ids]
+
+    pg_cursor.execute(f"""
+        SELECT idgenre, idparentgenre
+        FROM data.genre
+        WHERE idgenre IN %s
+          AND is_content = TRUE
+    """, (tuple(content_ids),))
+    rows = pg_cursor.fetchall()
+
+    parents_in_list = set(row[1] for row in rows if row[1] is not None)
+
+    leaf_ids = [str(cid) for cid in content_ids if cid not in parents_in_list]
+
+    return leaf_ids
 
 def migrate_manuscripts():
+    migrate_manuscript_content()
     es = get_es_client()
     conn, cursor = get_db_connection()
+    pg_conn, pg_cursor = get_postgres_connection()
+
 
     create_manuscript_tables(cursor)
 
@@ -170,13 +238,6 @@ def migrate_manuscripts():
                 "entity_id_col": "acknowledgement_id",
             },
             {
-                "source_key": "content",
-                "entity_table": "content",
-                "join_table": "manuscript_content",
-                "parent_id_col": "manuscript_id",
-                "entity_id_col": "content_id",
-            },
-            {
                 "source_key": "origin",
                 "entity_table": "origins",
                 "join_table": "manuscript_origin",
@@ -200,7 +261,18 @@ def migrate_manuscripts():
         MANUSCRIPT_IDENT_TYPE_MAP = {
             "diktyon": "diktyon"
         }
-        
+
+        content_list = source.get("content", [])
+        content_ids = [c.get("id") for c in content_list if c.get("id")]
+
+        leaf_ids = get_deepest_leaf_from_postgres(pg_cursor, content_ids)
+
+        for leaf_id in leaf_ids:
+            cursor.execute("""
+                INSERT OR IGNORE INTO manuscript_content (manuscript_id, content_id)
+                VALUES (?, ?)
+            """, (manuscript_id, leaf_id))
+
         for es_field, ident_type in MANUSCRIPT_IDENT_TYPE_MAP.items():
             for identifier in source.get(es_field, []):
                 if not identifier:
