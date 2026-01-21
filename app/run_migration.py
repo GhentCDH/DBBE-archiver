@@ -36,7 +36,7 @@ def run_migration():
 
 
 if __name__ == "__main__":
-    # run_migration()
+    run_migration()
 
     enable_zenodo_upload = str_to_bool(
         os.getenv("ENABLE_ZENODO_UPLOAD", "false")
