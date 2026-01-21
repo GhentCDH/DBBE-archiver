@@ -90,10 +90,11 @@ def create_base_tables():
     """)
     
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS content (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL
-    )
+        CREATE TABLE IF NOT EXISTS content (
+            id TEXT PRIMARY KEY,
+            parent_id TEXT REFERENCES content(id) ON DELETE CASCADE,
+            name TEXT
+        );
     """)
     
     cursor.execute("""
