@@ -60,9 +60,11 @@ def create_base_tables():
         name TEXT,
         historical_name TEXT,
         parent_id TEXT,
+        category_id TEXT,
         FOREIGN KEY(parent_id) REFERENCES locations(id)
     )
     """)
+
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS text_statuses (
@@ -122,12 +124,6 @@ def create_base_tables():
     )
     """)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS cities (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL
-    )
-    """)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS libraries (
             id TEXT PRIMARY KEY,
