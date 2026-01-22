@@ -80,10 +80,8 @@ Related tables:
 - ```occurrence_management```: Internal information. For example: To do's in the processing of this occurrence
 - ```occurrence_acknowledgement```: Plain text shout out to people who helped in the publication of this occurrence. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to occurrence_person_roles._
 - ```occurrence_text_statuses```: An occurrence text can be partially/completely (un)known
-- ```occurrence_subject```: **This one is tricky:** Persons can have a Role "Subject" in an Occurrence, implying they are mentioned in that occurrence. However, an Occurrence also has a "Subject" , 
-which could (but not has to be) be a person (in which case both the Subjects table and the Persons table refer to the same person). **Homer** for example appears both in the Subjects and in the Persons table. He has the same ID in both but they are not linked. To be analyzed (and discussed).
 - ```occurrence_related_occurrences``` and ```occurrence_relation_definitions```: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in occurrence_relation_definitions
-
+- ```occurrence_keyword```: Keywords telling what the occurrence is about
 
 #### **2. Types**
 
@@ -97,7 +95,6 @@ Related tables:
 - ```Type_management```: Internal information. For example: To do's in the processing of this Type
 - ```Type_acknowledgement```: Plain text shout out to people who helped in the publication of this Type. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to type_person_roles._
 - ```Type_text_statuses```
-- ```Type_subject```
 - ```Type_related_types (linked via type_relation_definitions)```
 - ```Type_tags```
 - ```Type_occurrences```: Occurrences linked to this type
@@ -113,7 +110,7 @@ Related tables:
 
 - ```Manuscript_acknowledgement```: Plain text shout out to people who helped in the publication of this Acknowledgement. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to manuscript_person_roles._
 - ```Manuscript_content```: Explains what the manuscript is about. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
-- ```Manuscript_identification```
+- ```Manuscript_identification```: Links a manuscript to one or more IDs that were used in canonical works to refer to this manuscript (ex: Diktyon)
 - ```Manuscript_management```: Internal information. For example: To do's in the processing of this manuscript
 - ```Manuscript_origin```
 - ```Manuscript_person_roles```: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...
@@ -154,7 +151,7 @@ Verse_groups table allows grouping of related verses. For now, we made a separat
 
 - ```roles``` — defines role types for persons.
 - ```text_statuses``` — textual status of occurrences or types.
-- ```subjects``` — subjects for occurrences and types.
+- ```keywords``` — keywords for occurrences and types.
 - ```tags``` — tags for types: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.
 - ```metres``` — metre classification.
 - ```genres``` — genre classification.

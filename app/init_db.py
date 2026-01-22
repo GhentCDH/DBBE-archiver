@@ -67,9 +67,9 @@ def create_base_tables():
         name TEXT
     )
     """)
-    
+
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS subjects (
+    CREATE TABLE IF NOT EXISTS keyword (
         id TEXT PRIMARY KEY,
         name TEXT
     )

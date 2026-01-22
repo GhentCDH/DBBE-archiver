@@ -117,17 +117,7 @@ def create_occurrence_tables(cursor):
         FOREIGN KEY (text_status_id) REFERENCES text_statuses(id)
     )
     """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS occurrence_subject (
-        occurrence_id TEXT NOT NULL,
-        subject_id TEXT NOT NULL,
-        PRIMARY KEY (occurrence_id, subject_id),
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (subject_id) REFERENCES subjects(id)
-    )
-    """)
-    
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS occurrence_related_occurrences (
         occurrence_id TEXT NOT NULL,
@@ -140,12 +130,32 @@ def create_occurrence_tables(cursor):
         CHECK (occurrence_id <> related_occurrence_id)
     )
     """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS occurrence_keyword (
+        occurrence_id TEXT NOT NULL,
+        keyword_id TEXT NOT NULL,
+        PRIMARY KEY (occurrence_id, keyword_id),
+        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
+        FOREIGN KEY (keyword_id) REFERENCES keyword(id)
+    );
+    """)
     
     cursor.execute("""
     INSERT OR IGNORE INTO occurrence_relation_definitions (id, definition) VALUES
     ('0', 'verse_related'),
     ('1', 'type_related')
     """)
+
+
+def get_subject_keyword(pg_cursor, subject_id):
+    pg_cursor.execute("""
+        SELECT identity, keyword
+        FROM data.keyword
+        WHERE identity = %s
+          AND is_subject = true
+    """, (subject_id,))
+    return pg_cursor.fetchone()
 
 
 def migrate_occurrences():
@@ -210,6 +220,29 @@ def migrate_occurrences():
             occ_id
         ))
 
+        subjects = source.get("subject", [])
+        if isinstance(subjects, dict):
+            subjects = [subjects]
+        elif not isinstance(subjects, list):
+            subjects = []
+        for subj in subjects:
+            subject_id = str(subj.get("id", ""))
+            if not subject_id:
+                continue
+            pg_keyword = get_subject_keyword(pg_cursor, subject_id)
+            if not pg_keyword:
+                continue
+            keyword_id, keyword_name = pg_keyword
+            cursor.execute(
+                "INSERT OR IGNORE INTO keyword (id, name) VALUES (?, ?)",
+                (keyword_id, keyword_name)
+            )
+
+            cursor.execute(
+                "INSERT OR IGNORE INTO occurrence_keyword (occurrence_id, keyword_id) VALUES (?, ?)",
+                (occ_id, keyword_id)
+            )
+
         OCCURRENCE_M2M = [
             {
                 "source_key": "genre",
@@ -238,13 +271,6 @@ def migrate_occurrences():
                 "join_table": "occurrence_management",
                 "parent_id_col": "occurrence_id",
                 "entity_id_col": "management_id",
-            },
-            {
-                "source_key": "subject",
-                "entity_table": "subjects",
-                "join_table": "occurrence_subject",
-                "parent_id_col": "occurrence_id",
-                "entity_id_col": "subject_id",
             },
         ]
 

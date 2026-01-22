@@ -107,16 +107,7 @@ def create_type_tables(cursor):
         FOREIGN KEY (text_status_id) REFERENCES text_statuses(id)
     )
     """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS type_subject (
-        type_id TEXT NOT NULL,
-        subject_id TEXT NOT NULL,
-        PRIMARY KEY (type_id, subject_id),
-        FOREIGN KEY (type_id) REFERENCES types(id),
-        FOREIGN KEY (subject_id) REFERENCES subjects(id)
-    )
-    """)
+
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_person_roles (
@@ -173,6 +164,26 @@ def create_type_tables(cursor):
         CHECK (type_id <> related_type_id)
     )
     """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS type_keyword (
+        type_id TEXT NOT NULL,
+        keyword_id TEXT NOT NULL,
+        PRIMARY KEY (type_id, keyword_id),
+        FOREIGN KEY (type_id) REFERENCES types(id),
+        FOREIGN KEY (keyword_id) REFERENCES keyword(id)
+    );
+    """)
+
+
+def get_subject_keyword(pg_cursor, subject_id):
+    pg_cursor.execute("""
+        SELECT identity, keyword
+        FROM data.keyword
+        WHERE identity = %s
+          AND is_subject = true
+    """, (subject_id,))
+    return pg_cursor.fetchone()
 
 def migrate_types():
     es = get_es_client()
@@ -251,6 +262,7 @@ def migrate_types():
                     (type_id, tag_id)
                 )
 
+
         cs = source.get('critical_status')
         if isinstance(cs, dict):
             cs_id = str(cs.get('id', ''))
@@ -278,6 +290,29 @@ def migrate_types():
                     "INSERT OR IGNORE INTO type_text_statuses (type_id, text_status_id) VALUES (?, ?)",
                     (type_id, ts_id)
                 )
+
+        subjects = source.get("subject", [])
+        if isinstance(subjects, dict):
+            subjects = [subjects]
+        elif not isinstance(subjects, list):
+            subjects = []
+        for subj in subjects:
+            subject_id = str(subj.get("id", ""))
+            if not subject_id:
+                continue
+            pg_keyword = get_subject_keyword(pg_cursor, subject_id)
+            if not pg_keyword:
+                continue
+            keyword_id, keyword_name = pg_keyword
+            cursor.execute(
+                "INSERT OR IGNORE INTO keyword (id, name) VALUES (?, ?)",
+                (keyword_id, keyword_name)
+            )
+
+            cursor.execute(
+                "INSERT OR IGNORE INTO type_keyword (type_id, keyword_id) VALUES (?, ?)",
+                (type_id, keyword_id)
+            )
 
         TYPES_M2M = [
             {
@@ -307,13 +342,6 @@ def migrate_types():
                 "join_table": "type_management",
                 "parent_id_col": "type_id",
                 "entity_id_col": "management_id",
-            },
-            {
-                "source_key": "subject",
-                "entity_table": "subjects",
-                "join_table": "type_subject",
-                "parent_id_col": "type_id",
-                "entity_id_col": "subject_id",
             },
         ]
 

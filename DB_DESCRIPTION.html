@@ -52,7 +52,8 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <li><code>occurrence_management</code>: Internal information. For example: To do's in the processing of this occurrence</li>
 <li><code>occurrence_acknowledgement</code>: Plain text shout out to people who helped in the publication of this occurrence. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>occurrence_person_roles</code>.</li>
 <li><code>occurrence_text_statuses</code>: An occurrence text can be partially/completely (un)known</li>
-<li><code>occurrence_subject</code>: This one is tricky: Persons can have a Role "Subject" in an Occurrence, implying they are mentioned in that occurrence. However, an Occurrence also has a "Subject" , which could (but not has to be) be a person (in which case both the Subjects table and the Persons table refer to the same person). Homer for example appears both in the Subjects and in the Persons table. He has the same ID in both but they are not linked. To be analyzed (and discussed).</li>
+<li><code>occurrence_keyword</code>: Keywords telling what the occurrence is about</li>
+
 <li><code>occurrence_related_occurrences</code>and <code>occurrence_relation_definitions</code>: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in <code>occurrence_relation_definitions</code></li>
 </ul>
 
@@ -69,11 +70,12 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <li><code>Type_management</code>: Internal information. For example: To do's in the processing of this Type</li>
 <li><code>Type_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Type. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>type_person_roles</code>.</li>
 <li><code>Type_text_statuses</code></li>
-<li><code>Type_subject</code></li>
 <li><code>Type_related_types</code>(linked via <code>type_relation_definitions</code>)</li>
 <li><code>Type_tags</code></li>
 <li><code>Type_occurrences</code>: Occurrences linked to this type</li>
 <li><code>Type_editorial_status</code>: editorial states for types. Currently only (not) a critical text. This might become just a boolean value but since it's not sure yet, we stored it like this</li>
+<li><code>Type_keyword</code></li>: Keywords explaining what the Type is about.
+
 </ul>
 
 <h3>3. Manuscripts</h3>
@@ -124,11 +126,10 @@ Columns include <code>id</code>, <code>occurrence_id</code>, <code>manuscript_id
 <code>Verse_groups</code>table allows grouping of related verses. For now, we made a separate table for it because it seems like something that could receive additional metadata in a later phase (descriptions about this verse group?). However, currently verse groups have nothing else than IDs.</p>
 
 <h3>7. Lookup / Metadata Tables</h3>
-
 <ul>
 <li><code>roles</code>: defines role types for persons.</li>
 <li><code>text_statuses</code>: textual status of occurrences or types.</li>
-<li><code>subjects</code>: subjects for occurrences and types.</li>
+<li><code>keywords</code>: keywords for occurrences and types.</li>
 <li><code>tags</code>: tags for types: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.</li>
 <li><code>metres</code>: metre classification.</li>
 <li><code>genres</code>: genre classification.</li>
