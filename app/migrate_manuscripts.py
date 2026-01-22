@@ -1,7 +1,8 @@
 import uuid
+
 from common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, insert_many_to_one,
+    add_column_if_missing, get_or_create_role, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, insert_many_to_one,
     get_postgres_connection
 )
 
@@ -34,7 +35,6 @@ def create_manuscript_tables(cursor):
         ("modified", "TEXT"),
         ("number_of_occurrences", "INTEGER"),
         ("shelf", "TEXT"),
-        ("city_id", "INTEGER"),
         ("library_id", "TEXT"),
         ("collection_id", "INTEGER")
     ]
@@ -171,7 +171,6 @@ def migrate_manuscript_content():
     cursor.execute("PRAGMA foreign_keys = OFF")
     print("Foreign key constraints disabled for content migration")
 
-    # Step 1: fetch only content nodes
     pg_cursor.execute("""
         SELECT idgenre, idparentgenre, genre
         FROM data.genre
@@ -183,14 +182,12 @@ def migrate_manuscript_content():
 
     cursor.execute("BEGIN")
 
-    # Step 2: insert all nodes first
     for idgenre, _, genre in rows:
         cursor.execute("""
             INSERT OR IGNORE INTO content (id, name)
             VALUES (?, ?)
         """, (str(idgenre), genre))
 
-    # Step 3: wire up parent relationships
     for idgenre, idparentgenre, _ in rows:
         if idparentgenre is not None:
             cursor.execute("""
@@ -282,25 +279,23 @@ def migrate_manuscripts():
         ))
 
         for role_field, role_name_in_table in ROLE_FIELD_TO_ROLE_NAME.items():
-            role_id = get_role_id(cursor, role_name_in_table)
+            role_id = get_or_create_role(cursor, role_name_in_table)
             if not role_id:
                 continue
             
             persons = source.get(role_field, [])
-            if isinstance(persons, list):
-                for p in persons:
-                    person_id = str(p.get('id', ''))
-                    if not person_id:
-                        continue
-                    
-                    cursor.execute("SELECT 1 FROM persons WHERE id=?", (person_id,))
-                    person_exists = cursor.fetchone()
-                    
-                    if person_exists:
-                        cursor.execute(
-                            "INSERT OR IGNORE INTO manuscript_person_roles (manuscript_id, person_id, role_id) VALUES (?, ?, ?)",
-                            (manuscript_id, person_id, role_id)
-                        )
+            if isinstance(persons, dict):
+                persons = [persons]
+            elif not isinstance(persons, list):
+                persons = []
+
+            for p in persons:
+                person_id = str(p.get('id', ''))
+                if person_id:
+                    cursor.execute(
+                        "INSERT INTO manuscript_person_roles (manuscript_id, person_id, role_id) VALUES (?, ?, ?)",
+                        (manuscript_id, person_id, role_id)
+                    )
 
         link_manuscript_to_locations(cursor, manuscript_id, pg_cursor)
 
