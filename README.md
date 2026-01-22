@@ -94,11 +94,12 @@ Related tables:
 - ```Type_metre```: Metres attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.
 - ```Type_management```: Internal information. For example: To do's in the processing of this Type
 - ```Type_acknowledgement```: Plain text shout out to people who helped in the publication of this Type. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to type_person_roles._
-- ```Type_text_statuses```
-- ```Type_related_types (linked via type_relation_definitions)```
-- ```Type_tags```
+- ```Type_text_statuses```: Type text can be either completely known or partially unknown
+- ```Type_related_types (linked via type_relation_definitions)```: Groups of similar types
+- ```Type_tags```:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). F
 - ```Type_occurrences```: Occurrences linked to this type
 - ```Type_editorial_status```: editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
+- ```type_keyword```: Keywords telling what the type is about
 
 
 
@@ -124,7 +125,7 @@ Contains metadata about persons involved (authors, editors, patrons, etc.).
 Related tables:
 
 - ```Person_acknowledgement```: Plain text shout out to people who helped in the publication of the information on this (historical) person. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a person_person_roles table which would be confusing._
-- ```person_identification```
+- ```person_identification```: Used to link persons to canonical IDs set by different authorities.
 - ```person_management```: Internal information. For example: To do's in the processing of this person
 - ```person_self_designations```: How a scribe describes himself
 - ```person_offices```: the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
@@ -141,11 +142,11 @@ Related tables:
 
 #### **6. Verses**
 
-Contains verse-level data for occurrences and manuscripts.
+Contains verse-level data for occurrences.
 
 Columns include ```id, occurrence_id, manuscript_id, text, order_in_occurrence, verse_group_id.```
 
-Verse_groups table allows grouping of related verses. For now, we made a separate table for it because it seems like something that could receive additional metadata in a later phase (descriptions about this verse group?). However, currently verse groups have nothing else than IDs.
+Verse_groups allow grouping of related verses.
 
 ### **Lookup / Metadata Tables**
 
@@ -160,12 +161,12 @@ Verse_groups table allows grouping of related verses. For now, we made a separat
 - ```editorial_statuses``` — editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
 - ```self_designations``` — how a scribe describes himself
 - ```offices``` — the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
-- ```locations```
-- ```cities``` — city metadata. **To do**: This seems conceptually related to origins. We should probably revise how geographical info is stored.
-- ```libraries``` — library metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
+- ```locations``` - Locations that could be linked to manuscripts, libraries, persons,... . This is based upon the postgrs 'region' table. Note that a region used to have a flag is_city in the Postgres' Region table. I want to avoid keeping this approach so for now I did not add it. We might want to consider making this cleaner. 
+- ```libraries``` — library name and location. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```collections``` — collection metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```biblio_category``` — categories for bibliographies.
 - ```content``` - the content of a manuscript.  **To do**: This is currently flattened (ex. Biblica > Novum Testamentum > Evangeliarium), we might want to split this up and add a hierarchy.
+- ```identifications``` -canonnical ways to refer to persons or manuscripts
 
 ----
 
