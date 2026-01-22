@@ -112,7 +112,7 @@ Related tables:
 - ```Manuscript_content```: Explains what the manuscript is about. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
 - ```Manuscript_identification```: Links a manuscript to one or more IDs that were used in canonical works to refer to this manuscript (ex: Diktyon)
 - ```Manuscript_management```: Internal information. For example: To do's in the processing of this manuscript
-- ```Manuscript_origin```
+- ```Manuscript_location```: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the locations table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "Locations"
 - ```Manuscript_person_roles```: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...
 
 
@@ -160,7 +160,7 @@ Verse_groups table allows grouping of related verses. For now, we made a separat
 - ```editorial_statuses``` — editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
 - ```self_designations``` — how a scribe describes himself
 - ```offices``` — the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
-- ```origins``` — geographical or institutional origins for manuscripts. **To do:** because of the elasticsearch, these are flattened. For example, an origin name could be ```Asia Minor < Turkey```, but also ```Turkey```. We might want to add some hierarchy here.
+- ```locations```
 - ```cities``` — city metadata. **To do**: This seems conceptually related to origins. We should probably revise how geographical info is stored.
 - ```libraries``` — library metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```collections``` — collection metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)

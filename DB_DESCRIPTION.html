@@ -89,7 +89,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <li><code>Manuscript_content</code></li>
 <li><code>Manuscript_identification</code></li>
 <li><code>Manuscript_management</code>: Internal information. For example: To do's in the processing of this manuscript</li>
-<li><code>Manuscript_origin</code></li>
+<li><code>Manuscript_location</code></li>: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the locations table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "Locations".
 <li><code>Manuscript_person_roles</code>: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...</li>
 </ul>
 
@@ -138,7 +138,7 @@ Columns include <code>id</code>, <code>occurrence_id</code>, <code>manuscript_id
 <li><code>editorial_statuses</code>: editorial states for types. Currently only (not) a critical text. This might become just a boolean value but since it's not sure yet, we stored it like this</li>
 <li><code>self_designations</code>: how a scribe describes himself</li>
 <li><code>offices</code>: the official title of a person. To do: These are currently stored entirely separate from <code>self designation</code>, even tho a person could describe himself using his official title too...</li>
-<li><code>origins</code>: geographical or institutional origins for manuscripts. To do: because of the elasticsearch, these are flattened. For example, an origin name could be Asia Minor &lt; Turkey, but also Turkey. We might want to add some hierarchy here.</li>
+<li><code>locations</code>:
 <li><code>cities</code>: city metadata. To do: This seems conceptually related to origins. We should probably revise how geographical info is stored.</li>
 <li><code>libraries</code>: library metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>
 <li><code>collections</code>: collection metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>

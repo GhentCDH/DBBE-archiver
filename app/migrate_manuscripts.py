@@ -75,14 +75,74 @@ def create_manuscript_tables(cursor):
     """)
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS manuscript_origin (
+    CREATE TABLE IF NOT EXISTS manuscript_location (
         manuscript_id TEXT NOT NULL,
-        origin_id TEXT NOT NULL,
-        PRIMARY KEY (manuscript_id, origin_id),
+        location_id TEXT NOT NULL,
+        PRIMARY KEY (manuscript_id, location_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
-        FOREIGN KEY (origin_id) REFERENCES origins(id)
+        FOREIGN KEY (location_id) REFERENCES locations(id)
     )
     """)
+
+def get_region_hierarchy(pg_cursor, region_id):
+    hierarchy = []
+    current_id = region_id
+    while current_id:
+        pg_cursor.execute("""
+            SELECT identity, name, historical_name, parent_idregion
+            FROM data.region
+            WHERE identity = %s
+        """, (current_id,))
+        row = pg_cursor.fetchone()
+        if not row:
+            break
+        identity, name, historical_name, parent_id = row
+        hierarchy.append((str(identity), name, historical_name, str(parent_id) if parent_id else None))
+        current_id = parent_id
+    return hierarchy[::-1]
+
+def insert_location_hierarchy(cursor, hierarchy):
+    leaf_id = None
+    for region_id, name, historical_name, parent_id in hierarchy:
+        cursor.execute("""
+            INSERT OR IGNORE INTO locations (id, name, historical_name, parent_id)
+            VALUES (?, ?, ?, ?)
+        """, (region_id, name, historical_name, parent_id))
+        leaf_id = region_id
+    return leaf_id
+
+def link_manuscript_to_locations(cursor, manuscript_id, pg_cursor):
+    pg_cursor.execute("""
+        SELECT f.idlocation
+        FROM data.factoid f
+        JOIN data.factoid_type ft
+            ON f.idfactoid_type = ft.idfactoid_type
+        WHERE f.subject_identity = %s
+          AND ft.type = 'written'
+    """, (manuscript_id,))
+    loc_rows = pg_cursor.fetchall()
+
+    for (idlocation,) in loc_rows:
+        pg_cursor.execute("""
+            SELECT idregion
+            FROM data.location
+            WHERE idlocation = %s
+        """, (idlocation,))
+        row = pg_cursor.fetchone()
+        if not row:
+            continue
+        idregion = row[0]
+
+        hierarchy = get_region_hierarchy(pg_cursor, idregion)
+
+        leaf_id = insert_location_hierarchy(cursor, hierarchy)
+
+        if leaf_id:
+            cursor.execute("""
+                INSERT OR IGNORE INTO manuscript_location(manuscript_id, location_id)
+                VALUES (?, ?)
+            """, (manuscript_id, leaf_id))
+
 
 def migrate_manuscript_content():
     conn, cursor = get_db_connection()
@@ -222,6 +282,8 @@ def migrate_manuscripts():
                             (manuscript_id, person_id, role_id)
                         )
 
+        link_manuscript_to_locations(cursor, manuscript_id, pg_cursor)
+
         MANUSCRIPT_M2M = [
             {
                 "source_key": "management",
@@ -236,13 +298,6 @@ def migrate_manuscripts():
                 "join_table": "manuscript_acknowledgement",
                 "parent_id_col": "manuscript_id",
                 "entity_id_col": "acknowledgement_id",
-            },
-            {
-                "source_key": "origin",
-                "entity_table": "origins",
-                "join_table": "manuscript_origin",
-                "parent_id_col": "manuscript_id",
-                "entity_id_col": "origin_id",
             },
         ]
 

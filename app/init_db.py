@@ -55,9 +55,12 @@ def create_base_tables():
     """)
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS origins (
+    CREATE TABLE IF NOT EXISTS locations (
         id TEXT PRIMARY KEY,
-        name TEXT
+        name TEXT,
+        historical_name TEXT,
+        parent_id TEXT,
+        FOREIGN KEY(parent_id) REFERENCES locations(id)
     )
     """)
 
