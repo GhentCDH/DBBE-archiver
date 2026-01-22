@@ -53,7 +53,6 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <li><code>occurrence_acknowledgement</code>: Plain text shout out to people who helped in the publication of this occurrence. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>occurrence_person_roles</code>.</li>
 <li><code>occurrence_text_statuses</code>: An occurrence text can be partially/completely (un)known</li>
 <li><code>occurrence_keyword</code>: Keywords telling what the occurrence is about</li>
-
 <li><code>occurrence_related_occurrences</code>and <code>occurrence_relation_definitions</code>: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in <code>occurrence_relation_definitions</code></li>
 </ul>
 
@@ -69,12 +68,12 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <li><code>Type_metre</code>: Metres attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.</li>
 <li><code>Type_management</code>: Internal information. For example: To do's in the processing of this Type</li>
 <li><code>Type_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Type. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>type_person_roles</code>.</li>
-<li><code>Type_text_statuses</code></li>
-<li><code>Type_related_types</code>(linked via <code>type_relation_definitions</code>)</li>
-<li><code>Type_tags</code></li>
+<li><code>Type_text_statuses</code>: Type text can be either completely known or partially unknown</li>
+<li><code>Type_related_types</code>(linked via <code>type_relation_definitions</code>) Groups of similar types</li>
+  <li><code>Type_tags</code>:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...).</li>
 <li><code>Type_occurrences</code>: Occurrences linked to this type</li>
 <li><code>Type_editorial_status</code>: editorial states for types. Currently only (not) a critical text. This might become just a boolean value but since it's not sure yet, we stored it like this</li>
-<li><code>Type_keyword</code></li>: Keywords explaining what the Type is about.
+<li><code>Type_keyword</code>: Keywords explaining what the Type is about.</li>
 
 </ul>
 
@@ -86,10 +85,10 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 
 <ul>
 <li><code>Manuscript_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Acknowledgement. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>manuscript_person_roles</code>.</li>
-<li><code>Manuscript_content</code></li>
-<li><code>Manuscript_identification</code></li>
+<li><code>Manuscript_content</code>: Explains what the manuscript is about. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. </li>
+<li><code>Manuscript_identification</code>: Links a manuscript to one or more IDs that were used in canonical works to refer to this manuscript (ex: Diktyon)</li>
 <li><code>Manuscript_management</code>: Internal information. For example: To do's in the processing of this manuscript</li>
-<li><code>Manuscript_location</code></li>: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the locations table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "Locations".
+<li><code>Manuscript_location</code>: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the locations table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "Locations".</li>
 <li><code>Manuscript_person_roles</code>: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...</li>
 </ul>
 
@@ -101,7 +100,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 
 <ul>
 <li><code>Person_acknowledgement</code>: Plain text shout out to people who helped in the publication of the information on this (historical) person. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a <code>person_person_roles</code>table which would be confusing.</li>
-<li><code>person_identification</code></li>
+<li><code>person_identification</code>:  Used to link persons to canonical IDs set by different authorities. </li>
 <li><code>person_management</code>: Internal information. For example: To do's in the processing of this person</li>
 <li><code>person_self_designations</code>: How a scribe describes himself</li>
 <li><code>person_offices</code>: the official title of a person. To do: These are currently stored entirely separate from <code>self designation</code>, even tho a person could describe himself using his official title too...</li>
@@ -115,15 +114,17 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 
 <ul>
 <li><code>bibliography_management</code>: Internal information. For example: To do's in the processing of this bibliography</li>
-<li><code>bibliography_person_roles</code></li>
+<li><code>bibliography_person_roles</code>: All kinds of persons who played a role in creating this bibliography</li>
 </ul>
 
 <h3>6. Verses</h3>
 
-<p>Contains verse-level data for occurrences and manuscripts.<br>
+<p>Contains verse-level data for occurrences and manuscripts.</p>
 
 Columns include <code>id</code>, <code>occurrence_id</code>, <code>manuscript_id</code>, <code>text</code>, <code>order_in_occurrence</code>, <code>verse_group_id</code>.<br>
-<code>Verse_groups</code>table allows grouping of related verses. For now, we made a separate table for it because it seems like something that could receive additional metadata in a later phase (descriptions about this verse group?). However, currently verse groups have nothing else than IDs.</p>
+
+
+Verse_groups allows grouping of related verses.
 
 <h3>7. Lookup / Metadata Tables</h3>
 <ul>
@@ -139,9 +140,9 @@ Columns include <code>id</code>, <code>occurrence_id</code>, <code>manuscript_id
 <li><code>self_designations</code>: how a scribe describes himself</li>
 <li><code>offices</code>: the official title of a person. To do: These are currently stored entirely separate from <code>self designation</code>, even tho a person could describe himself using his official title too...</li>
 <li><code>locations</code>:
-<li><code>cities</code>: city metadata. To do: This seems conceptually related to origins. We should probably revise how geographical info is stored.</li>
 <li><code>libraries</code>: library metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>
 <li><code>collections</code>: collection metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>
 <li><code>biblio_category</code>: categories for bibliographies.</li>
 <li><code>content</code>- the content of a manuscript. To do: This is currently flattened (ex. Biblica &gt; Novum Testamentum &gt; Evangeliarium), we might want to split this up and add a hierarchy.</li>
+<li><code>identifications</code>: canonical ways to refer to persons or manuscripts</li>
 </ul>
