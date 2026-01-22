@@ -60,7 +60,6 @@ def create_base_tables():
         name TEXT,
         historical_name TEXT,
         parent_id TEXT,
-        category_id TEXT,
         FOREIGN KEY(parent_id) REFERENCES locations(id)
     )
     """)
