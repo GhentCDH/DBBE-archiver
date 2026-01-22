@@ -3,11 +3,7 @@ from common import (
 )
 
 def create_verse_tables(cursor):
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS verse_groups (
-        id TEXT PRIMARY KEY
-    )
-    """)
+
 
     verse_columns = {
         "text": "TEXT",
@@ -61,19 +57,14 @@ def migrate_verses():
                 (occurrence_id,)
             )
 
-        group_id = source.get("group_id")
-        if group_id is not None:
-            group_id = str(group_id)
-            cursor.execute(
-                "INSERT OR IGNORE INTO verse_groups (id) VALUES (?)",
-                (group_id,)
-            )
-
+        verse_group_id = source.get("group_id")
+        if verse_group_id is not None:
+            verse_group_id = str(verse_group_id)
         cursor.execute("""
             INSERT OR IGNORE INTO verses (
                 id, text, occurrence_id, manuscript_id, order_in_occurrence, verse_group_id
             ) VALUES (?, ?, ?, ?, ?, ?)
-        """, (verse_id, text, occurrence_id, manuscript_id, order_in_occurrence, group_id))
+        """, (verse_id, text, occurrence_id, manuscript_id, order_in_occurrence, verse_group_id))
 
         batch_count += 1
         if batch_count % 1000 == 0:

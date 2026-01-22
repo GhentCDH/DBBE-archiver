@@ -12,6 +12,7 @@ def create_base_tables():
         id TEXT PRIMARY KEY,
         occurrence_id TEXT,
         manuscript_id TEXT,
+        verse_group_id TEXT,
         FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id)
     )
@@ -145,12 +146,7 @@ def create_base_tables():
     )
     """)
     
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS verse_groups (
-        id TEXT PRIMARY KEY
-    )
-    """)
-    
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS occurrence_relation_definitions (
         id TEXT PRIMARY KEY,
