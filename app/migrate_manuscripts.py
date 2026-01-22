@@ -5,6 +5,26 @@ from common import (
     get_postgres_connection
 )
 
+def get_library_for_manuscript(pg_cursor, manuscript_id):
+    pg_cursor.execute("""
+        SELECT DISTINCT
+            i.identity AS library_id,
+            i.name AS library_name,
+            i.idregion AS location_id
+        FROM data.located_at la
+        JOIN data.location l ON la.idlocation = l.idlocation
+        JOIN data.fund f ON l.idfund = f.idfund
+        JOIN data.institution i ON f.idlibrary = i.identity
+        WHERE la.iddocument = %s
+    """, (manuscript_id,))
+    return pg_cursor.fetchone()
+
+def insert_library(cursor, library_id, name, location_id):
+    cursor.execute("""
+        INSERT OR IGNORE INTO libraries (id, name, location_id)
+        VALUES (?, ?, ?)
+    """, (str(library_id), name, str(location_id) if location_id else None))
+
 def create_manuscript_tables(cursor):
     manuscript_columns = [
         ("name", "TEXT"),
@@ -15,7 +35,7 @@ def create_manuscript_tables(cursor):
         ("number_of_occurrences", "INTEGER"),
         ("shelf", "TEXT"),
         ("city_id", "INTEGER"),
-        ("library_id", "INTEGER"),
+        ("library_id", "TEXT"),
         ("collection_id", "INTEGER")
     ]
     
@@ -84,9 +104,9 @@ def create_manuscript_tables(cursor):
     )
     """)
 
-def get_region_hierarchy(pg_cursor, region_id):
+def get_region_hierarchy(pg_cursor, location_id):
     hierarchy = []
-    current_id = region_id
+    current_id = location_id
     while current_id:
         pg_cursor.execute("""
             SELECT identity, name, historical_name, parent_idregion
@@ -103,12 +123,12 @@ def get_region_hierarchy(pg_cursor, region_id):
 
 def insert_location_hierarchy(cursor, hierarchy):
     leaf_id = None
-    for region_id, name, historical_name, parent_id in hierarchy:
+    for location_id, name, historical_name, parent_id in hierarchy:
         cursor.execute("""
             INSERT OR IGNORE INTO locations (id, name, historical_name, parent_id)
             VALUES (?, ?, ?, ?)
-        """, (region_id, name, historical_name, parent_id))
-        leaf_id = region_id
+        """, (location_id, name, historical_name, parent_id))
+        leaf_id = location_id
     return leaf_id
 
 def link_manuscript_to_locations(cursor, manuscript_id, pg_cursor):
@@ -310,8 +330,25 @@ def migrate_manuscripts():
             )
 
         insert_many_to_one(cursor, "city", "cities", manuscript_id, source.get("city"))
-        insert_many_to_one(cursor, "library", "libraries", manuscript_id, source.get("library"))
         insert_many_to_one(cursor, "collection", "collections", manuscript_id, source.get("collection"))
+
+        lib = get_library_for_manuscript(pg_cursor, manuscript_id)
+
+        if lib:
+            library_id, library_name, location_id = lib
+
+            if location_id:
+                hierarchy = get_region_hierarchy(pg_cursor, location_id)
+                insert_location_hierarchy(cursor, hierarchy)
+
+            insert_library(cursor, library_id, library_name, location_id)
+            cursor.execute("""
+                UPDATE manuscripts
+                SET library_id = ?
+                WHERE id = ?
+            """, (str(library_id), manuscript_id))
+
+
 
         MANUSCRIPT_IDENT_TYPE_MAP = {
             "diktyon": "diktyon"

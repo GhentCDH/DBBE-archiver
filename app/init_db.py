@@ -129,10 +129,12 @@ def create_base_tables():
     )
     """)
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS libraries (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL
-    )
+        CREATE TABLE IF NOT EXISTS libraries (
+            id TEXT PRIMARY KEY,
+            name TEXT,
+            region_id TEXT,
+            FOREIGN KEY (region_id) REFERENCES locations(id)
+        );
     """)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS collections (
