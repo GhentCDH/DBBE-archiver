@@ -165,7 +165,7 @@ Verse_groups allow grouping of related verses.
 - ```libraries``` — library name and location. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```collections``` — collection metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```biblio_category``` — categories for bibliographies.
-- ```content``` - the content of a manuscript.  **To do**: This is currently flattened (ex. Biblica > Novum Testamentum > Evangeliarium), we might want to split this up and add a hierarchy.
+- ```content``` -  Used for storing manuscript content. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
 - ```identifications``` -canonical ways to refer to persons or manuscripts
 
 ----
