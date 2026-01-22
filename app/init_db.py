@@ -128,8 +128,8 @@ def create_base_tables():
         CREATE TABLE IF NOT EXISTS libraries (
             id TEXT PRIMARY KEY,
             name TEXT,
-            region_id TEXT,
-            FOREIGN KEY (region_id) REFERENCES locations(id)
+            location_id TEXT,
+            FOREIGN KEY (location_id) REFERENCES locations(id)
         );
     """)
     cursor.execute("""
