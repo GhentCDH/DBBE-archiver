@@ -62,8 +62,8 @@ This SQLite database is built from six primary Elasticsearch indices:
 These indices provide the foundational data, which are complemented with data from Postgres. 
 From these, we construct the relational database in SQLite, building supporting tables to handle relationships, metadata, and controlled vocabularies.
 
-For a full visual of the database schema, please visit <a href="https://www.yworks.com/yed-live/?file=https://gist.githubusercontent.com/PaulienLem/3cac2a338071a907f976a57008549939/raw/dcab7e67ac8dd3232e7a09521678349ff4d7d685/Imported%20Document">yED live</a>.
-
+For a full visual of the database schema, please visit 
+<a href="https://www.yworks.com/yed-live/?file=https://gist.githubusercontent.com/PaulienLem/03b10297a226b54e4b09f34364cefb2e/raw/432961c90bd5cf0e3768773093e662499855a574/Imported%20Document">yEd live</a>.
 ### Core Tables
 
 #### **1. Occurrences**
