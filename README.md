@@ -21,6 +21,7 @@ Use the .env file to configure the paths to the current Postgres and Elastic ser
 
 ## Running locally
 - Clone the repository
+- Generate a new virtual environment (>=3.11): ```python3.11 -m venv .venv``` and ```source .venv/bin/activate```
 - ```cd app```
 - ```pip install .```
 - ```cd ../```
