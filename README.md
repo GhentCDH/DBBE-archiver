@@ -35,16 +35,20 @@ Configure Zenodo uploads by setting these variables in your `.env` file for othe
     - `<existing_id>`: Creates a new version of that deposition, deletes old `export_data.sqlite`, updates metadata, and uploads new file
 
 ## Running from Docker
-- ```docker build dbbe-archive .```
+
+- ```cd``` to the root of the repository
+- ```docker build -t dbbe-archive -f app/Dockerfile .```
 ```
 docker run
 --network host
---env-file .env
+--env-file app/.env
 -v "$(pwd)/data:/app/data"  
 dbbe-archive
 ```
 - Resulting SQLite files are written to app/data
 - Modify the .env file for running on machines other than localhost
+
+Note: if you ran this locally earlier, you might already have a sqlite file in your datafolder. This might conflict if you rerun with Docker, because the script retries inserts that are already there. In other words: make sure app/data is empty. 
 
 ----
 
