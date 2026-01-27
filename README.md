@@ -25,7 +25,7 @@ Use the .env file to configure the paths to the current Postgres and Elastic ser
 - ```pip install .```
 - ```python -m app.run_migration```
 
-Resulting SQLite files are written to app/data and published as draft to a new Zenodo deposit. 
+Resulting SQLite files are written to app/data and published as draft to a new Zenodo deposit if Zenodo upload is enabled.
 Configure Zenodo uploads by setting these variables in your `.env` file for other behaviour:
 
 - **`ENABLE_ZENODO_UPLOAD`** : Master switch for Zenodo upload functionality  (`"false"`,  `"true"`) - Defalt false
