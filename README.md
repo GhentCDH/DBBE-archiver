@@ -28,7 +28,7 @@ Use the .env file to configure the paths to the current Postgres and Elastic ser
 Resulting SQLite files are written to app/data and published as draft to a new Zenodo deposit. 
 Configure Zenodo uploads by setting these variables in your `.env` file for other behaviour:
 
-- **`ENABLE_ZENODO_UPLOAD`** : Master switch for Zenodo upload functionality  (`"false"`,  `"true"`)
+- **`ENABLE_ZENODO_UPLOAD`** : Master switch for Zenodo upload functionality  (`"false"`,  `"true"`) - Defalt false
 - **`PUBLISH_DRAFT`** : Controls whether to publish the (new version of the) deposition or leave as draft (`"false"`,  `"true"`)
 - **`DEPOSITION_ID`**: ID of existing Zenodo deposition (for creating new versions)
     - `None`: Creates a brand new deposition
