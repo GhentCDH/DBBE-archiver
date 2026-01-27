@@ -1,14 +1,13 @@
 import sys
-from init_db import create_base_tables
-from migrate_verses import migrate_verses
-from migrate_persons import migrate_persons
-from migrate_types import migrate_types
-from migrate_occurrences import migrate_occurrences
-from migrate_manuscripts import migrate_manuscripts
-from migrate_bibliographies import migrate_bibliographies
-from zenodo_upload import upload_sqlite_files_to_zenodo
+from .init_db import create_base_tables
+from .migrate_verses.migrate_verses import migrate_verses
+from .migrate_persons.migrate_persons import migrate_persons
+from .migrate_types.migrate_types import migrate_types
+from .migrate_occurrences.migrate_occurrences import migrate_occurrences
+from .migrate_manuscripts.migrate_manuscripts import migrate_manuscripts
+from .migrate_bibliographies import migrate_bibliographies
+from .zenodo_upload import upload_sqlite_files_to_zenodo
 import os
-
 
 def str_to_bool(value: str) -> bool:
     return value.lower() in {"1", "true", "yes", "on"}
@@ -20,9 +19,10 @@ def run_migration():
         ("Migrating verses", migrate_verses),
         ("Migrating persons", migrate_persons),
         ("Migrating manuscripts", migrate_manuscripts),
-        ("Migrating bibliographies", migrate_bibliographies),
         ("Migrating occurrences", migrate_occurrences),
-        ("Migrating types", migrate_types)
+        ("Migrating types", migrate_types),
+        ("Migrating bibliographies", migrate_bibliographies),
+
     ]
 
     for i, (step_name, step_func) in enumerate(steps, 1):

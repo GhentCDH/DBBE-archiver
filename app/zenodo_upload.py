@@ -8,7 +8,10 @@ ZENODO_TOKEN = os.getenv("ZENODO_TOKEN", "")
 ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
 DEPOSITION_TITLE = os.getenv("DEPOSITION_TITLE", "Database of Byzantine Book Epigrams - Archive")
 
-with open("../DB_DESCRIPTION.html", "r", encoding="utf-8") as f:
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+description_file_path = os.path.join(BASE_DIR, "DB_DESCRIPTION.html")
+
+with open(description_file_path, "r", encoding="utf-8") as f:
     description_text = f.read()
 
 

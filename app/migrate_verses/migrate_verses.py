@@ -1,4 +1,4 @@
-from common import (
+from ..common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices, add_column_if_missing
 )
 
@@ -8,7 +8,6 @@ def create_verse_tables(cursor):
     verse_columns = {
         "text": "TEXT",
         "occurrence_id": "TEXT",
-        "manuscript_id": "TEXT",
         "order_in_occurrence": "INTEGER",
         "verse_group_id": "TEXT"
     }
@@ -44,13 +43,7 @@ def migrate_verses():
         order_in_occurrence = source.get("order", 0)
 
         occurrence_id = str(source.get("occurrence", {}).get("id", ""))
-        manuscript_id = str(source.get("manuscript", {}).get("id", ""))
 
-        if manuscript_id:
-            cursor.execute(
-                "INSERT OR IGNORE INTO manuscripts (id) VALUES (?)",
-                (manuscript_id,)
-            )
         if occurrence_id:
             cursor.execute(
                 "INSERT OR IGNORE INTO occurrences (id) VALUES (?)",
@@ -62,9 +55,9 @@ def migrate_verses():
             verse_group_id = str(verse_group_id)
         cursor.execute("""
             INSERT OR IGNORE INTO verses (
-                id, text, occurrence_id, manuscript_id, order_in_occurrence, verse_group_id
-            ) VALUES (?, ?, ?, ?, ?, ?)
-        """, (verse_id, text, occurrence_id, manuscript_id, order_in_occurrence, verse_group_id))
+                id, text, occurrence_id, order_in_occurrence, verse_group_id
+            ) VALUES (?, ?, ?, ?, ?)
+        """, (verse_id, text, occurrence_id, order_in_occurrence, verse_group_id))
 
         batch_count += 1
         if batch_count % 1000 == 0:

@@ -108,14 +108,36 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 
 <h3>5. Bibliographies</h3>
 
-<p>Contains bibliographic entries. Important to do: Use the postgres to link bibliographical information to the entities they are linked to.</p>
-
-<p>Related tables:</p>
+<p>Bibliographies are modelled as concrete entity types, rather than a single table as in the original setup.</p>
 
 <ul>
-<li><code>bibliography_management</code>: Internal information. For example: To do's in the processing of this bibliography</li>
-<li><code>bibliography_person_roles</code>: All kinds of persons who played a role in creating this bibliography</li>
+<li>article</li>
+<li>book</li>
+<li>book_chapter</li>
+<li>blog_post</li>
+<li>bib_varia</li>
+<li>online_source</li>
+<li>phd</li>
 </ul>
+
+<p>Each bibliographic entity has:</p>
+
+<ul>
+  <li>its own table</li>
+  <li>a corresponding <code>*_person_roles</code> table</li>
+  <li>a corresponding <code>*_managements</code> table</li>
+  <li>linking tables to the item the bibliography is about:
+    <ul>
+      <li>manuscripts (<code>manuscript_*</code>)</li>
+      <li>occurrences (<code>occurrence_*</code>)</li>
+      <li>persons (<code>person_*</code>)</li>
+      <li>types (<code>type_*</code>)</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Additional structures:</p>
+<li>journal and journal_issue: Articles may be linked to journal issues via article.journal_issue_id</li>
 
 <h3>6. Verses</h3>
 

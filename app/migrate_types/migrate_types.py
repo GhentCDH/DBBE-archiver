@@ -1,4 +1,4 @@
-from common import (
+from ..common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
     add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, get_postgres_connection
 )

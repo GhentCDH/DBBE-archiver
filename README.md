@@ -23,7 +23,8 @@ Use the .env file to configure the paths to the current Postgres and Elastic ser
 - Clone the repository
 - ```cd app```
 - ```pip install .```
-- ```python run_migration.py ```
+- ```cd ../```
+- ```python -m app.run_migration```
 
 Resulting SQLite files are written to app/data and published as draft to a new Zenodo deposit. 
 Configure Zenodo uploads by setting these variables in your `.env` file for other behaviour:
@@ -133,12 +134,30 @@ Related tables:
 
 #### **5. Bibliographies**
 
-Contains bibliographic entries. **Important to do**: Use the postgres to link bibliographical information to the entities they are linked to. 
+Bibliographies are modelled as concrete entity types, rather than a single table as in the original setup.
 
-Related tables:
+- ```article```
+- ```book```
+- ```book_chapter```
+- ```blog_post```
+- ```bib_varia```
+- ```online_source```
+- ```phd```
 
-- ```bibliography_management```: Internal information. For example: To do's in the processing of this bibliography
-- ```bibliography_person_roles```: All kinds of persons who played a role in creating this bibliography
+Each bibliographic entity has:
+- its own table
+- a corresponding *_person_roles table
+- a corresponding *_managements table
+- linking tables to the item the bibliography is about:
+  - manuscripts (manuscript_*)
+  - occurrences (occurrence_*)
+  - persons (persons_*)
+  - types (types_*)
+
+Additional structures:
+- journal and journal_issue: Articles may be linked to journal issues via article.journal_issue_id
+
+Note that, for now, some of these bibliography tables were added for completeness sake: not every concept (Manuscript / Occurrence / Person / Type) has all types of bibliographies linked to it (online sources, PhDs, etc.)
 
 #### **6. Verses**
 

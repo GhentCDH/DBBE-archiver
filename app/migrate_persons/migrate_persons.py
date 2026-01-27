@@ -1,6 +1,6 @@
 
 import uuid
-from common import (
+from ..common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
     add_column_if_missing
 )

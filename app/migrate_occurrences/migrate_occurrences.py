@@ -1,4 +1,4 @@
-from common import (
+from ..common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
     add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME,
     insert_many_to_many, get_postgres_connection
@@ -185,6 +185,9 @@ def migrate_occurrences():
     batch_count = 0
 
     for hit in hits:
+        MAX_OCCURRENCES = 200
+        if batch_count >= MAX_OCCURRENCES:
+            break
         source = hit['_source']
         occ_id = str(source.get('id', hit['_id']))
         manuscript_id = str(source.get('manuscript', {}).get('id', ''))

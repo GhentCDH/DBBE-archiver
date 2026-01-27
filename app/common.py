@@ -165,3 +165,4 @@ def insert_many_to_one(cursor, entity_name, table_name, manuscript_id, entity_da
             f"UPDATE manuscripts SET {entity_name}_id = ? WHERE id = ?",
             (entity_id, manuscript_id)
         )
+
