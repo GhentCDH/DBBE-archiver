@@ -20,11 +20,9 @@ The repository contains the initial tests stored in a notebook, and the producti
 Use the .env file to configure the paths to the current Postgres and Elastic servers, and provide a key and URL for Zenodo uploads. The default configured in this repository uses the Zenodo sandbox URL, which should be replaced on production.
 
 ## Running locally
-- Clone the repository
+- Clone the repository and ```cd``` to the repository root folder
 - Generate a new virtual environment (>=3.11): ```python3.11 -m venv .venv``` and ```source .venv/bin/activate```
-- ```cd app```
 - ```pip install .```
-- ```cd ../```
 - ```python -m app.run_migration```
 
 Resulting SQLite files are written to app/data and published as draft to a new Zenodo deposit. 
