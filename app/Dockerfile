@@ -1,7 +1,7 @@
 FROM ghcr.io/astral-sh/uv:alpine
 WORKDIR /app
 
-COPY pyproject.toml .
+COPY ../pyproject.toml .
 
 RUN uv sync --no-dev
 
