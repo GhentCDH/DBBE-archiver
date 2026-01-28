@@ -184,10 +184,17 @@ def migrate_occurrences():
     cursor.execute("BEGIN")
     batch_count = 0
 
+    pg_cursor.execute("""
+        SELECT identity, keyword
+        FROM data.keyword
+        WHERE is_subject = true
+    """)
+    keyword_cache = {str(row[0]): row[1] for row in pg_cursor.fetchall()}
+
     for hit in hits:
-        MAX_OCCURRENCES = 200
-        if batch_count >= MAX_OCCURRENCES:
-            break
+        # MAX_OCCURRENCES = 200
+        # if batch_count >= MAX_OCCURRENCES:
+        #     break
         source = hit['_source']
         occ_id = str(source.get('id', hit['_id']))
         manuscript_id = str(source.get('manuscript', {}).get('id', ''))
@@ -228,22 +235,26 @@ def migrate_occurrences():
             subjects = [subjects]
         elif not isinstance(subjects, list):
             subjects = []
+
+        occ_keyword_rows = []
         for subj in subjects:
             subject_id = str(subj.get("id", ""))
             if not subject_id:
                 continue
-            pg_keyword = get_subject_keyword(pg_cursor, subject_id)
-            if not pg_keyword:
+
+            keyword_name = keyword_cache.get(subject_id)
+            if not keyword_name:
                 continue
-            keyword_id, keyword_name = pg_keyword
             cursor.execute(
                 "INSERT OR IGNORE INTO keyword (id, name) VALUES (?, ?)",
-                (keyword_id, keyword_name)
+                (subject_id, keyword_name)
             )
+            occ_keyword_rows.append((occ_id, subject_id))
 
-            cursor.execute(
+        if occ_keyword_rows:
+            cursor.executemany(
                 "INSERT OR IGNORE INTO occurrence_keyword (occurrence_id, keyword_id) VALUES (?, ?)",
-                (occ_id, keyword_id)
+                occ_keyword_rows
             )
 
         OCCURRENCE_M2M = [
