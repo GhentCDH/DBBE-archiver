@@ -6,6 +6,33 @@ from ..common import (
 )
 
 
+def get_location_hierarchy_and_leaf(cursor, pg_cursor, location_id):
+    hierarchy = []
+    current_id = location_id
+    while current_id:
+        pg_cursor.execute("""
+            SELECT identity, name, historical_name, parent_idregion
+            FROM data.region
+            WHERE identity = %s
+        """, (current_id,))
+        row = pg_cursor.fetchone()
+        if not row:
+            break
+        identity, name, historical_name, parent_id = row
+        hierarchy.append((str(identity), name, historical_name, str(parent_id) if parent_id else None))
+        current_id = parent_id
+
+    leaf_id = None
+    for loc_id, name, hist_name, parent_id in reversed(hierarchy):
+        cursor.execute("""
+            INSERT OR IGNORE INTO locations (id, name, historical_name, parent_id)
+            VALUES (?, ?, ?, ?)
+        """, (loc_id, name, hist_name, parent_id))
+        leaf_id = loc_id
+    return leaf_id
+
+
+
 def create_person_tables(cursor):
     person_columns = {
         "first_name": "TEXT",
@@ -20,7 +47,8 @@ def create_person_tables(cursor):
         "modified": "TEXT",
         "created": "TEXT",
         "public_comment": "TEXT",
-        "private_comment": "TEXT"
+        "private_comment": "TEXT",
+        "location_id": "TEXT",
     }
     
     for col, col_type in person_columns.items():
@@ -88,7 +116,8 @@ def migrate_persons():
             person.identity,
             name.first_name,
             name.last_name,
-            factoid_origination.location_id,
+            factoid_orig.subject_identity,
+            factoid_orig.idlocation,
             person.is_historical,
             person.is_modern,
             person.is_dbbe,
@@ -97,35 +126,44 @@ def migrate_persons():
         FROM data.person person
         INNER JOIN data.name name ON name.idperson = person.identity
         LEFT JOIN (
-            SELECT factoid.subject_identity, factoid.date AS born_date
-            FROM data.factoid
-            INNER JOIN data.factoid_type ftype ON factoid.idfactoid_type = ftype.idfactoid_type
-            WHERE ftype.type = 'born'
+            SELECT subject_identity, date AS born_date
+            FROM data.factoid f
+            JOIN data.factoid_type ft ON f.idfactoid_type = ft.idfactoid_type
+            WHERE ft.type = 'born'
         ) AS factoid_born ON person.identity = factoid_born.subject_identity
         LEFT JOIN (
-            SELECT factoid.subject_identity, factoid.date AS death_date
-            FROM data.factoid
-            INNER JOIN data.factoid_type ftype ON factoid.idfactoid_type = ftype.idfactoid_type
-            WHERE ftype.type = 'died'
+            SELECT subject_identity, date AS death_date
+            FROM data.factoid f
+            JOIN data.factoid_type ft ON f.idfactoid_type = ft.idfactoid_type
+            WHERE ft.type = 'died'
         ) AS factoid_died ON person.identity = factoid_died.subject_identity
         LEFT JOIN (
-            SELECT factoid.subject_identity, factoid.idlocation AS location_id
-            FROM data.factoid
-            INNER JOIN data.factoid_type ftype ON factoid.idfactoid_type = ftype.idfactoid_type
-            WHERE ftype.type = 'origination'
-        ) AS factoid_origination ON person.identity = factoid_origination.subject_identity
+            SELECT subject_identity, idlocation
+            FROM data.factoid f
+            JOIN data.factoid_type ft ON f.idfactoid_type = ft.idfactoid_type
+            WHERE ft.type = 'origination'
+        ) AS factoid_orig ON person.identity = factoid_orig.subject_identity
     """)
 
     rows = pg_cursor.fetchall()
 
-    cursor.execute("BEGIN")
+    person_locations = {}
+    for row in rows:
+        pid = str(row[0])
+        loc_id = row[4]
+        if loc_id:
+            if pid in person_locations:
+                raise ValueError(f"Person {pid} has multiple origination locations in Postgres!")
+            person_locations[pid] = loc_id
 
+    cursor.execute("BEGIN")
     for row in rows:
         (
             person_id,
             first_name,
             last_name,
-            location_id,
+            _,
+            orig_location_id,
             is_historical,
             is_modern,
             is_dbbe,
@@ -156,8 +194,8 @@ def migrate_persons():
             person_id,
             first_name,
             last_name,
-            born_date,  # floor year
-            born_date,  # ceiling year (if you have separate logic, adjust)
+            born_date,
+            born_date,
             death_date,
             death_date,
             bool(is_dbbe),
@@ -165,145 +203,25 @@ def migrate_persons():
             bool(is_historical)
         ))
 
-    cursor.execute("COMMIT")
+        if orig_location_id:
+            pg_cursor.execute("""
+                SELECT idregion
+                FROM data.location
+                WHERE idlocation = %s
+            """, (orig_location_id,))
+            row_region = pg_cursor.fetchone()
+            if row_region and row_region[0]:
+                region_id = row_region[0]
+                leaf_id = get_location_hierarchy_and_leaf(cursor, pg_cursor, region_id)
+                cursor.execute("""
+                    UPDATE persons
+                    SET location_id = ?
+                    WHERE id = ?
+                """, (leaf_id, person_id))
 
-
-    indices = get_dbbe_indices(es)
-    person_index = next((idx for idx in indices if idx.endswith("persons")), None)
-    
-    if not person_index:
-        print("No person index found")
-        conn.close()
-        return
-    
-    print(f"Migrating persons from index: {person_index}")
-    hits = scroll_all(es, person_index)
-    print(f"Total persons fetched: {len(hits)}")
-    
-    cursor.execute("BEGIN")
-    
-    for hit in hits:
-        source = hit['_source']
-        person_id = str(source.get('id', hit['_id']))
-        
-        cursor.execute("""
-        INSERT INTO persons (
-            id, born_date_floor_year, born_date_ceiling_year,
-            death_date_floor_year, death_date_ceiling_year,
-            is_dbbe_person, is_modern_person, is_historical_person,
-            modified, created, public_comment, private_comment
-        ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-            born_date_floor_year = excluded.born_date_floor_year,
-            born_date_ceiling_year = excluded.born_date_ceiling_year,
-            death_date_floor_year = excluded.death_date_floor_year,
-            death_date_ceiling_year = excluded.death_date_ceiling_year,
-            is_dbbe_person = excluded.is_dbbe_person,
-            is_modern_person = excluded.is_modern_person,
-            is_historical_person = excluded.is_historical_person,
-            modified = excluded.modified,
-            created = excluded.created,
-            public_comment = excluded.public_comment,
-            private_comment = excluded.private_comment
-        """, (
-            person_id,
-            source.get('born_date_floor_year'),
-            source.get('born_date_ceiling_year'),
-            source.get('death_date_floor_year'),
-            source.get('death_date_ceiling_year'),
-            bool(source.get('is_dbbe_person', False)),
-            bool(source.get('is_modern_person', False)),
-            bool(source.get('is_historical_person', False)),
-            source.get('modified'),
-            source.get('created'),
-            source.get('public_comment'),
-            source.get('private_comment')
-        ))
-        
-        # Management
-        for mgmt in source.get('management', []):
-            mgmt_id = str(mgmt.get('id', ''))
-            mgmt_name = mgmt.get('name', '')
-            if mgmt_id and mgmt_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO management (id, name) VALUES (?, ?)",
-                    (mgmt_id, mgmt_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO person_management (person_id, management_id) VALUES (?, ?)",
-                    (person_id, mgmt_id)
-                )
-
-
-        # Acknowledgements
-        for ack in source.get('acknowledgement', []):
-            ack_id = str(ack.get('id', ''))
-            ack_name = ack.get('name', '')
-            if ack_id and ack_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO acknowledgements (id, name) VALUES (?, ?)",
-                    (ack_id, ack_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO person_acknowledgement (person_id, acknowledgement_id) VALUES (?, ?)",
-                    (person_id, ack_id)
-                )
-        
-        # Self designations
-        for sd in source.get('self_designation', []):
-            sd_id = str(sd.get('id', ''))
-            sd_name = sd.get('name', '')
-            if sd_id and sd_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO self_designations (id, name) VALUES (?, ?)",
-                    (sd_id, sd_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO person_self_designations (person_id, self_designation_id) VALUES (?, ?)",
-                    (person_id, sd_id)
-                )
-        
-        # Offices
-        for office in source.get('office', []):
-            office_id = str(office.get('id', ''))
-            office_name = office.get('name', '')
-            if office_id and office_name:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO offices (id, name) VALUES (?, ?)",
-                    (office_id, office_name)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO person_offices (person_id, office_id) VALUES (?, ?)",
-                    (person_id, office_id)
-                )
-        
-        # Identifications
-        PERSON_IDENT_TYPE_MAP = {
-            "viaf": "viaf",
-            "plre": "plre",
-            "pbw": "pbw"
-        }
-        
-        for es_field, ident_type in PERSON_IDENT_TYPE_MAP.items():
-            for identifier in source.get(es_field, []):
-                if not identifier:
-                    continue
-                
-                ident_id = str(uuid.uuid4())
-                cursor.execute(
-                    "INSERT OR IGNORE INTO identifications (id, type, identifier_value) VALUES (?, ?, ?)",
-                    (ident_id, ident_type, identifier)
-                )
-                cursor.execute(
-                    "INSERT OR IGNORE INTO person_identification (person_id, identification_id) VALUES (?, ?)",
-                    (person_id, ident_id)
-                )
-    
     cursor.execute("COMMIT")
     conn.close()
     pg_conn.close()
-
-    print(f"Persons migration completed: {len(hits)} persons inserted")
 
 
 if __name__ == "__main__":
