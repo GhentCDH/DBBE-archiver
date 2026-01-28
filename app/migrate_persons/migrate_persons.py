@@ -2,13 +2,14 @@
 import uuid
 from ..common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-    add_column_if_missing
+    add_column_if_missing, get_postgres_connection
 )
 
 
 def create_person_tables(cursor):
     person_columns = {
-        "full_name": "TEXT",
+        "first_name": "TEXT",
+        "last_name": "TEXT",
         "born_date_floor_year": "TEXT",
         "born_date_ceiling_year": "TEXT",
         "death_date_floor_year": "TEXT",
@@ -77,16 +78,96 @@ def create_person_tables(cursor):
 
 
 def migrate_persons():
-    """
-    Migrate persons from Elasticsearch to SQLite.
-    """
     es = get_es_client()
     conn, cursor = get_db_connection()
-    
-    # Create person tables
+    pg_conn, pg_cursor = get_postgres_connection()
     create_person_tables(cursor)
-    
-    # Get indices
+
+    pg_cursor.execute("""
+        SELECT
+            person.identity,
+            name.first_name,
+            name.last_name,
+            factoid_origination.location_id,
+            person.is_historical,
+            person.is_modern,
+            person.is_dbbe,
+            factoid_born.born_date,
+            factoid_died.death_date
+        FROM data.person person
+        INNER JOIN data.name name ON name.idperson = person.identity
+        LEFT JOIN (
+            SELECT factoid.subject_identity, factoid.date AS born_date
+            FROM data.factoid
+            INNER JOIN data.factoid_type ftype ON factoid.idfactoid_type = ftype.idfactoid_type
+            WHERE ftype.type = 'born'
+        ) AS factoid_born ON person.identity = factoid_born.subject_identity
+        LEFT JOIN (
+            SELECT factoid.subject_identity, factoid.date AS death_date
+            FROM data.factoid
+            INNER JOIN data.factoid_type ftype ON factoid.idfactoid_type = ftype.idfactoid_type
+            WHERE ftype.type = 'died'
+        ) AS factoid_died ON person.identity = factoid_died.subject_identity
+        LEFT JOIN (
+            SELECT factoid.subject_identity, factoid.idlocation AS location_id
+            FROM data.factoid
+            INNER JOIN data.factoid_type ftype ON factoid.idfactoid_type = ftype.idfactoid_type
+            WHERE ftype.type = 'origination'
+        ) AS factoid_origination ON person.identity = factoid_origination.subject_identity
+    """)
+
+    rows = pg_cursor.fetchall()
+
+    cursor.execute("BEGIN")
+
+    for row in rows:
+        (
+            person_id,
+            first_name,
+            last_name,
+            location_id,
+            is_historical,
+            is_modern,
+            is_dbbe,
+            born_date,
+            death_date
+        ) = row
+
+        person_id = str(person_id)
+
+        cursor.execute("""
+        INSERT INTO persons (
+            id, first_name, last_name,
+            born_date_floor_year, born_date_ceiling_year,
+            death_date_floor_year, death_date_ceiling_year,
+            is_dbbe_person, is_modern_person, is_historical_person
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            first_name = excluded.first_name,
+            last_name = excluded.last_name,
+            born_date_floor_year = excluded.born_date_floor_year,
+            born_date_ceiling_year = excluded.born_date_ceiling_year,
+            death_date_floor_year = excluded.death_date_floor_year,
+            death_date_ceiling_year = excluded.death_date_ceiling_year,
+            is_dbbe_person = excluded.is_dbbe_person,
+            is_modern_person = excluded.is_modern_person,
+            is_historical_person = excluded.is_historical_person
+        """, (
+            person_id,
+            first_name,
+            last_name,
+            born_date,  # floor year
+            born_date,  # ceiling year (if you have separate logic, adjust)
+            death_date,
+            death_date,
+            bool(is_dbbe),
+            bool(is_modern),
+            bool(is_historical)
+        ))
+
+    cursor.execute("COMMIT")
+
+
     indices = get_dbbe_indices(es)
     person_index = next((idx for idx in indices if idx.endswith("persons")), None)
     
@@ -105,16 +186,14 @@ def migrate_persons():
         source = hit['_source']
         person_id = str(source.get('id', hit['_id']))
         
-        # Insert or update person
         cursor.execute("""
         INSERT INTO persons (
-            id, full_name, born_date_floor_year, born_date_ceiling_year,
+            id, born_date_floor_year, born_date_ceiling_year,
             death_date_floor_year, death_date_ceiling_year,
             is_dbbe_person, is_modern_person, is_historical_person,
             modified, created, public_comment, private_comment
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
-            full_name = excluded.full_name,
             born_date_floor_year = excluded.born_date_floor_year,
             born_date_ceiling_year = excluded.born_date_ceiling_year,
             death_date_floor_year = excluded.death_date_floor_year,
@@ -128,7 +207,6 @@ def migrate_persons():
             private_comment = excluded.private_comment
         """, (
             person_id,
-            source.get('name'),
             source.get('born_date_floor_year'),
             source.get('born_date_ceiling_year'),
             source.get('death_date_floor_year'),
@@ -223,7 +301,8 @@ def migrate_persons():
     
     cursor.execute("COMMIT")
     conn.close()
-    
+    pg_conn.close()
+
     print(f"Persons migration completed: {len(hits)} persons inserted")
 
 
