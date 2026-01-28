@@ -1,4 +1,4 @@
-# app/migrate_bibliographies/book_chapters.py
+# app/migrate_bibliographies/link_chapters_to_books.py
 from ..common import get_db_connection, get_postgres_connection
 
 def migrate_book_chapters():

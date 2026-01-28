@@ -1,12 +1,9 @@
-
-# app/migrate_bibliographies/journals.py
 from ..common import get_db_connection, get_postgres_connection
 
 def migrate_journals():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
 
-    # --- Step 1: get journal titles
     pg_cursor.execute("""
         SELECT j.identity AS journal_id,
                dt.title AS journal_title
@@ -22,7 +19,6 @@ def migrate_journals():
                 title_sort_key = excluded.title_sort_key
         """, (str(journal_id), journal_title, journal_title))
 
-    # --- Step 2: get journal issues
     pg_cursor.execute("""
         SELECT ji.identity AS issue_id,
                ji.idjournal AS journal_id,
@@ -35,7 +31,6 @@ def migrate_journals():
     """)
 
     for issue_id, journal_id, year, volume, number, series, forthcoming in pg_cursor.fetchall():
-        # create a readable title for the issue
         title_parts = []
         if year: title_parts.append(str(year))
         if series: title_parts.append(series)

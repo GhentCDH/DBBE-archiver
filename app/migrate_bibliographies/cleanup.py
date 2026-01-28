@@ -1,7 +1,7 @@
 # app/migrate_bibliographies/cleanup.py
 from ..common import get_db_connection
-from .biblio_type import BiblioType  # assuming enums are in the same folder
-from .biblio_entity import BiblioEntity
+from .biblio_type_enum import BiblioType  # assuming enums are in the same folder
+from .biblio_entity_enum import BiblioEntity
 
 OPTIONAL_COLUMNS = ["page_start", "page_end", "raw_pages", "rel_url", "source_remark", "image"]
 

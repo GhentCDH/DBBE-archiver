@@ -1,6 +1,6 @@
-# app/migrate_bibliographies/references.py
+# app/migrate_bibliographies/insert_main_bibliographies.py
 from ..common import get_db_connection, get_postgres_connection, get_es_client, scroll_all, get_dbbe_indices
-from .biblio_type import BiblioType
+from .biblio_type_enum import BiblioType
 
 
 def migrate_references():

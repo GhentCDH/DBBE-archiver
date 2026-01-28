@@ -1,6 +1,6 @@
 # app/migrate_bibliographies/schema.py
 from ..common import get_db_connection, add_column_if_missing
-from .biblio_type import BiblioType
+from .biblio_type_enum import BiblioType
 
 def create_schema():
     conn, cursor = get_db_connection()
