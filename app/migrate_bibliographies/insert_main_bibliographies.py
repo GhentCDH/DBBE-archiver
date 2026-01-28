@@ -1,101 +1,119 @@
 # app/migrate_bibliographies/insert_main_bibliographies.py
-from ..common import get_db_connection, get_postgres_connection, get_es_client, scroll_all, get_dbbe_indices
+from ..common import get_db_connection, get_postgres_connection
 from .biblio_type_enum import BiblioType
+from .biblio_entity_enum import BiblioEntity
+import sqlite3
 
+# Map Postgres entity type strings → BiblioEntity enum
+POSTGRES_TYPE_TO_ENTITY = {
+    "manuscript": BiblioEntity.MANUSCRIPT,
+    "occurrence": BiblioEntity.OCCURRENCE,
+    "type": BiblioEntity.TYPE,
+    "person": BiblioEntity.PERSON,
+}
 
 def migrate_main_bibliographies():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
 
     pg_cursor.execute("""
-        SELECT identity
-        FROM data.bib_varia
+        SELECT identity, 'article' AS bib_type FROM data.article
+        UNION ALL
+        SELECT identity, 'blog_post' FROM data.blog_post
+        UNION ALL
+        SELECT identity, 'book' FROM data.book
+        UNION ALL
+        SELECT identity, 'book_chapter' FROM data.bookchapter
+        UNION ALL
+        SELECT identity, 'online_source' FROM data.online_source
+        UNION ALL
+        SELECT identity, 'phd' FROM data.phd
+        UNION ALL
+        SELECT identity, 'bib_varia' FROM data.bib_varia
     """)
-    for (bib_varia_id,) in pg_cursor.fetchall():
-        cursor.execute(
-            "INSERT OR IGNORE INTO bib_varia (id) VALUES (?)",
-            (str(bib_varia_id),)
-        )
+
+
+    for source_id, bib_type in pg_cursor.fetchall():
+        bib_type_enum = next((bt for bt in BiblioType if bt.value == bib_type), None)
+        if bib_type_enum:
+            cursor.execute(
+                f"INSERT OR IGNORE INTO {bib_type_enum.value} (id) VALUES (?)",
+                (str(source_id),)
+            )
 
     pg_cursor.execute("""
         SELECT
-            r.idreference,
-            r.idsource,
-            r.page_start,
-            r.page_end,
-            CASE WHEN r.page_start IS NULL THEN r.temp_page_removeme ELSE NULL END AS raw_pages,
-            r.url,
-            r.source_remark,
-            r.image,
+            r.idsource AS biblio_id,
+            r.idtarget AS entity_id,
             COALESCE(
-                a.type::text, bp.type::text, b.type::text,
-                bc.type::text, os.type::text, p.type::text, bv.type::text
-            ) AS bib_type
+                m.type::text,
+                o.type::text,
+                t.type::text,
+                p.type::text,
+                tr.type::text
+            ) AS entity_type,
+            r.page_start,
+            r.page_end
         FROM data.reference r
-        LEFT JOIN (SELECT identity,'article' type FROM data.article) a ON r.idsource=a.identity
-        LEFT JOIN (SELECT identity,'blog_post' type FROM data.blog_post) bp ON r.idsource=bp.identity
-        LEFT JOIN (SELECT identity,'book' type FROM data.book) b ON r.idsource=b.identity
-        LEFT JOIN (SELECT identity,'book_chapter' type FROM data.bookchapter) bc ON r.idsource=bc.identity
-        LEFT JOIN (SELECT identity,'online_source' type FROM data.online_source) os ON r.idsource=os.identity
-        LEFT JOIN (SELECT identity,'phd' type FROM data.phd) p ON r.idsource=p.identity
-        LEFT JOIN (SELECT identity,'bib_varia' type FROM data.bib_varia) bv ON r.idsource=bv.identity
+        LEFT JOIN (SELECT identity AS entity_id, 'manuscript' AS type FROM data.manuscript) m
+            ON r.idtarget = m.entity_id
+        LEFT JOIN (SELECT identity AS entity_id, 'occurrence' AS type FROM data.original_poem) o
+            ON r.idtarget = o.entity_id
+        LEFT JOIN (SELECT identity AS entity_id, 'type' AS type FROM data.reconstructed_poem) t
+            ON r.idtarget = t.entity_id
+        LEFT JOIN (SELECT identity AS entity_id, 'person' AS type FROM data.person) p
+            ON r.idtarget = p.entity_id
+        LEFT JOIN (SELECT identity AS entity_id, 'translation' AS type FROM data.translation) tr
+            ON r.idtarget = tr.entity_id
     """)
-
-    reference_rows = pg_cursor.fetchall()
-
-    for row in reference_rows:
-        _, source_id, _, _, _, _, _, _, bib_type = row
-        if not bib_type:
+    for biblio_id, entity_id, entity_type_str, page_start, page_end in pg_cursor.fetchall():
+        if not entity_type_str:
             continue
 
-        bib_type_enum = next(
-            (
-                bt for bt in BiblioType
-                if bt.value == bib_type.lower().replace(" ", "_")
-            ),
-            None
-        )
+        entity_enum = POSTGRES_TYPE_TO_ENTITY.get(entity_type_str)
+        if not entity_enum:
+            continue
+
+        pg_cursor.execute("""
+            SELECT
+                CASE
+                    WHEN EXISTS(SELECT 1 FROM data.article WHERE identity = %s) THEN 'article'
+                    WHEN EXISTS(SELECT 1 FROM data.blog_post WHERE identity = %s) THEN 'blog_post'
+                    WHEN EXISTS(SELECT 1 FROM data.book WHERE identity = %s) THEN 'book'
+                    WHEN EXISTS(SELECT 1 FROM data.bookchapter WHERE identity = %s) THEN 'book_chapter'
+                    WHEN EXISTS(SELECT 1 FROM data.online_source WHERE identity = %s) THEN 'online_source'
+                    WHEN EXISTS(SELECT 1 FROM data.phd WHERE identity = %s) THEN 'phd'
+                    WHEN EXISTS(SELECT 1 FROM data.bib_varia WHERE identity = %s) THEN 'bib_varia'
+                END AS bib_type
+        """, (biblio_id,) * 7)
+        result = pg_cursor.fetchone()
+        if not result or not result[0]:
+            continue
+
+        bib_type_enum = next((bt for bt in BiblioType if bt.value == result[0]), None)
         if not bib_type_enum:
             continue
 
-        cursor.execute(
-            f"INSERT OR IGNORE INTO {bib_type_enum.value} (id) VALUES (?)",
-            (str(source_id),)
-        )
+        join_table = f"{entity_enum.name.lower()}_{bib_type_enum.value}"
+        entity_col = f"{entity_enum.name.lower()}_id"
+        bib_col = f"{bib_type_enum.value}_id"
 
-    es = get_es_client()
-    indices = get_dbbe_indices(es)
-    bibliography_index = next((idx for idx in indices if idx.endswith("bibliographies")), None)
-    if bibliography_index:
-        hits = scroll_all(es, bibliography_index)
-        for hit in hits:
-            source = hit['_source']
-            bib_id = str(source.get('id', hit['_id']))
-            title = source.get('title')
-            title_sort_key = source.get('title_sort_key')
-
-            bib_type_name = source.get('type', {}).get('name')
-            if not bib_type_name:
-                continue
-
-            bib_type_enum = next(
-                (
-                    bt for bt in BiblioType
-                    if bt.value == bib_type_name.lower().replace(" ", "_")
-                ),
-                None
+        try:
+            cursor.execute(
+                f"INSERT OR IGNORE INTO {join_table} ({entity_col}, {bib_col}, page_start, page_end) VALUES (?, ?, ?, ?)",
+                (str(entity_id), str(biblio_id), page_start, page_end)
             )
-            if not bib_type_enum:
-                continue
-
-            cursor.execute(f"""
-                INSERT INTO {bib_type_enum.value} (id, title, title_sort_key)
-                VALUES (?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    title = excluded.title,
-                    title_sort_key = excluded.title_sort_key
-            """, (bib_id, title, title_sort_key))
+        except sqlite3.IntegrityError as e:
+            # Log a warning but continue
+            print(
+                f"FK WARNING: Could not insert into {join_table}: "
+                f"entity_id={entity_id}, biblio_id={biblio_id}. "
+                f"The bibliography itself was inserted.",
+                e
+            )
 
     conn.commit()
     conn.close()
     pg_conn.close()
+
+
