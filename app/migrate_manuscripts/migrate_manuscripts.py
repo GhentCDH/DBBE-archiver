@@ -97,10 +97,10 @@ def create_manuscript_tables(cursor):
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS manuscript_location (
         manuscript_id TEXT NOT NULL,
-        location_id TEXT NOT NULL,
-        PRIMARY KEY (manuscript_id, location_id),
+        origin_id TEXT NOT NULL,
+        PRIMARY KEY (manuscript_id, origin_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
-        FOREIGN KEY (location_id) REFERENCES locations(id)
+        FOREIGN KEY (origin_id) REFERENCES locations(id)
     )
     """)
 
@@ -159,7 +159,7 @@ def link_manuscript_to_locations(cursor, manuscript_id, pg_cursor):
 
         if leaf_id:
             cursor.execute("""
-                INSERT OR IGNORE INTO manuscript_location(manuscript_id, location_id)
+                INSERT OR IGNORE INTO manuscript_location(manuscript_id, origin_id)
                 VALUES (?, ?)
             """, (manuscript_id, leaf_id))
 
