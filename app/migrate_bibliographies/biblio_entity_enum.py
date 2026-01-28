@@ -1,10 +1,10 @@
 from enum import Enum
 
 class BiblioEntity(Enum):
-    MANUSCRIPT = ("manuscripts", "id")
-    PERSON = ("persons", "id")
-    OCCURRENCE = ("occurrences", "id")
-    TYPE = ("types", "id")
+    MANUSCRIPT = ("manuscript", "manuscript_id")
+    PERSON = ("person", "person_id")
+    OCCURRENCE = ("occurrence", "occurrence_id")
+    TYPE = ("type", "type_id")
 
     def __init__(self, sqlite_table: str, id_column: str):
         self.sqlite_table = sqlite_table
