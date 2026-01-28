@@ -106,13 +106,63 @@ def get_role_id(cursor, role_name):
     row = cursor.fetchone()
     return row[0] if row else None
 
+
+
 def get_or_create_role(cursor, role_name):
-    role_id = get_role_id(cursor, role_name)
-    if role_id:
+    cursor.execute(
+        "SELECT id FROM roles WHERE name = ? LIMIT 1",
+        (role_name,)
+    )
+    row = cursor.fetchone()
+    if row:
+        return row[0]
+
+    pg_conn, pg_cursor = get_postgres_connection()
+
+    pg_cursor.execute(
+        """
+        SELECT idrole
+        FROM data.role
+        WHERE system_name = %s
+        LIMIT 1
+        """,
+        (role_name.lower(),)
+    )
+    pg_row = pg_cursor.fetchone()
+
+    if pg_row:
+        role_id = str(pg_row[0])
+        cursor.execute(
+            "INSERT INTO roles (id, name) VALUES (?, ?)",
+            (role_id, role_name)
+        )
         return role_id
-    role_id = str(uuid.uuid4())
-    cursor.execute("INSERT INTO roles (id, name) VALUES (?, ?)", (role_id, role_name))
+
+
+    pg_cursor.execute("SELECT MAX(idrole) FROM data.role")
+    pg_max = pg_cursor.fetchone()[0] or 0
+
+    cursor.execute(
+        """
+        SELECT MAX(CAST(id AS INTEGER))
+        FROM roles
+        WHERE CAST(id AS INTEGER) > ?
+        """,
+        (pg_max,)
+    )
+    local_max = cursor.fetchone()[0]
+
+    next_id = pg_max + 1 if local_max is None else local_max + 1
+    role_id = str(next_id)
+
+    cursor.execute(
+        "INSERT INTO roles (id, name) VALUES (?, ?)",
+        (role_id, role_name)
+    )
+
     return role_id
+
+
 
 
 def get_dbbe_indices(es):
