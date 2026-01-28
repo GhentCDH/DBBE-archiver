@@ -3,9 +3,19 @@ from ..common import get_db_connection, get_postgres_connection, get_es_client, 
 from .biblio_type_enum import BiblioType
 
 
-def migrate_references():
+def migrate_main_bibliographies():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
+
+    pg_cursor.execute("""
+        SELECT identity
+        FROM data.bib_varia
+    """)
+    for (bib_varia_id,) in pg_cursor.fetchall():
+        cursor.execute(
+            "INSERT OR IGNORE INTO bib_varia (id) VALUES (?)",
+            (str(bib_varia_id),)
+        )
 
     pg_cursor.execute("""
         SELECT
@@ -38,11 +48,13 @@ def migrate_references():
         if not bib_type:
             continue
 
-        bib_type_enum = None
-        for bt in BiblioType:
-            if bt.value == bib_type.lower().replace(" ", "_"):
-                bib_type_enum = bt
-                break
+        bib_type_enum = next(
+            (
+                bt for bt in BiblioType
+                if bt.value == bib_type.lower().replace(" ", "_")
+            ),
+            None
+        )
         if not bib_type_enum:
             continue
 
@@ -66,11 +78,13 @@ def migrate_references():
             if not bib_type_name:
                 continue
 
-            bib_type_enum = None
-            for bt in BiblioType:
-                if bt.value == bib_type_name.lower().replace(" ", "_"):
-                    bib_type_enum = bt
-                    break
+            bib_type_enum = next(
+                (
+                    bt for bt in BiblioType
+                    if bt.value == bib_type_name.lower().replace(" ", "_")
+                ),
+                None
+            )
             if not bib_type_enum:
                 continue
 
