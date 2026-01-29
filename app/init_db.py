@@ -226,7 +226,6 @@ def create_base_tables():
                )
            """)
 
-        # Type-specific entity ↔ bibliography join tables
         for entity, sqlite_table in BIBLIO_ENTITY_TYPES.items():
             cursor.execute(f"""
                    CREATE TABLE IF NOT EXISTS {entity}_{bib_type} (

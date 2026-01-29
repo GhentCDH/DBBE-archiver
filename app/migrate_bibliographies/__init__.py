@@ -17,4 +17,4 @@ def migrate_bibliographies():
     migrate_journals()
     migrate_person_roles()
     migrate_managements()
-    cleanup_bibliographies()
+    # cleanup_bibliographies()

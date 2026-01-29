@@ -129,7 +129,7 @@ def get_or_create_role(cursor, role_name):
     pg_row = pg_cursor.fetchone()
 
     if pg_row:
-        role_id = str(pg_row[0])
+        role_id = pg_row[0]
         cursor.execute(
             "INSERT INTO roles (id, name) VALUES (?, ?)",
             (role_id, role_name)
@@ -151,7 +151,7 @@ def get_or_create_role(cursor, role_name):
     local_max = cursor.fetchone()[0]
 
     next_id = pg_max + 1 if local_max is None else local_max + 1
-    role_id = str(next_id)
+    role_id = next_id
 
     cursor.execute(
         "INSERT INTO roles (id, name) VALUES (?, ?)",
@@ -178,7 +178,7 @@ def insert_many_to_many(
     parent_id: str,
 ):
     for item in source.get(source_key, []):
-        item_id = str(item.get("id", ""))
+        item_id = item.get("id", "")
         item_name = item.get("name", "")
         if not item_id or not item_name:
             continue
@@ -201,7 +201,7 @@ def insert_many_to_one(cursor, entity_name, table_name, manuscript_id, entity_da
     if not entity_data:
         return
 
-    entity_id = str(entity_data.get("id", ""))
+    entity_id = entity_data.get("id", "")
     entity_name_val = entity_data.get("name", "")
 
     if entity_id and entity_name_val:

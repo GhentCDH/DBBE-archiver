@@ -26,8 +26,8 @@ def create_schema():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS person_management (
-        person_id TEXT NOT NULL,
-        management_id TEXT NOT NULL,
+        person_id INTEGER NOT NULL,
+        management_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, management_id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
         FOREIGN KEY (management_id) REFERENCES management(id)
@@ -36,8 +36,8 @@ def create_schema():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS person_acknowledgement (
-        person_id TEXT NOT NULL,
-        acknowledgement_id TEXT NOT NULL,
+        person_id INTEGER NOT NULL,
+        acknowledgement_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, acknowledgement_id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
         FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgements(id)
@@ -46,8 +46,8 @@ def create_schema():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS person_self_designations (
-        person_id TEXT NOT NULL,
-        self_designation_id TEXT NOT NULL,
+        person_id INTEGER NOT NULL,
+        self_designation_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, self_designation_id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
         FOREIGN KEY (self_designation_id) REFERENCES self_designations(id)
@@ -56,8 +56,8 @@ def create_schema():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS person_offices (
-        person_id TEXT NOT NULL,
-        office_id TEXT NOT NULL,
+        person_id INTEGER NOT NULL,
+        office_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, office_id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
         FOREIGN KEY (office_id) REFERENCES offices(id)
@@ -66,8 +66,8 @@ def create_schema():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS person_identification (
-        person_id TEXT NOT NULL,
-        identification_id TEXT NOT NULL,
+        person_id INTEGER NOT NULL,
+        identification_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, identification_id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
         FOREIGN KEY (identification_id) REFERENCES identifications(id)
