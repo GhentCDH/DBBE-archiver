@@ -1,8 +1,7 @@
 
 import uuid
 from ..common import (
-    get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-    add_column_if_missing, get_postgres_connection
+    get_db_connection, get_es_client, get_postgres_connection
 )
 
 
@@ -31,85 +30,9 @@ def get_location_hierarchy_and_leaf(cursor, pg_cursor, location_id):
         leaf_id = loc_id
     return leaf_id
 
-
-
-def create_person_tables(cursor):
-    person_columns = {
-        "first_name": "TEXT",
-        "last_name": "TEXT",
-        "born_date_floor_year": "TEXT",
-        "born_date_ceiling_year": "TEXT",
-        "death_date_floor_year": "TEXT",
-        "death_date_ceiling_year": "TEXT",
-        "is_dbbe_person": "BOOLEAN",
-        "is_modern_person": "BOOLEAN",
-        "is_historical_person": "BOOLEAN",
-        "modified": "TEXT",
-        "created": "TEXT",
-        "public_comment": "TEXT",
-        "private_comment": "TEXT",
-        "location_id": "TEXT",
-    }
-    
-    for col, col_type in person_columns.items():
-        add_column_if_missing(cursor, "persons", col, col_type)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS person_management (
-        person_id TEXT NOT NULL,
-        management_id TEXT NOT NULL,
-        PRIMARY KEY (person_id, management_id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
-        FOREIGN KEY (management_id) REFERENCES management(id)
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS person_acknowledgement (
-        person_id TEXT NOT NULL,
-        acknowledgement_id TEXT NOT NULL,
-        PRIMARY KEY (person_id, acknowledgement_id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
-        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgements(id)
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS person_self_designations (
-        person_id TEXT NOT NULL,
-        self_designation_id TEXT NOT NULL,
-        PRIMARY KEY (person_id, self_designation_id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
-        FOREIGN KEY (self_designation_id) REFERENCES self_designations(id)
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS person_offices (
-        person_id TEXT NOT NULL,
-        office_id TEXT NOT NULL,
-        PRIMARY KEY (person_id, office_id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
-        FOREIGN KEY (office_id) REFERENCES offices(id)
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS person_identification (
-        person_id TEXT NOT NULL,
-        identification_id TEXT NOT NULL,
-        PRIMARY KEY (person_id, identification_id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
-        FOREIGN KEY (identification_id) REFERENCES identifications(id)
-    )
-    """)
-
-
-def migrate_persons():
-    es = get_es_client()
+def run_person_migration():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
-    create_person_tables(cursor)
 
     pg_cursor.execute("""
         SELECT
@@ -219,10 +142,20 @@ def migrate_persons():
                     WHERE id = ?
                 """, (leaf_id, person_id))
 
+    pg_cursor.execute("SELECT id, name FROM data.self_designation")
+    for sd_id, sd_name in pg_cursor.fetchall():
+        cursor.execute("""
+            INSERT OR IGNORE INTO self_designations (id, name)
+            VALUES (?, ?)
+        """, (str(sd_id), sd_name))
+
+    pg_cursor.execute("SELECT idperson, idself_designation FROM data.person_self_designation")
+    for person_id, sd_id in pg_cursor.fetchall():
+        cursor.execute("""
+            INSERT OR IGNORE INTO person_self_designations (person_id, self_designation_id)
+            VALUES (?, ?)
+        """, (str(person_id), str(sd_id)))
+
     cursor.execute("COMMIT")
     conn.close()
     pg_conn.close()
-
-
-if __name__ == "__main__":
-    migrate_persons()
