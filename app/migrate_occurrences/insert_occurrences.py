@@ -1,6 +1,6 @@
 from ..common import (
     get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME,
+     get_role_id, ROLE_FIELD_TO_ROLE_NAME,
     insert_many_to_many, get_postgres_connection
 )
 
@@ -34,118 +34,37 @@ def get_related_occurrences(occ_id, pg_cursor):
     """, (occ_id, occ_id, occ_id))
     return [row[0] for row in pg_cursor.fetchall()]
 
-def create_occurrence_tables(cursor):
-    occurrence_columns = [
-        ("created", "TEXT"),
-        ("modified", "TEXT"),
-        ("public_comment", "TEXT"),
-        ("private_comment", "TEXT"),
-        ("is_dbbe", "BOOLEAN"),
-        ("incipit", "TEXT"),
-        ("text_stemmer", "TEXT"),
-        ("text_original", "TEXT"),
-        ("location_in_ms", "TEXT"),
-        ("date_floor_year", "TEXT"),
-        ("date_ceiling_year", "TEXT"),
-        ("palaeographical_info", "TEXT"),
-        ("contextual_info", "TEXT"),
-        ("manuscript_id", "TEXT"),
-        ("title", "TEXT")
-    ]
-    
-    for col, col_type in occurrence_columns:
-        add_column_if_missing(cursor, "occurrences", col, col_type)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS occurrence_person_roles (
-        occurrence_id TEXT NOT NULL,
-        person_id TEXT NOT NULL,
-        role_id TEXT NOT NULL,
-        PRIMARY KEY (occurrence_id, person_id, role_id),
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
-        FOREIGN KEY (role_id) REFERENCES roles(id)
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS occurrence_genres (
-        occurrence_id TEXT NOT NULL,
-        genre_id TEXT NOT NULL,
-        PRIMARY KEY (occurrence_id, genre_id),
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (genre_id) REFERENCES genres(id)
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS occurrence_metres (
-        occurrence_id TEXT NOT NULL,
-        metre_id TEXT NOT NULL,
-        PRIMARY KEY (occurrence_id, metre_id),
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (metre_id) REFERENCES metres(id)
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS occurrence_management (
-        occurrence_id TEXT NOT NULL,
-        management_id TEXT NOT NULL,
-        PRIMARY KEY (occurrence_id, management_id),
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (management_id) REFERENCES management(id)
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS occurrence_acknowledgement (
-        occurrence_id TEXT NOT NULL,
-        acknowledgement_id TEXT NOT NULL,
-        PRIMARY KEY (occurrence_id, acknowledgement_id),
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgements(id)
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS occurrence_text_statuses (
-        occurrence_id TEXT NOT NULL,
-        text_status_id TEXT NOT NULL,
-        PRIMARY KEY (occurrence_id, text_status_id),
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (text_status_id) REFERENCES text_statuses(id)
-    )
+def preload_related_occurrences(pg_cursor):
+    pg_cursor.execute("""
+        WITH verse_links AS (
+            SELECT
+                a.idoriginal_poem AS src,
+                b.idoriginal_poem AS dst
+            FROM data.original_poem_verse a
+            JOIN data.original_poem_verse b ON a.idgroup = b.idgroup
+            WHERE a.idoriginal_poem <> b.idoriginal_poem
+        ),
+        factoid_links AS (
+            SELECT
+                fa.subject_identity AS src,
+                fb.subject_identity AS dst
+            FROM data.factoid fa
+            JOIN data.factoid_type fta ON fa.idfactoid_type = fta.idfactoid_type
+            JOIN data.factoid fb ON fa.object_identity = fb.object_identity
+            JOIN data.factoid_type ftb ON fb.idfactoid_type = ftb.idfactoid_type
+            WHERE fta.type = 'reconstruction of'
+              AND ftb.type = 'reconstruction of'
+              AND fa.subject_identity <> fb.subject_identity
+        )
+        SELECT src, dst FROM verse_links
+        UNION
+        SELECT src, dst FROM factoid_links
     """)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS occurrence_related_occurrences (
-        occurrence_id TEXT NOT NULL,
-        related_occurrence_id TEXT NOT NULL,
-        relation_definition_id TEXT NOT NULL,
-        PRIMARY KEY (occurrence_id, related_occurrence_id, relation_definition_id),
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (related_occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (relation_definition_id) REFERENCES occurrence_relation_definitions(id),
-        CHECK (occurrence_id <> related_occurrence_id)
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS occurrence_keyword (
-        occurrence_id TEXT NOT NULL,
-        keyword_id TEXT NOT NULL,
-        PRIMARY KEY (occurrence_id, keyword_id),
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (keyword_id) REFERENCES keyword(id)
-    );
-    """)
-    
-    cursor.execute("""
-    INSERT OR IGNORE INTO occurrence_relation_definitions (id, definition) VALUES
-    ('0', 'verse_related'),
-    ('1', 'type_related')
-    """)
+    rel = {}
+    for src, dst in pg_cursor.fetchall():
+        rel.setdefault(str(src), []).append(str(dst))
+    return rel
 
 
 def get_subject_keyword(pg_cursor, subject_id):
@@ -158,15 +77,14 @@ def get_subject_keyword(pg_cursor, subject_id):
     return pg_cursor.fetchone()
 
 
-def migrate_occurrences():
+def run_occurrence_migration():
     es = get_es_client()
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
+    related_occurrence_map = preload_related_occurrences(pg_cursor)
 
     cursor.execute("PRAGMA foreign_keys = OFF")
     print("Foreign key constraints disabled for migration")
-
-    create_occurrence_tables(cursor)
 
     indices = get_dbbe_indices(es)
     occ_index = next((idx for idx in indices if idx.endswith("occurrences")), None)
@@ -192,9 +110,6 @@ def migrate_occurrences():
     keyword_cache = {str(row[0]): row[1] for row in pg_cursor.fetchall()}
 
     for hit in hits:
-        # MAX_OCCURRENCES = 200
-        # if batch_count >= MAX_OCCURRENCES:
-        #     break
         source = hit['_source']
         occ_id = str(source.get('id', hit['_id']))
         manuscript_id = str(source.get('manuscript', {}).get('id', ''))
@@ -329,7 +244,8 @@ def migrate_occurrences():
                     )
 
 
-        related_ids = get_related_occurrences(occ_id, pg_cursor)
+        # related_ids = get_related_occurrences(occ_id, pg_cursor)
+        related_ids = related_occurrence_map.get(occ_id, [])
         if related_ids:
             related_rows = [(occ_id, rid, '0') for rid in related_ids]
             cursor.executemany("""
@@ -352,6 +268,3 @@ def migrate_occurrences():
     conn.close()
 
     print(f"Occurrences migration completed: {batch_count} occurrences updated")
-
-if __name__ == "__main__":
-    migrate_occurrences()
