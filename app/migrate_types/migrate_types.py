@@ -40,8 +40,8 @@ def create_type_tables(cursor):
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_management (
-        type_id TEXT NOT NULL,
-        management_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        management_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, management_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (management_id) REFERENCES management(id)
@@ -50,8 +50,8 @@ def create_type_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_acknowledgement (
-        type_id TEXT NOT NULL,
-        acknowledgement_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        acknowledgement_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, acknowledgement_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgements(id)
@@ -60,8 +60,8 @@ def create_type_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_tags (
-        type_id TEXT NOT NULL,
-        tag_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        tag_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, tag_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (tag_id) REFERENCES tags(id)
@@ -70,8 +70,8 @@ def create_type_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_genre (
-        type_id TEXT NOT NULL,
-        genre_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        genre_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, genre_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (genre_id) REFERENCES genres(id)
@@ -80,8 +80,8 @@ def create_type_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_metre (
-        type_id TEXT NOT NULL,
-        metre_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        metre_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, metre_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (metre_id) REFERENCES metres(id)
@@ -90,8 +90,8 @@ def create_type_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_editorial_status (
-        type_id TEXT NOT NULL,
-        editorial_status_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        editorial_status_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, editorial_status_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (editorial_status_id) REFERENCES editorial_statuses(id)
@@ -100,8 +100,8 @@ def create_type_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_text_statuses (
-        type_id TEXT NOT NULL,
-        text_status_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        text_status_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, text_status_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (text_status_id) REFERENCES text_statuses(id)
@@ -111,9 +111,9 @@ def create_type_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_person_roles (
-        type_id TEXT NOT NULL,
-        person_id TEXT NOT NULL,
-        role_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        person_id INTEGER NOT NULL,
+        role_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, person_id, role_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
@@ -123,8 +123,8 @@ def create_type_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_occurrences (
-        type_id TEXT NOT NULL,
-        occurrence_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        occurrence_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, occurrence_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (occurrence_id) REFERENCES occurrences(id)
@@ -133,9 +133,9 @@ def create_type_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_related_types (
-        type_id TEXT NOT NULL,
-        related_type_id TEXT NOT NULL,
-        relation_definition_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        related_type_id INTEGER NOT NULL,
+        relation_definition_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, related_type_id, relation_definition_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (related_type_id) REFERENCES types(id),
@@ -147,16 +147,16 @@ def create_type_tables(cursor):
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_relation_definitions (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         definition TEXT NOT NULL UNIQUE
     )
     """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_related_types (
-        type_id TEXT NOT NULL,
-        related_type_id TEXT NOT NULL,
-        relation_definition_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        related_type_id INTEGER NOT NULL,
+        relation_definition_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, related_type_id, relation_definition_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (related_type_id) REFERENCES types(id),
@@ -167,8 +167,8 @@ def create_type_tables(cursor):
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_keyword (
-        type_id TEXT NOT NULL,
-        keyword_id TEXT NOT NULL,
+        type_id INTEGER NOT NULL,
+        keyword_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, keyword_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
         FOREIGN KEY (keyword_id) REFERENCES keyword(id)
