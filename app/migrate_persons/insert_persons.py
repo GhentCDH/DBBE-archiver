@@ -4,6 +4,20 @@ from ..common import (
     get_db_connection, get_postgres_connection
 )
 
+def parse_fuzzy_date(fd):
+    if not fd:
+        return None, None
+
+    fd = fd.strip("()[]")
+    parts = fd.split(',')
+    if len(parts) != 2:
+        raise ValueError(f"Invalid fuzzydate format: {fd}")
+
+    floor = parts[0].strip().replace('"', '')
+    ceiling = parts[1].strip().replace('"', '')
+
+    return floor, ceiling
+
 
 def get_location_hierarchy_and_leaf(cursor, pg_cursor, location_id):
     hierarchy = []
@@ -96,6 +110,9 @@ def run_person_migration():
 
         person_id = str(person_id)
 
+        born_floor, born_ceiling = parse_fuzzy_date(born_date)
+        death_floor, death_ceiling = parse_fuzzy_date(death_date)
+
         cursor.execute("""
         INSERT INTO persons (
             id, first_name, last_name,
@@ -117,10 +134,10 @@ def run_person_migration():
             person_id,
             first_name,
             last_name,
-            born_date,
-            born_date,
-            death_date,
-            death_date,
+            born_floor,
+            born_ceiling,
+            death_floor,
+            death_ceiling,
             bool(is_dbbe),
             bool(is_modern),
             bool(is_historical)
