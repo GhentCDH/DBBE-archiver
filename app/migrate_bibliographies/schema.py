@@ -8,7 +8,7 @@ def create_schema():
     for bib_type in BiblioType:
         cursor.execute(f"""
             CREATE TABLE IF NOT EXISTS {bib_type.value} (
-                id TEXT PRIMARY KEY,
+                id INTEGER PRIMARY KEY,
                 title TEXT,
                 title_sort_key TEXT
             )
@@ -16,7 +16,7 @@ def create_schema():
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS journal (
-            id TEXT PRIMARY KEY,
+            id INTEGER PRIMARY KEY,
             title TEXT,
             title_sort_key TEXT
         )
@@ -24,8 +24,8 @@ def create_schema():
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS journal_issue (
-            id TEXT PRIMARY KEY,
-            journal_id TEXT,
+            id INTEGER PRIMARY KEY,
+            journal_id INTEGER,
             title TEXT,
             title_sort_key TEXT
         )
@@ -33,7 +33,6 @@ def create_schema():
 
     # Add foreign key columns if missing
     add_column_if_missing(cursor, "book_chapter", "book_id", "TEXT")
-    add_column_if_missing(cursor, "article", "journal_issue_id", "TEXT")
 
     conn.commit()
     conn.close()
