@@ -1,7 +1,7 @@
 
 import uuid
 from ..common import (
-    get_db_connection, get_es_client, get_postgres_connection
+    get_db_connection, get_postgres_connection
 )
 
 
@@ -155,6 +155,20 @@ def run_person_migration():
             INSERT OR IGNORE INTO person_self_designations (person_id, self_designation_id)
             VALUES (?, ?)
         """, (str(person_id), str(sd_id)))
+
+    pg_cursor.execute("SELECT idoccupation, occupation FROM data.occupation")
+    for office_id, office_name in pg_cursor.fetchall():
+        cursor.execute("""
+            INSERT OR IGNORE INTO offices (id, name)
+            VALUES (?, ?)
+        """, (str(office_id), office_name))
+
+    pg_cursor.execute("SELECT idperson, idoccupation FROM data.person_occupation")
+    for person_id, office_id in pg_cursor.fetchall():
+        cursor.execute("""
+            INSERT OR IGNORE INTO person_offices (person_id, office_id)
+            VALUES (?, ?)
+        """, (str(person_id), str(office_id)))
 
     cursor.execute("COMMIT")
     conn.close()
