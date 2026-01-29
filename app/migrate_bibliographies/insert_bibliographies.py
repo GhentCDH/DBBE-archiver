@@ -1,0 +1,67 @@
+from ..common import get_db_connection, get_postgres_connection, get_es_client
+from .biblio_type_enum import BiblioType
+from collections import defaultdict
+
+def get_biblio_titles_from_es(biblio_ids, es):
+    index = "dbbe_dev_bibliographies"
+    titles = {}
+    CHUNK = 500
+
+    for i in range(0, len(biblio_ids), CHUNK):
+        chunk = biblio_ids[i:i+CHUNK]
+        res = es.mget(index=index, body={"ids": chunk})
+        for doc in res["docs"]:
+            if doc.get("found"):
+                src = doc["_source"]
+                titles[doc["_id"]] = {
+                    "title": src.get("title", ""),
+                    "title_sort_key": src.get("title_sort_key", "")
+                }
+            else:
+                titles[doc["_id"]] = {"title": "", "title_sort_key": ""}
+    return titles
+
+def insert_bibliographies():
+    conn, cursor = get_db_connection()
+    pg_conn, pg_cursor = get_postgres_connection()
+    es = get_es_client()
+
+    pg_cursor.execute("""
+        SELECT identity, 'article' AS bib_type FROM data.article
+        UNION ALL
+        SELECT identity, 'blog_post' FROM data.blog_post
+        UNION ALL
+        SELECT identity, 'book' FROM data.book
+        UNION ALL
+        SELECT identity, 'book_chapter' FROM data.bookchapter
+        UNION ALL
+        SELECT identity, 'online_source' FROM data.online_source
+        UNION ALL
+        SELECT identity, 'phd' FROM data.phd
+        UNION ALL
+        SELECT identity, 'bib_varia' FROM data.bib_varia
+    """)
+    rows = pg_cursor.fetchall()
+
+    biblio_ids = [str(r[0]) for r in rows]
+    titles_cache = get_biblio_titles_from_es(biblio_ids, es)
+
+    bib_rows_by_type = defaultdict(list)
+    for source_id, bib_type in rows:
+        title_data = titles_cache.get(str(source_id), {})
+        bib_rows_by_type[bib_type].append(
+            (str(source_id), title_data.get("title", ""), title_data.get("title_sort_key", ""))
+        )
+
+    cursor.execute("BEGIN")
+    for bib_type, insert_rows in bib_rows_by_type.items():
+        bib_type_enum = next((bt for bt in BiblioType if bt.value == bib_type), None)
+        if bib_type_enum:
+            cursor.executemany(
+                f"INSERT OR IGNORE INTO {bib_type_enum.value} (id, title, title_sort_key) VALUES (?, ?, ?)",
+                insert_rows
+            )
+    cursor.execute("COMMIT")
+
+    conn.close()
+    pg_conn.close()
