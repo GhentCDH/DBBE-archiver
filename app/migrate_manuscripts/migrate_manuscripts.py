@@ -24,7 +24,7 @@ def insert_library(cursor, library_id, name, location_id):
     cursor.execute("""
         INSERT OR IGNORE INTO libraries (id, name, location_id)
         VALUES (?, ?, ?)
-    """, (str(library_id), name, str(location_id) if location_id else None))
+    """, (int(library_id), name, int(location_id) if location_id else None))
 
 def create_manuscript_tables(cursor):
     manuscript_columns = [
@@ -44,9 +44,9 @@ def create_manuscript_tables(cursor):
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS manuscript_person_roles (
-        manuscript_id TEXT NOT NULL,
-        person_id TEXT NOT NULL,
-        role_id TEXT NOT NULL,
+        manuscript_id INTEGER NOT NULL,
+        person_id INTEGER NOT NULL,
+        role_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, person_id, role_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
@@ -56,8 +56,8 @@ def create_manuscript_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS manuscript_management (
-        manuscript_id TEXT NOT NULL,
-        management_id TEXT NOT NULL,
+        manuscript_id INTEGER NOT NULL,
+        management_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, management_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
         FOREIGN KEY (management_id) REFERENCES management(id)
@@ -66,8 +66,8 @@ def create_manuscript_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS manuscript_acknowledgement (
-        manuscript_id TEXT NOT NULL,
-        acknowledgement_id TEXT NOT NULL,
+        manuscript_id INTEGER NOT NULL,
+        acknowledgement_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, acknowledgement_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
         FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgements(id)
@@ -76,8 +76,8 @@ def create_manuscript_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS manuscript_content (
-        manuscript_id TEXT NOT NULL,
-        content_id TEXT NOT NULL,
+        manuscript_id INTEGER NOT NULL,
+        content_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, content_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
         FOREIGN KEY (content_id) REFERENCES content(id)
@@ -86,8 +86,8 @@ def create_manuscript_tables(cursor):
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS manuscript_identification (
-        manuscript_id TEXT NOT NULL,
-        identification_id TEXT NOT NULL,
+        manuscript_id INTEGER NOT NULL,
+        identification_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, identification_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
         FOREIGN KEY (identification_id) REFERENCES identifications(id)
@@ -96,8 +96,8 @@ def create_manuscript_tables(cursor):
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS manuscript_location (
-        manuscript_id TEXT NOT NULL,
-        origin_id TEXT NOT NULL,
+        manuscript_id INTEGER NOT NULL,
+        origin_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, origin_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
         FOREIGN KEY (origin_id) REFERENCES locations(id)
@@ -117,7 +117,7 @@ def get_region_hierarchy(pg_cursor, location_id):
         if not row:
             break
         identity, name, historical_name, parent_id = row
-        hierarchy.append((str(identity), name, historical_name, str(parent_id) if parent_id else None))
+        hierarchy.append((int(identity), name, historical_name, int(parent_id) if parent_id else None))
         current_id = parent_id
     return hierarchy[::-1]
 
@@ -186,7 +186,7 @@ def migrate_manuscript_content():
         cursor.execute("""
             INSERT OR IGNORE INTO content (id, name)
             VALUES (?, ?)
-        """, (str(idgenre), genre))
+        """, (int(idgenre), genre))
 
     for idgenre, idparentgenre, _ in rows:
         if idparentgenre is not None:
@@ -194,7 +194,7 @@ def migrate_manuscript_content():
                 UPDATE content
                 SET parent_id = ?
                 WHERE id = ?
-            """, (str(idparentgenre), str(idgenre)))
+            """, (int(idparentgenre), int(idgenre)))
 
     cursor.execute("COMMIT")
     cursor.execute("PRAGMA foreign_keys = ON")
@@ -222,7 +222,7 @@ def get_deepest_leaf_from_postgres(pg_cursor, content_ids):
 
     parents_in_list = set(row[1] for row in rows if row[1] is not None)
 
-    leaf_ids = [str(cid) for cid in content_ids if cid not in parents_in_list]
+    leaf_ids = [int(cid) for cid in content_ids if cid not in parents_in_list]
 
     return leaf_ids
 
@@ -251,7 +251,7 @@ def migrate_manuscripts():
     
     for hit in hits:
         source = hit['_source']
-        manuscript_id = str(source.get('id', hit['_id']))
+        manuscript_id = int(source.get('id', hit['_id']))
 
         cursor.execute("""
         INSERT INTO manuscripts (
@@ -290,7 +290,7 @@ def migrate_manuscripts():
                 persons = []
 
             for p in persons:
-                person_id = str(p.get('id', ''))
+                person_id = int(p.get('id', ''))
                 if person_id:
                     cursor.execute(
                         "INSERT INTO manuscript_person_roles (manuscript_id, person_id, role_id) VALUES (?, ?, ?)",
@@ -340,7 +340,7 @@ def migrate_manuscripts():
                 UPDATE manuscripts
                 SET library_id = ?
                 WHERE id = ?
-            """, (str(library_id), manuscript_id))
+            """, (int(library_id), manuscript_id))
 
 
 
@@ -363,16 +363,22 @@ def migrate_manuscripts():
             for identifier in source.get(es_field, []):
                 if not identifier:
                     continue
-                ident_id = str(uuid.uuid4())
                 cursor.execute(
-                    "INSERT OR IGNORE INTO identifications (id, type, identifier_value) VALUES (?, ?, ?)",
-                    (ident_id, ident_type, identifier)
+                    "INSERT OR IGNORE INTO identifications (type, identifier_value) VALUES (?, ?)",
+                    (ident_type, identifier)
                 )
+                ident_id = cursor.lastrowid
+                if ident_id == 0:
+                    cursor.execute(
+                        "SELECT id FROM identifications WHERE type = ? AND identifier_value = ?",
+                        (ident_type, identifier)
+                    )
+                    ident_id = cursor.fetchone()[0]
                 cursor.execute(
                     "INSERT OR IGNORE INTO manuscript_identification (manuscript_id, identification_id) VALUES (?, ?)",
                     (manuscript_id, ident_id)
                 )
-    
+
     cursor.execute("COMMIT")
     conn.close()
     

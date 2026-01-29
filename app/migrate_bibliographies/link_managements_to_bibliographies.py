@@ -1,10 +1,6 @@
 from ..common import get_db_connection, get_postgres_connection
 from .biblio_type_enum import BiblioType
 
-from ..common import get_db_connection, get_postgres_connection
-from .biblio_type_enum import BiblioType
-
-
 def migrate_managements():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
@@ -48,15 +44,18 @@ def migrate_managements():
         if not bib_type_enum:
             continue
 
-        doc_id = str(doc_id)
-        mgmt_id = str(mgmt_id)
+        doc_id = int(doc_id)
+        mgmt_id = int(mgmt_id)
 
         if mgmt_id not in sqlite_managements:
             pg_cursor.execute("SELECT id, name FROM data.management WHERE id = %s", (mgmt_id,))
             mgmt_row = pg_cursor.fetchone()
             if not mgmt_row:
                 continue
-            cursor.execute("INSERT INTO management (id, name) VALUES (?, ?)", (mgmt_row[0], mgmt_row[1]))
+            cursor.execute(
+                "INSERT INTO management (id, name) VALUES (?, ?)",
+                (mgmt_row[0], mgmt_row[1])
+            )
             sqlite_managements.add(mgmt_id)
 
         cursor.execute(

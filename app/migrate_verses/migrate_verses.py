@@ -4,12 +4,11 @@ from ..common import (
 
 def create_verse_tables(cursor):
 
-
     verse_columns = {
         "text": "TEXT",
-        "occurrence_id": "TEXT",
+        "occurrence_id": "INTEGER",
         "order_in_occurrence": "INTEGER",
-        "verse_group_id": "TEXT"
+        "verse_group_id": "INTEGER"
     }
     for col, col_type in verse_columns.items():
         add_column_if_missing(cursor, "verses", col, col_type)
@@ -38,13 +37,22 @@ def migrate_verses():
 
     for hit in hits:
         source = hit["_source"]
-        verse_id = str(source.get("id", hit["_id"]))
+        try:
+            verse_id = int(source.get("id", hit["_id"]))
+        except (TypeError, ValueError):
+            continue
+
         text = source.get("verse", "")
         order_in_occurrence = source.get("order", 0)
 
-        occurrence_id = str(source.get("occurrence", {}).get("id", ""))
+        occurrence_id = source.get("occurrence", {}).get("id")
+        if occurrence_id is not None:
+            try:
+                occurrence_id = int(occurrence_id)
+            except (TypeError, ValueError):
+                occurrence_id = None
 
-        if occurrence_id:
+        if occurrence_id is not None:
             cursor.execute(
                 "INSERT OR IGNORE INTO occurrences (id) VALUES (?)",
                 (occurrence_id,)
@@ -52,7 +60,11 @@ def migrate_verses():
 
         verse_group_id = source.get("group_id")
         if verse_group_id is not None:
-            verse_group_id = str(verse_group_id)
+            try:
+                verse_group_id = int(verse_group_id)
+            except (TypeError, ValueError):
+                verse_group_id = None
+
         cursor.execute("""
             INSERT OR IGNORE INTO verses (
                 id, text, occurrence_id, order_in_occurrence, verse_group_id

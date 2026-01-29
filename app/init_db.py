@@ -20,60 +20,60 @@ BIBLIO_ENTITY_TYPES = {
 def create_base_tables():
     conn, cursor = get_db_connection()
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS persons (id TEXT PRIMARY KEY)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS occurrences (id TEXT PRIMARY KEY)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS manuscripts (id TEXT PRIMARY KEY)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS persons (id INTEGER PRIMARY KEY)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS occurrences (id INTEGER PRIMARY KEY)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS manuscripts (id INTEGER PRIMARY KEY)")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS verses (
-        id TEXT PRIMARY KEY,
-        occurrence_id TEXT,
-        verse_group_id TEXT,
+        id INTEGER PRIMARY KEY,
+        occurrence_id INTEGER,
+        verse_group_id INTEGER,
         FOREIGN KEY (occurrence_id) REFERENCES occurrences(id)
     )
     """)
-    cursor.execute("CREATE TABLE IF NOT EXISTS types (id TEXT PRIMARY KEY)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS types (id INTEGER PRIMARY KEY)")
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS roles (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS management (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
     """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS acknowledgements (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
     """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS genres (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS metres (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS locations (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT,
         historical_name TEXT,
-        parent_id TEXT,
+        parent_id INTEGER,
         FOREIGN KEY(parent_id) REFERENCES locations(id)
     )
     """)
@@ -81,43 +81,43 @@ def create_base_tables():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS text_statuses (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS keyword (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tags (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS editorial_statuses (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
     
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS content (
-            id TEXT PRIMARY KEY,
-            parent_id TEXT REFERENCES content(id) ON DELETE CASCADE,
+            id INTEGER PRIMARY KEY,
+            parent_id INTEGER REFERENCES content(id) ON DELETE CASCADE,
             name TEXT
         );
     """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS identifications (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         type TEXT NOT NULL,
         identifier_value TEXT NOT NULL
     )
@@ -125,45 +125,43 @@ def create_base_tables():
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS self_designations (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
     """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS offices (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
     """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS libraries (
-            id TEXT PRIMARY KEY,
+            id INTEGER PRIMARY KEY,
             name TEXT,
-            location_id TEXT,
+            location_id INTEGER,
             FOREIGN KEY (location_id) REFERENCES locations(id)
         );
     """)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS collections (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
     """)
 
-    
-
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS occurrence_relation_definitions (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         definition TEXT NOT NULL UNIQUE
     )
     """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS type_relation_definitions (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         definition TEXT NOT NULL UNIQUE
     )
     """)
@@ -171,7 +169,7 @@ def create_base_tables():
         # Type-specific bibliography table
         cursor.execute(f"""
                CREATE TABLE IF NOT EXISTS {bib_type} (
-                   id TEXT PRIMARY KEY,
+                   id INTEGER PRIMARY KEY,
                    title TEXT,
                    title_sort_key TEXT
                )
@@ -180,9 +178,9 @@ def create_base_tables():
         # Type-specific roles table
         cursor.execute(f"""
                CREATE TABLE IF NOT EXISTS {bib_type}_person_roles (
-                   bibliography_id TEXT NOT NULL,
-                   person_id TEXT NOT NULL,
-                   role_id TEXT NOT NULL,
+                   bibliography_id INTEGER NOT NULL,
+                   person_id INTEGER NOT NULL,
+                   role_id INTEGER NOT NULL,
                    PRIMARY KEY (bibliography_id, person_id, role_id),
                    FOREIGN KEY (bibliography_id) REFERENCES {bib_type}(id),
                    FOREIGN KEY (person_id) REFERENCES persons(id),
@@ -190,11 +188,10 @@ def create_base_tables():
                )
            """)
 
-        # Type-specific management table
         cursor.execute(f"""
                CREATE TABLE IF NOT EXISTS {bib_type}_managements (
-                   bibliography_id TEXT NOT NULL,
-                   management_id TEXT NOT NULL,
+                   bibliography_id INTEGER NOT NULL,
+                   management_id INTEGER NOT NULL,
                    PRIMARY KEY (bibliography_id, management_id),
                    FOREIGN KEY (bibliography_id) REFERENCES {bib_type}(id),
                    FOREIGN KEY (management_id) REFERENCES management(id)
@@ -203,7 +200,7 @@ def create_base_tables():
 
         cursor.execute(f"""
               CREATE TABLE IF NOT EXISTS journal (
-                id TEXT PRIMARY KEY,
+                id INTEGER PRIMARY KEY,
                 title TEXT,
                 title_sort_key TEXT
             );
@@ -211,8 +208,8 @@ def create_base_tables():
 
         cursor.execute(f"""
             CREATE TABLE IF NOT EXISTS journal_issue (
-                id TEXT PRIMARY KEY,
-                journal_id TEXT NOT NULL,
+                id INTEGER PRIMARY KEY,
+                journal_id INTEGER NOT NULL,
                 title TEXT,
                 title_sort_key TEXT,
                 FOREIGN KEY (journal_id) REFERENCES journal(id)
@@ -221,8 +218,8 @@ def create_base_tables():
 
         cursor.execute(f"""
                CREATE TABLE IF NOT EXISTS {bib_type}_managements (
-                   bibliography_id TEXT NOT NULL,
-                   management_id TEXT NOT NULL,
+                   bibliography_id INTEGER NOT NULL,
+                   management_id INTEGER NOT NULL,
                    PRIMARY KEY (bibliography_id, management_id),
                    FOREIGN KEY (bibliography_id) REFERENCES {bib_type}(id),
                    FOREIGN KEY (management_id) REFERENCES management(id)
@@ -233,8 +230,8 @@ def create_base_tables():
         for entity, sqlite_table in BIBLIO_ENTITY_TYPES.items():
             cursor.execute(f"""
                    CREATE TABLE IF NOT EXISTS {entity}_{bib_type} (
-                       {entity}_id TEXT NOT NULL,
-                       {bib_type}_id TEXT NOT NULL,
+                       {entity}_id INTEGER NOT NULL,
+                       {bib_type}_id INTEGER NOT NULL,
                        page_start INTEGER,
                        page_end INTEGER,
                        url TEXT,
