@@ -4,35 +4,6 @@ from ..common import (
     insert_many_to_many, get_postgres_connection
 )
 
-def get_related_occurrences(occ_id, pg_cursor):
-    pg_cursor.execute("""
-        SELECT b.idoriginal_poem
-        FROM data.original_poem_verse a
-        INNER JOIN data.original_poem_verse b ON a.idgroup = b.idgroup
-        WHERE a.idoriginal_poem = %s AND b.idoriginal_poem <> a.idoriginal_poem
-        GROUP BY b.idoriginal_poem
-
-        UNION
-
-        SELECT fb.subject_identity
-        FROM data.factoid fa
-        INNER JOIN data.factoid_type fta ON fa.idfactoid_type = fta.idfactoid_type
-        INNER JOIN data.factoid fb ON fa.object_identity = fb.object_identity
-        INNER JOIN data.factoid_type ftb ON fb.idfactoid_type = ftb.idfactoid_type
-        WHERE fa.subject_identity = %s
-        AND fta.type = 'reconstruction of'
-        AND ftb.type = 'reconstruction of'
-        AND fb.subject_identity <> fa.subject_identity
-        AND fb.subject_identity NOT IN (
-            SELECT b.idoriginal_poem
-            FROM data.original_poem_verse a
-            INNER JOIN data.original_poem_verse b ON a.idgroup = b.idgroup
-            WHERE a.idoriginal_poem = %s
-            AND b.idoriginal_poem <> a.idoriginal_poem
-            GROUP BY b.idoriginal_poem
-        )
-    """, (occ_id, occ_id, occ_id))
-    return [row[0] for row in pg_cursor.fetchall()]
 
 def preload_related_occurrences(pg_cursor):
     pg_cursor.execute("""
@@ -244,7 +215,6 @@ def run_occurrence_migration():
                     )
 
 
-        # related_ids = get_related_occurrences(occ_id, pg_cursor)
         related_ids = related_occurrence_map.get(occ_id, [])
         if related_ids:
             related_rows = [(occ_id, rid, '0') for rid in related_ids]
