@@ -4,6 +4,16 @@ def migrate_journals():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
 
+    cursor.execute("""
+        PRAGMA table_info(article)
+    """)
+    columns = [row[1] for row in cursor.fetchall()]  # column names
+    if "journal_issue_id" not in columns:
+        cursor.execute("""
+            ALTER TABLE article
+            ADD COLUMN journal_issue_id INTEGER REFERENCES journal_issue(id)
+        """)
+
     pg_cursor.execute("""
         SELECT j.identity AS journal_id,
                dt.title AS journal_title
