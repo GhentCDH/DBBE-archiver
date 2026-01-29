@@ -1,16 +1,33 @@
 # app/migrate_bibliographies/insert_main_bibliographies.py
-from ..common import get_db_connection, get_postgres_connection
+from ..common import get_db_connection, get_postgres_connection, get_es_client
 from .biblio_type_enum import BiblioType
 from .biblio_entity_enum import BiblioEntity
 import sqlite3
 
-# Map Postgres entity type strings → BiblioEntity enum
 POSTGRES_TYPE_TO_ENTITY = {
     "manuscript": BiblioEntity.MANUSCRIPT,
     "occurrence": BiblioEntity.OCCURRENCE,
     "type": BiblioEntity.TYPE,
     "person": BiblioEntity.PERSON,
 }
+
+def get_biblio_titles_from_es(biblio_ids, es):
+    index = "dbbe_dev_bibliographies"  # adjust to your ES index
+    titles = {}
+
+    for bid in biblio_ids:
+        try:
+            doc = es.get(index=index, id=bid)
+            source = doc['_source']
+            titles[bid] = {
+                "title": source.get("title", ""),
+                "title_sort_key": source.get("title_sort_key", "")
+            }
+        except Exception:
+            titles[bid] = {"title": "", "title_sort_key": ""}
+
+    return titles
+
 
 def migrate_main_bibliographies():
     conn, cursor = get_db_connection()
@@ -32,13 +49,23 @@ def migrate_main_bibliographies():
         SELECT identity, 'bib_varia' FROM data.bib_varia
     """)
 
+    es = get_es_client()
+    rows = pg_cursor.fetchall()  # fetch once
 
-    for source_id, bib_type in pg_cursor.fetchall():
+    # Build biblio IDs for Elasticsearch
+    biblio_ids = [str(row[0]) for row in rows]
+    titles_cache = get_biblio_titles_from_es(biblio_ids, es)
+
+    for source_id, bib_type in rows:
         bib_type_enum = next((bt for bt in BiblioType if bt.value == bib_type), None)
         if bib_type_enum:
+            title_data = titles_cache.get(str(source_id), {})
+            title = title_data.get("title", "")
+            title_sort = title_data.get("title_sort_key", "")
+
             cursor.execute(
-                f"INSERT OR IGNORE INTO {bib_type_enum.value} (id) VALUES (?)",
-                (str(source_id),)
+                f"INSERT OR IGNORE INTO {bib_type_enum.value} (id, title, title_sort_key) VALUES (?, ?, ?)",
+                (str(source_id), title, title_sort)
             )
 
     pg_cursor.execute("""
