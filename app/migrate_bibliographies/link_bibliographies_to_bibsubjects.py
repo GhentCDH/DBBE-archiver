@@ -9,7 +9,7 @@ POSTGRES_TYPE_TO_ENTITY = {
     "person": BiblioEntity.PERSON,
 }
 
-def migrate_biblio_references():
+def link_bibliographies_to_bibsubjects():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
 
@@ -25,7 +25,10 @@ def migrate_biblio_references():
                 tr.type::text
             ) AS entity_type,
             r.page_start,
-            r.page_end
+            r.page_end,
+            r.url,
+            r.image,
+            r.private_comment
         FROM data.reference r
         LEFT JOIN (SELECT identity AS entity_id, 'manuscript' AS type FROM data.manuscript) m
             ON r.idtarget = m.entity_id
@@ -59,7 +62,7 @@ def migrate_biblio_references():
     BIB_TYPE_ENUM_MAP = {bt.value: bt for bt in BiblioType}
 
     cursor.execute("BEGIN")
-    for biblio_id, entity_id, entity_type_str, page_start, page_end in rows:
+    for biblio_id, entity_id, entity_type_str, page_start, page_end, url, image, private_comment in rows:
         if not entity_type_str:
             continue
         entity_enum = POSTGRES_TYPE_TO_ENTITY.get(entity_type_str)
@@ -77,8 +80,8 @@ def migrate_biblio_references():
         bib_col = f"{bib_type_enum.value}_id"
 
         cursor.execute(
-            f"INSERT OR IGNORE INTO {join_table} ({entity_col}, {bib_col}, page_start, page_end) VALUES (?, ?, ?, ?)",
-            (str(entity_id), str(biblio_id), page_start, page_end)
+            f"INSERT OR IGNORE INTO {join_table} ({entity_col}, {bib_col}, page_start, page_end,url, image, private_comment) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (str(entity_id), str(biblio_id), page_start, page_end, url, image, private_comment)
         )
     cursor.execute("COMMIT")
     conn.close()

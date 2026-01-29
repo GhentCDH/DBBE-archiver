@@ -8,12 +8,11 @@ from .link_articles_to_journals import migrate_journals
 from .cleanup import cleanup_bibliographies
 from .link_persons_to_bibliographies import migrate_person_roles
 from .insert_bibliographies import insert_bibliographies
-from .insert_bibliography_references import migrate_biblio_references
+from .link_bibliographies_to_bibsubjects import link_bibliographies_to_bibsubjects
 def migrate_bibliographies():
     create_schema()
-    # migrate_main_bibliographies()
     insert_bibliographies()
-    migrate_biblio_references()
+    link_bibliographies_to_bibsubjects()
     migrate_book_chapters()
     migrate_journals()
     migrate_person_roles()
