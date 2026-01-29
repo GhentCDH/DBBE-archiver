@@ -237,10 +237,9 @@ def create_base_tables():
                        {bib_type}_id TEXT NOT NULL,
                        page_start INTEGER,
                        page_end INTEGER,
-                       raw_pages TEXT,
-                       rel_url TEXT,
-                       source_remark TEXT,
+                       url TEXT,
                        image TEXT,
+                       private_comment TEXT,
                        PRIMARY KEY ({entity}_id, {bib_type}_id),
                        FOREIGN KEY ({entity}_id) REFERENCES {sqlite_table}(id),
                        FOREIGN KEY ({bib_type}_id) REFERENCES {bib_type}(id)
