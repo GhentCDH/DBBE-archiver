@@ -22,7 +22,23 @@ def create_base_tables():
 
     cursor.execute("CREATE TABLE IF NOT EXISTS persons (id INTEGER PRIMARY KEY)")
     cursor.execute("CREATE TABLE IF NOT EXISTS occurrences (id INTEGER PRIMARY KEY)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS manuscripts (id INTEGER PRIMARY KEY)")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS manuscripts (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        date_floor_year INTEGER,
+        date_ceiling_year INTEGER,
+        created TEXT,
+        modified TEXT,
+        number_of_occurrences INTEGER,
+        shelf TEXT,
+        library_id INTEGER,
+        collection_id INTEGER,
+        FOREIGN KEY (library_id) REFERENCES libraries(id),
+        FOREIGN KEY (collection_id) REFERENCES collections(id)
+    )
+    """)
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS verses (
         id INTEGER PRIMARY KEY,

@@ -35,7 +35,7 @@ def create_manuscript_tables(cursor):
         ("modified", "TEXT"),
         ("number_of_occurrences", "INTEGER"),
         ("shelf", "TEXT"),
-        ("library_id", "TEXT"),
+        ("library_id", "INTEGER"),
         ("collection_id", "INTEGER")
     ]
     
