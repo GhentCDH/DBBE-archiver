@@ -1,10 +1,10 @@
 import uuid
 
-from ..common import (
-    get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-    add_column_if_missing, get_or_create_role, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, insert_many_to_one,
-    get_postgres_connection
-)
+from ..common import (execute_with_normalization,
+                      get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
+                      add_column_if_missing, get_or_create_role, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, insert_many_to_one,
+                      get_postgres_connection
+                      )
 
 def get_library_for_manuscript(pg_cursor, manuscript_id):
     pg_cursor.execute("""
@@ -21,7 +21,7 @@ def get_library_for_manuscript(pg_cursor, manuscript_id):
     return pg_cursor.fetchone()
 
 def insert_library(cursor, library_id, name, location_id):
-    cursor.execute("""
+    execute_with_normalization(cursor, """
         INSERT OR IGNORE INTO libraries (id, name, location_id)
         VALUES (?, ?, ?)
     """, (int(library_id), name, int(location_id) if location_id else None))
@@ -42,7 +42,7 @@ def create_manuscript_tables(cursor):
     for col, col_type in manuscript_columns:
         add_column_if_missing(cursor, "manuscripts", col, col_type)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS manuscript_person_roles (
         manuscript_id INTEGER NOT NULL,
         person_id INTEGER NOT NULL,
@@ -54,7 +54,7 @@ def create_manuscript_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS manuscript_management (
         manuscript_id INTEGER NOT NULL,
         management_id INTEGER NOT NULL,
@@ -64,7 +64,7 @@ def create_manuscript_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS manuscript_acknowledgement (
         manuscript_id INTEGER NOT NULL,
         acknowledgement_id INTEGER NOT NULL,
@@ -74,7 +74,7 @@ def create_manuscript_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS manuscript_content (
         manuscript_id INTEGER NOT NULL,
         content_id INTEGER NOT NULL,
@@ -84,7 +84,7 @@ def create_manuscript_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS manuscript_identification (
         manuscript_id INTEGER NOT NULL,
         identification_id INTEGER NOT NULL,
@@ -94,7 +94,7 @@ def create_manuscript_tables(cursor):
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS manuscript_location (
         manuscript_id INTEGER NOT NULL,
         origin_id INTEGER NOT NULL,
@@ -124,7 +124,7 @@ def get_region_hierarchy(pg_cursor, location_id):
 def insert_location_hierarchy(cursor, hierarchy):
     leaf_id = None
     for location_id, name, historical_name, parent_id in hierarchy:
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO locations (id, name, historical_name, parent_id)
             VALUES (?, ?, ?, ?)
         """, (location_id, name, historical_name, parent_id))
@@ -158,7 +158,7 @@ def link_manuscript_to_locations(cursor, manuscript_id, pg_cursor):
         leaf_id = insert_location_hierarchy(cursor, hierarchy)
 
         if leaf_id:
-            cursor.execute("""
+            execute_with_normalization(cursor, """
                 INSERT OR IGNORE INTO manuscript_location(manuscript_id, origin_id)
                 VALUES (?, ?)
             """, (manuscript_id, leaf_id))
@@ -168,7 +168,7 @@ def migrate_manuscript_content():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
 
-    cursor.execute("PRAGMA foreign_keys = OFF")
+    execute_with_normalization(cursor, "PRAGMA foreign_keys = OFF")
     print("Foreign key constraints disabled for content migration")
 
     pg_cursor.execute("""
@@ -180,24 +180,24 @@ def migrate_manuscript_content():
     rows = pg_cursor.fetchall()
     print(f"Fetched {len(rows)} content nodes from Postgres (is_content=True)")
 
-    cursor.execute("BEGIN")
+    execute_with_normalization(cursor, "BEGIN")
 
     for idgenre, _, genre in rows:
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO content (id, name)
             VALUES (?, ?)
         """, (int(idgenre), genre))
 
     for idgenre, idparentgenre, _ in rows:
         if idparentgenre is not None:
-            cursor.execute("""
+            execute_with_normalization(cursor, """
                 UPDATE content
                 SET parent_id = ?
                 WHERE id = ?
             """, (int(idparentgenre), int(idgenre)))
 
-    cursor.execute("COMMIT")
-    cursor.execute("PRAGMA foreign_keys = ON")
+    execute_with_normalization(cursor, "COMMIT")
+    execute_with_normalization(cursor, "PRAGMA foreign_keys = ON")
     print("Foreign key constraints re-enabled")
 
     conn.close()
@@ -247,13 +247,13 @@ def migrate_manuscripts():
     hits = scroll_all(es, manuscript_index)
     print(f"Total manuscripts fetched: {len(hits)}")
     
-    cursor.execute("BEGIN")
+    execute_with_normalization(cursor, "BEGIN")
     
     for hit in hits:
         source = hit['_source']
         manuscript_id = int(source.get('id', hit['_id']))
 
-        cursor.execute("""
+        execute_with_normalization(cursor, """
         INSERT INTO manuscripts (
             id, name, date_floor_year, date_ceiling_year,
             created, modified, number_of_occurrences, shelf
@@ -292,10 +292,10 @@ def migrate_manuscripts():
             for p in persons:
                 person_id = int(p.get('id', ''))
                 if person_id:
-                    cursor.execute(
+                    execute_with_normalization(cursor,
                         "INSERT INTO manuscript_person_roles (manuscript_id, person_id, role_id) VALUES (?, ?, ?)",
-                        (manuscript_id, person_id, role_id)
-                    )
+                                               (manuscript_id, person_id, role_id)
+                                               )
 
         link_manuscript_to_locations(cursor, manuscript_id, pg_cursor)
 
@@ -336,7 +336,7 @@ def migrate_manuscripts():
                 insert_location_hierarchy(cursor, hierarchy)
 
             insert_library(cursor, library_id, library_name, location_id)
-            cursor.execute("""
+            execute_with_normalization(cursor, """
                 UPDATE manuscripts
                 SET library_id = ?
                 WHERE id = ?
@@ -354,7 +354,7 @@ def migrate_manuscripts():
         leaf_ids = get_deepest_leaf_from_postgres(pg_cursor, content_ids)
 
         for leaf_id in leaf_ids:
-            cursor.execute("""
+            execute_with_normalization(cursor, """
                 INSERT OR IGNORE INTO manuscript_content (manuscript_id, content_id)
                 VALUES (?, ?)
             """, (manuscript_id, leaf_id))
@@ -363,23 +363,23 @@ def migrate_manuscripts():
             for identifier in source.get(es_field, []):
                 if not identifier:
                     continue
-                cursor.execute(
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO identifications (type, identifier_value) VALUES (?, ?)",
-                    (ident_type, identifier)
-                )
+                                           (ident_type, identifier)
+                                           )
                 ident_id = cursor.lastrowid
                 if ident_id == 0:
-                    cursor.execute(
+                    execute_with_normalization(cursor,
                         "SELECT id FROM identifications WHERE type = ? AND identifier_value = ?",
-                        (ident_type, identifier)
-                    )
+                                               (ident_type, identifier)
+                                               )
                     ident_id = cursor.fetchone()[0]
-                cursor.execute(
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO manuscript_identification (manuscript_id, identification_id) VALUES (?, ?)",
-                    (manuscript_id, ident_id)
-                )
+                                           (manuscript_id, ident_id)
+                                           )
 
-    cursor.execute("COMMIT")
+    execute_with_normalization(cursor, "COMMIT")
     conn.close()
     
     print(f"Manuscripts migration completed: {len(hits)} manuscripts inserted")

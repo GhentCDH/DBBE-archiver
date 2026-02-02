@@ -1,8 +1,7 @@
 
 import uuid
-from ..common import (
-    get_db_connection, get_postgres_connection
-)
+from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
+
 
 def parse_fuzzy_date(fd):
     if not fd:
@@ -37,7 +36,7 @@ def get_location_hierarchy_and_leaf(cursor, pg_cursor, location_id):
 
     leaf_id = None
     for loc_id, name, hist_name, parent_id in reversed(hierarchy):
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO locations (id, name, historical_name, parent_id)
             VALUES (?, ?, ?, ?)
         """, (loc_id, name, hist_name, parent_id))
@@ -93,7 +92,7 @@ def run_person_migration():
                 raise ValueError(f"Person {pid} has multiple origination locations in Postgres!")
             person_locations[pid] = loc_id
 
-    cursor.execute("BEGIN")
+    execute_with_normalization(cursor, "BEGIN")
     for row in rows:
         (
             person_id,
@@ -113,7 +112,7 @@ def run_person_migration():
         born_floor, born_ceiling = parse_fuzzy_date(born_date)
         death_floor, death_ceiling = parse_fuzzy_date(death_date)
 
-        cursor.execute("""
+        execute_with_normalization(cursor, """
         INSERT INTO persons (
             id, first_name, last_name,
             born_date_floor_year, born_date_ceiling_year,
@@ -153,7 +152,7 @@ def run_person_migration():
             if row_region and row_region[0]:
                 region_id = row_region[0]
                 leaf_id = get_location_hierarchy_and_leaf(cursor, pg_cursor, region_id)
-                cursor.execute("""
+                execute_with_normalization(cursor, """
                     UPDATE persons
                     SET location_id = ?
                     WHERE id = ?
@@ -161,32 +160,32 @@ def run_person_migration():
 
     pg_cursor.execute("SELECT id, name FROM data.self_designation")
     for sd_id, sd_name in pg_cursor.fetchall():
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO self_designations (id, name)
             VALUES (?, ?)
         """, (str(sd_id), sd_name))
 
     pg_cursor.execute("SELECT idperson, idself_designation FROM data.person_self_designation")
     for person_id, sd_id in pg_cursor.fetchall():
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO person_self_designations (person_id, self_designation_id)
             VALUES (?, ?)
         """, (str(person_id), str(sd_id)))
 
     pg_cursor.execute("SELECT idoccupation, occupation FROM data.occupation")
     for office_id, office_name in pg_cursor.fetchall():
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO offices (id, name)
             VALUES (?, ?)
         """, (str(office_id), office_name))
 
     pg_cursor.execute("SELECT idperson, idoccupation FROM data.person_occupation")
     for person_id, office_id in pg_cursor.fetchall():
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO person_offices (person_id, office_id)
             VALUES (?, ?)
         """, (str(person_id), str(office_id)))
 
-    cursor.execute("COMMIT")
+    execute_with_normalization(cursor, "COMMIT")
     conn.close()
     pg_conn.close()

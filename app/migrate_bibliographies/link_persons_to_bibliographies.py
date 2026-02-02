@@ -1,13 +1,13 @@
 # app/migrate_bibliographies/link_persons_to_bibliographies.py
 import sqlite3
-from ..common import get_db_connection, get_postgres_connection
+from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
 from .biblio_type_enum import BiblioType
 
 def exists(cursor, table, id_):
-    cursor.execute(
+    execute_with_normalization(cursor,
         f"SELECT 1 FROM {table} WHERE id = ? LIMIT 1",
-        (id_,)
-    )
+                               (id_,)
+                               )
     return cursor.fetchone() is not None
 
 
@@ -63,14 +63,14 @@ def migrate_person_roles():
         role_id = str(role_id)
 
         try:
-            cursor.execute(
+            execute_with_normalization(cursor,
                 f"""
                 INSERT INTO {bib_type_enum.value}_person_roles
                     (bibliography_id, person_id, role_id)
                 VALUES (?, ?, ?)
                 """,
-                (bib_id, person_id, role_id)
-            )
+                                       (bib_id, person_id, role_id)
+                                       )
         except sqlite3.IntegrityError as e:
             print(
                 "FK ERROR:",
@@ -81,14 +81,14 @@ def migrate_person_roles():
                 e
             )
 
-        cursor.execute(
+        execute_with_normalization(cursor,
             f"""
             INSERT OR IGNORE INTO {bib_type_enum.value}_person_roles
                 (bibliography_id, person_id, role_id)
             VALUES (?, ?, ?)
             """,
-            (str(doc_id), str(person_id), str(role_id))
-        )
+                                   (str(doc_id), str(person_id), str(role_id))
+                                   )
 
     conn.commit()
     conn.close()

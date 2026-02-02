@@ -1,4 +1,4 @@
-from .common import MAIN_DB_PATH, get_db_connection
+from .common import MAIN_DB_PATH, get_db_connection, execute_with_normalization
 
 BIBLIO_TYPES = {
     "article",
@@ -20,9 +20,9 @@ BIBLIO_ENTITY_TYPES = {
 def create_base_tables():
     conn, cursor = get_db_connection()
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS persons (id INTEGER PRIMARY KEY)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS occurrences (id INTEGER PRIMARY KEY)")
-    cursor.execute("""
+    execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS persons (id INTEGER PRIMARY KEY)")
+    execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS occurrences (id INTEGER PRIMARY KEY)")
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS manuscripts (
         id INTEGER PRIMARY KEY,
         name TEXT,
@@ -39,7 +39,7 @@ def create_base_tables():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS verses (
         id INTEGER PRIMARY KEY,
         occurrence_id INTEGER,
@@ -47,44 +47,44 @@ def create_base_tables():
         FOREIGN KEY (occurrence_id) REFERENCES occurrences(id)
     )
     """)
-    cursor.execute("CREATE TABLE IF NOT EXISTS types (id INTEGER PRIMARY KEY)")
+    execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS types (id INTEGER PRIMARY KEY)")
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS roles (
         id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS management (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS acknowledgements (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS genres (
         id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS metres (
         id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS locations (
         id INTEGER PRIMARY KEY,
         name TEXT,
@@ -95,35 +95,35 @@ def create_base_tables():
     """)
 
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS text_statuses (
         id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS keyword (
         id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS tags (
         id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS editorial_statuses (
         id INTEGER PRIMARY KEY,
         name TEXT
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
         CREATE TABLE IF NOT EXISTS content (
             id INTEGER PRIMARY KEY,
             parent_id INTEGER REFERENCES content(id) ON DELETE CASCADE,
@@ -131,7 +131,7 @@ def create_base_tables():
         );
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS identifications (
         id INTEGER PRIMARY KEY,
         type TEXT NOT NULL,
@@ -139,21 +139,21 @@ def create_base_tables():
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS self_designations (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS offices (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
         CREATE TABLE IF NOT EXISTS libraries (
             id INTEGER PRIMARY KEY,
             name TEXT,
@@ -161,21 +161,21 @@ def create_base_tables():
             FOREIGN KEY (location_id) REFERENCES locations(id)
         );
     """)
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS collections (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS occurrence_relation_definitions (
         id INTEGER PRIMARY KEY,
         definition TEXT NOT NULL UNIQUE
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_relation_definitions (
         id INTEGER PRIMARY KEY,
         definition TEXT NOT NULL UNIQUE
@@ -183,7 +183,7 @@ def create_base_tables():
     """)
     for bib_type in BIBLIO_TYPES:
         # Type-specific bibliography table
-        cursor.execute(f"""
+        execute_with_normalization(cursor, f"""
                CREATE TABLE IF NOT EXISTS {bib_type} (
                    id INTEGER PRIMARY KEY,
                    title TEXT,
@@ -192,7 +192,7 @@ def create_base_tables():
            """)
 
         # Type-specific roles table
-        cursor.execute(f"""
+        execute_with_normalization(cursor, f"""
                CREATE TABLE IF NOT EXISTS {bib_type}_person_roles (
                    bibliography_id INTEGER NOT NULL,
                    person_id INTEGER NOT NULL,
@@ -204,7 +204,7 @@ def create_base_tables():
                )
            """)
 
-        cursor.execute(f"""
+        execute_with_normalization(cursor, f"""
                CREATE TABLE IF NOT EXISTS {bib_type}_managements (
                    bibliography_id INTEGER NOT NULL,
                    management_id INTEGER NOT NULL,
@@ -214,7 +214,7 @@ def create_base_tables():
                )
            """)
 
-        cursor.execute(f"""
+        execute_with_normalization(cursor, f"""
               CREATE TABLE IF NOT EXISTS journal (
                 id INTEGER PRIMARY KEY,
                 title TEXT,
@@ -222,7 +222,7 @@ def create_base_tables():
             );
            """)
 
-        cursor.execute(f"""
+        execute_with_normalization(cursor, f"""
             CREATE TABLE IF NOT EXISTS journal_issue (
                 id INTEGER PRIMARY KEY,
                 journal_id INTEGER NOT NULL,
@@ -232,7 +232,7 @@ def create_base_tables():
             );
            """)
 
-        cursor.execute(f"""
+        execute_with_normalization(cursor, f"""
                CREATE TABLE IF NOT EXISTS {bib_type}_managements (
                    bibliography_id INTEGER NOT NULL,
                    management_id INTEGER NOT NULL,
@@ -243,7 +243,7 @@ def create_base_tables():
            """)
 
         for entity, sqlite_table in BIBLIO_ENTITY_TYPES.items():
-            cursor.execute(f"""
+            execute_with_normalization(cursor, f"""
                    CREATE TABLE IF NOT EXISTS {entity}_{bib_type} (
                        {entity}_id INTEGER NOT NULL,
                        {bib_type}_id INTEGER NOT NULL,

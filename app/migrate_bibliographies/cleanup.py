@@ -1,5 +1,5 @@
 # app/migrate_bibliographies/cleanup.py
-from ..common import get_db_connection
+from ..common import execute_with_normalization, get_db_connection
 from .biblio_type_enum import BiblioType  # assuming enums are in the same folder
 from .biblio_entity_enum import BiblioEntity
 
@@ -11,12 +11,12 @@ def drop_all_null_columns(cursor):
         for bib_type in BiblioType:
             table = f"{entity.name.lower()}_{bib_type.value}"
 
-            cursor.execute(f"PRAGMA table_info({table})")
+            execute_with_normalization(cursor, f"PRAGMA table_info({table})")
             columns_in_table = [row[1] for row in cursor.fetchall()]
             cols_to_check = [col for col in OPTIONAL_COLUMNS if col in columns_in_table]
 
             for col in cols_to_check:
-                cursor.execute(f"SELECT COUNT(1) FROM {table} WHERE {col} IS NOT NULL")
+                execute_with_normalization(cursor, f"SELECT COUNT(1) FROM {table} WHERE {col} IS NOT NULL")
                 non_null_count = cursor.fetchone()[0]
 
                 if non_null_count == 0:
@@ -28,11 +28,11 @@ def drop_all_null_columns(cursor):
                     )
                     tmp_table = f"{table}_tmp"
 
-                    cursor.execute(f"CREATE TABLE {tmp_table} ({col_defs}, PRIMARY KEY ({entity.name.lower()}_id, {bib_type.value}_id))")
+                    execute_with_normalization(cursor, f"CREATE TABLE {tmp_table} ({col_defs}, PRIMARY KEY ({entity.name.lower()}_id, {bib_type.value}_id))")
                     cols_csv = ", ".join(remaining_cols)
-                    cursor.execute(f"INSERT INTO {tmp_table} ({cols_csv}) SELECT {cols_csv} FROM {table}")
-                    cursor.execute(f"DROP TABLE {table}")
-                    cursor.execute(f"ALTER TABLE {tmp_table} RENAME TO {table}")
+                    execute_with_normalization(cursor, f"INSERT INTO {tmp_table} ({cols_csv}) SELECT {cols_csv} FROM {table}")
+                    execute_with_normalization(cursor, f"DROP TABLE {table}")
+                    execute_with_normalization(cursor, f"ALTER TABLE {tmp_table} RENAME TO {table}")
 
                     columns_in_table = remaining_cols
 

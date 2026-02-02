@@ -1,4 +1,4 @@
-from ..common import get_db_connection, get_postgres_connection, get_es_client
+from ..common import execute_with_normalization, get_db_connection, get_postgres_connection, get_es_client
 from .biblio_type_enum import BiblioType
 from collections import defaultdict
 
@@ -53,7 +53,7 @@ def insert_bibliographies():
             (str(source_id), title_data.get("title", ""), title_data.get("title_sort_key", ""))
         )
 
-    cursor.execute("BEGIN")
+    execute_with_normalization(cursor, "BEGIN")
     for bib_type, insert_rows in bib_rows_by_type.items():
         bib_type_enum = next((bt for bt in BiblioType if bt.value == bib_type), None)
         if bib_type_enum:
@@ -61,7 +61,7 @@ def insert_bibliographies():
                 f"INSERT OR IGNORE INTO {bib_type_enum.value} (id, title, title_sort_key) VALUES (?, ?, ?)",
                 insert_rows
             )
-    cursor.execute("COMMIT")
+    execute_with_normalization(cursor, "COMMIT")
 
     conn.close()
     pg_conn.close()

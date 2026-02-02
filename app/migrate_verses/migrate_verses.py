@@ -1,6 +1,6 @@
-from ..common import (
-    get_db_connection, get_es_client, scroll_all, get_dbbe_indices, add_column_if_missing
-)
+from ..common import (execute_with_normalization,
+                      get_db_connection, get_es_client, scroll_all, get_dbbe_indices, add_column_if_missing, execute_with_normalization
+                      )
 
 def create_verse_tables(cursor):
 
@@ -18,7 +18,7 @@ def migrate_verses():
     conn, cursor = get_db_connection()
     create_verse_tables(cursor)
 
-    cursor.execute("PRAGMA foreign_keys = ON;")
+    execute_with_normalization(cursor, "PRAGMA foreign_keys = ON;")
 
     indices = get_dbbe_indices(es)
     verse_index = next((idx for idx in indices if idx.endswith("verses")), None)
@@ -32,7 +32,7 @@ def migrate_verses():
     hits = scroll_all(es, verse_index)
     print(f"Total verses fetched: {len(hits)}")
 
-    cursor.execute("BEGIN TRANSACTION")
+    execute_with_normalization(cursor, "BEGIN TRANSACTION")
     batch_count = 0
 
     for hit in hits:
@@ -53,10 +53,10 @@ def migrate_verses():
                 occurrence_id = None
 
         if occurrence_id is not None:
-            cursor.execute(
+            execute_with_normalization(cursor,
                 "INSERT OR IGNORE INTO occurrences (id) VALUES (?)",
-                (occurrence_id,)
-            )
+                                       (occurrence_id,)
+                                       )
 
         verse_group_id = source.get("group_id")
         if verse_group_id is not None:
@@ -65,7 +65,7 @@ def migrate_verses():
             except (TypeError, ValueError):
                 verse_group_id = None
 
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO verses (
                 id, text, occurrence_id, order_in_occurrence, verse_group_id
             ) VALUES (?, ?, ?, ?, ?)
@@ -73,10 +73,10 @@ def migrate_verses():
 
         batch_count += 1
         if batch_count % 1000 == 0:
-            cursor.execute("COMMIT")
-            cursor.execute("BEGIN TRANSACTION")
+            execute_with_normalization(cursor, "COMMIT")
+            execute_with_normalization(cursor, "BEGIN TRANSACTION")
 
-    cursor.execute("COMMIT")
+    execute_with_normalization(cursor, "COMMIT")
     conn.close()
     print(f"Verse migration completed: {batch_count} verses inserted")
 

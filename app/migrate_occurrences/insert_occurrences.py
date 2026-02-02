@@ -1,8 +1,8 @@
-from ..common import (
-    get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-     get_role_id, ROLE_FIELD_TO_ROLE_NAME,
-    insert_many_to_many, get_postgres_connection
-)
+from ..common import (execute_with_normalization,
+                      get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
+                      get_role_id, ROLE_FIELD_TO_ROLE_NAME,
+                      insert_many_to_many, get_postgres_connection
+                      )
 
 
 def preload_related_occurrences(pg_cursor):
@@ -54,7 +54,7 @@ def run_occurrence_migration():
     pg_conn, pg_cursor = get_postgres_connection()
     related_occurrence_map = preload_related_occurrences(pg_cursor)
 
-    cursor.execute("PRAGMA foreign_keys = OFF")
+    execute_with_normalization(cursor, "PRAGMA foreign_keys = OFF")
     print("Foreign key constraints disabled for migration")
 
     indices = get_dbbe_indices(es)
@@ -62,7 +62,7 @@ def run_occurrence_migration():
 
     if not occ_index:
         print("No occurrence index found")
-        cursor.execute("PRAGMA foreign_keys = ON")
+        execute_with_normalization(cursor, "PRAGMA foreign_keys = ON")
         conn.close()
         return
 
@@ -70,7 +70,7 @@ def run_occurrence_migration():
     hits = scroll_all(es, occ_index, size=500)
     print(f"Total occurrences fetched: {len(hits)}")
 
-    cursor.execute("BEGIN")
+    execute_with_normalization(cursor, "BEGIN")
     batch_count = 0
 
     pg_cursor.execute("""
@@ -85,12 +85,12 @@ def run_occurrence_migration():
         occ_id = str(source.get('id', hit['_id']))
         manuscript_id = str(source.get('manuscript', {}).get('id', ''))
 
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO occurrences (id)
             VALUES (?)
         """, (occ_id,))
 
-        cursor.execute("""
+        execute_with_normalization(cursor, """
         UPDATE occurrences SET
             created=?, modified=?, public_comment=?, private_comment=?,
             is_dbbe=?, incipit=?, text_stemmer=?, text_original=?,
@@ -131,10 +131,10 @@ def run_occurrence_migration():
             keyword_name = keyword_cache.get(subject_id)
             if not keyword_name:
                 continue
-            cursor.execute(
+            execute_with_normalization(cursor,
                 "INSERT OR IGNORE INTO keyword (id, name) VALUES (?, ?)",
-                (subject_id, keyword_name)
-            )
+                                       (subject_id, keyword_name)
+                                       )
             occ_keyword_rows.append((occ_id, subject_id))
 
         if occ_keyword_rows:
@@ -187,13 +187,13 @@ def run_occurrence_migration():
             ts_id = str(ts.get('id', ''))
             ts_name = ts.get('name', '')
             if ts_id:
-                cursor.execute(
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO text_statuses (id, name) VALUES (?, ?)",
-                    (ts_id, ts_name)
-                )
-                cursor.execute(
+                                           (ts_id, ts_name)
+                                           )
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO occurrence_text_statuses (occurrence_id, text_status_id) VALUES (?, ?)",
-                    (occ_id, ts_id))
+                                           (occ_id, ts_id))
 
         for role_field, role_name_in_table in ROLE_FIELD_TO_ROLE_NAME.items():
             role_id = get_role_id(cursor, role_name_in_table)
@@ -209,10 +209,10 @@ def run_occurrence_migration():
             for p in persons:
                 person_id = str(p.get('id', ''))
                 if person_id:
-                    cursor.execute(
+                    execute_with_normalization(cursor,
                         "INSERT OR IGNORE INTO occurrence_person_roles (occurrence_id, person_id, role_id) VALUES (?, ?, ?)",
-                        (occ_id, person_id, role_id)
-                    )
+                                               (occ_id, person_id, role_id)
+                                               )
 
 
         related_ids = related_occurrence_map.get(occ_id, [])
@@ -226,13 +226,13 @@ def run_occurrence_migration():
 
         batch_count += 1
         if batch_count % 1000 == 0:
-            cursor.execute("COMMIT")
-            cursor.execute("BEGIN")
+            execute_with_normalization(cursor, "COMMIT")
+            execute_with_normalization(cursor, "BEGIN")
             print(f"Processed {batch_count} occurrences...")
 
-    cursor.execute("COMMIT")
+    execute_with_normalization(cursor, "COMMIT")
 
-    cursor.execute("PRAGMA foreign_keys = ON")
+    execute_with_normalization(cursor, "PRAGMA foreign_keys = ON")
     print("Foreign key constraints re-enabled")
 
     conn.close()

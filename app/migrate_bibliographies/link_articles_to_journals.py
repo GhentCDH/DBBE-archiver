@@ -1,15 +1,15 @@
-from ..common import get_db_connection, get_postgres_connection
+from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
 
 def migrate_journals():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
         PRAGMA table_info(article)
     """)
     columns = [row[1] for row in cursor.fetchall()]  # column names
     if "journal_issue_id" not in columns:
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             ALTER TABLE article
             ADD COLUMN journal_issue_id INTEGER REFERENCES journal_issue(id)
         """)
@@ -21,7 +21,7 @@ def migrate_journals():
         JOIN data.document_title dt ON j.identity = dt.iddocument
     """)
     for journal_id, journal_title in pg_cursor.fetchall():
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT INTO journal (id, title, title_sort_key)
             VALUES (?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
@@ -49,7 +49,7 @@ def migrate_journals():
         if forthcoming: title_parts.append("(forthcoming)")
         issue_title = " ".join(title_parts) if title_parts else None
 
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT INTO journal_issue (id, journal_id, title, title_sort_key)
             VALUES (?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
@@ -66,7 +66,7 @@ def migrate_journals():
         JOIN data.journal_issue ji ON dc.idcontainer = ji.identity
     """)
     for article_id, issue_id in pg_cursor.fetchall():
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             UPDATE article
             SET journal_issue_id = ?
             WHERE id = ?

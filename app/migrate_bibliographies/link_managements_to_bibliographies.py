@@ -1,11 +1,11 @@
-from ..common import get_db_connection, get_postgres_connection
+from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
 from .biblio_type_enum import BiblioType
 
 def migrate_managements():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
 
-    sqlite_managements = {row[0] for row in cursor.execute("SELECT id FROM management").fetchall()}
+    sqlite_managements = {row[0] for row in execute_with_normalization(cursor, "SELECT id FROM management").fetchall()}
 
     pg_cursor.execute("""
         SELECT
@@ -52,20 +52,20 @@ def migrate_managements():
             mgmt_row = pg_cursor.fetchone()
             if not mgmt_row:
                 continue
-            cursor.execute(
+            execute_with_normalization(cursor,
                 "INSERT INTO management (id, name) VALUES (?, ?)",
-                (mgmt_row[0], mgmt_row[1])
-            )
+                                       (mgmt_row[0], mgmt_row[1])
+                                       )
             sqlite_managements.add(mgmt_id)
 
-        cursor.execute(
+        execute_with_normalization(cursor,
             f"""
             INSERT OR IGNORE INTO {bib_type_enum.value}_managements
                 (bibliography_id, management_id)
             VALUES (?, ?)
             """,
-            (doc_id, mgmt_id)
-        )
+                                   (doc_id, mgmt_id)
+                                   )
 
     conn.commit()
     conn.close()

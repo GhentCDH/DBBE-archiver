@@ -7,6 +7,7 @@ from .migrate_occurrences import migrate_occurrences
 from .migrate_manuscripts.migrate_manuscripts import migrate_manuscripts
 from .migrate_bibliographies import migrate_bibliographies
 from .zenodo_upload import upload_sqlite_files_to_zenodo
+from .common import NORMALIZATION_STATS
 import os
 
 def str_to_bool(value: str) -> bool:
@@ -37,6 +38,12 @@ def run_migration():
 
 if __name__ == "__main__":
     run_migration()
+    print(
+        f"Normalization stats: {NORMALIZATION_STATS['changed']} changed, {NORMALIZATION_STATS['unchanged']} unchanged")
+    if NORMALIZATION_STATS["samples"]:
+        print("Some sample changes:")
+        for original, normalized in NORMALIZATION_STATS["samples"]:
+            print(f"'{original}' → '{normalized}'")
 
     enable_zenodo_upload = str_to_bool(
         os.getenv("ENABLE_ZENODO_UPLOAD", "false")

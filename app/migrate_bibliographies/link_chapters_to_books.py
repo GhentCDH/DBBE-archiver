@@ -1,5 +1,5 @@
 # app/migrate_bibliographies/link_chapters_to_books.py
-from ..common import get_db_connection, get_postgres_connection
+from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
 
 def migrate_book_chapters():
     conn, cursor = get_db_connection()
@@ -13,7 +13,7 @@ def migrate_book_chapters():
     """)
 
     for chapter_id, book_id in pg_cursor.fetchall():
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             UPDATE book_chapter
             SET book_id = ?
             WHERE id = ?

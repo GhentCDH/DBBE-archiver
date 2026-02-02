@@ -1,5 +1,5 @@
 # app/migrate_bibliographies/schema.py
-from ..common import get_db_connection, add_column_if_missing
+from ..common import execute_with_normalization, get_db_connection, add_column_if_missing
 
 def create_schema():
     conn, cursor = get_db_connection()
@@ -25,7 +25,7 @@ def create_schema():
     for col, col_type in occurrence_columns:
         add_column_if_missing(cursor, "occurrences", col, col_type)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS occurrence_person_roles (
         occurrence_id INTEGER NOT NULL,
         person_id INTEGER NOT NULL,
@@ -37,7 +37,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS occurrence_genres (
         occurrence_id INTEGER NOT NULL,
         genre_id INTEGER NOT NULL,
@@ -47,7 +47,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS occurrence_metres (
         occurrence_id INTEGER NOT NULL,
         metre_id INTEGER NOT NULL,
@@ -57,7 +57,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS occurrence_management (
         occurrence_id INTEGER NOT NULL,
         management_id INTEGER NOT NULL,
@@ -67,7 +67,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS occurrence_acknowledgement (
         occurrence_id INTEGER NOT NULL,
         acknowledgement_id INTEGER NOT NULL,
@@ -77,7 +77,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS occurrence_text_statuses (
         occurrence_id INTEGER NOT NULL,
         text_status_id INTEGER NOT NULL,
@@ -87,7 +87,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS occurrence_related_occurrences (
         occurrence_id INTEGER NOT NULL,
         related_occurrence_id INTEGER NOT NULL,
@@ -100,7 +100,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS occurrence_keyword (
         occurrence_id INTEGER NOT NULL,
         keyword_id INTEGER NOT NULL,
@@ -110,7 +110,7 @@ def create_schema():
     );
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     INSERT OR IGNORE INTO occurrence_relation_definitions (id, definition) VALUES
     ('0', 'verse_related'),
     ('1', 'type_related')

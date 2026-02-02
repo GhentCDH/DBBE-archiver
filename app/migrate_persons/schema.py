@@ -1,5 +1,5 @@
 # app/migrate_bibliographies/schema.py
-from ..common import get_db_connection, add_column_if_missing
+from ..common import execute_with_normalization, get_db_connection, add_column_if_missing
 
 def create_schema():
     conn, cursor = get_db_connection()
@@ -24,7 +24,7 @@ def create_schema():
     for col, col_type in person_columns.items():
         add_column_if_missing(cursor, "persons", col, col_type)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS person_management (
         person_id INTEGER NOT NULL,
         management_id INTEGER NOT NULL,
@@ -34,7 +34,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS person_acknowledgement (
         person_id INTEGER NOT NULL,
         acknowledgement_id INTEGER NOT NULL,
@@ -44,7 +44,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS person_self_designations (
         person_id INTEGER NOT NULL,
         self_designation_id INTEGER NOT NULL,
@@ -54,7 +54,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS person_offices (
         person_id INTEGER NOT NULL,
         office_id INTEGER NOT NULL,
@@ -64,7 +64,7 @@ def create_schema():
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS person_identification (
         person_id INTEGER NOT NULL,
         identification_id INTEGER NOT NULL,

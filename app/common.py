@@ -4,12 +4,10 @@ import sqlite3
 from elasticsearch import Elasticsearch
 import uuid
 from pathlib import Path
-
 BASE_DIR = Path(__file__).parent
 MAIN_DB_PATH = BASE_DIR / "data" / "export_data.sqlite"
 MAIN_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 print(MAIN_DB_PATH)
-
 ROLE_FIELD_TO_ROLE_NAME = {
     "person_subject": "Subject",
     "owner": "Owner",
@@ -28,13 +26,50 @@ ROLE_FIELD_TO_ROLE_NAME = {
     "illuminator": "Illuminator"
 }
 
+import unicodedata
+import unicodedata
+
+NORMALIZATION_STATS = {
+    "changed": 0,
+    "unchanged": 0,
+    "samples": []  # store up to 20 examples
+}
+MAX_SAMPLES = 20
+
+def normalize_value(value):
+    if isinstance(value, str):
+        normalized = unicodedata.normalize("NFC", value)
+        if normalized != value:
+            NORMALIZATION_STATS["changed"] += 1
+            if len(NORMALIZATION_STATS["samples"]) < MAX_SAMPLES:
+                NORMALIZATION_STATS["samples"].append((value, normalized))
+        else:
+            NORMALIZATION_STATS["unchanged"] += 1
+        return normalized
+
+    if isinstance(value, (list, tuple)):
+        return type(value)(normalize_value(v) for v in value)
+
+    if isinstance(value, dict):
+        return {k: normalize_value(v) for k, v in value.items()}
+
+    return value
+
+
+def execute_with_normalization(cursor, query, params=None):
+    if params is None:
+        cursor.execute(query)
+    else:
+        cursor.execute(query, normalize_value(params))
+    return cursor
+
 
 def get_db_connection(db_path=MAIN_DB_PATH):
     conn = sqlite3.connect(db_path, timeout=60, isolation_level=None)
     cursor = conn.cursor()
-    cursor.execute("PRAGMA journal_mode = WAL;")
-    cursor.execute("PRAGMA busy_timeout = 60000;")
-    cursor.execute("PRAGMA foreign_keys = ON;")
+    execute_with_normalization(cursor, "PRAGMA journal_mode = WAL;")
+    execute_with_normalization(cursor, "PRAGMA busy_timeout = 60000;")
+    execute_with_normalization(cursor, "PRAGMA foreign_keys = ON;")
     return conn, cursor
 
 def get_postgres_connection():
@@ -93,24 +128,22 @@ def scroll_all(es, index, query=None, size=1000):
 
 
 def add_column_if_missing(cursor, table_name, column_name, column_type):
-    cursor.execute(f"PRAGMA table_info({table_name})")
+    execute_with_normalization(cursor, f"PRAGMA table_info({table_name})")
     columns = [col[1] for col in cursor.fetchall()]
     if column_name not in columns:
-        cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
+        execute_with_normalization(cursor, f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
 
 
 def get_role_id(cursor, role_name):
-    cursor.execute("SELECT id FROM roles WHERE LOWER(name)=LOWER(?)", (role_name,))
+    execute_with_normalization(cursor, "SELECT id FROM roles WHERE LOWER(name)=LOWER(?)", (role_name,))
     row = cursor.fetchone()
     return row[0] if row else None
 
-
-
 def get_or_create_role(cursor, role_name):
-    cursor.execute(
+    execute_with_normalization(cursor,
         "SELECT id FROM roles WHERE name = ? LIMIT 1",
-        (role_name,)
-    )
+                               (role_name,)
+                               )
     row = cursor.fetchone()
     if row:
         return row[0]
@@ -130,33 +163,33 @@ def get_or_create_role(cursor, role_name):
 
     if pg_row:
         role_id = pg_row[0]
-        cursor.execute(
+        execute_with_normalization(cursor,
             "INSERT INTO roles (id, name) VALUES (?, ?)",
-            (role_id, role_name)
-        )
+                                   (role_id, role_name)
+                                   )
         return role_id
 
 
     pg_cursor.execute("SELECT MAX(idrole) FROM data.role")
     pg_max = pg_cursor.fetchone()[0] or 0
 
-    cursor.execute(
+    execute_with_normalization(cursor,
         """
         SELECT MAX(CAST(id AS INTEGER))
         FROM roles
         WHERE CAST(id AS INTEGER) > ?
         """,
-        (pg_max,)
-    )
+                               (pg_max,)
+                               )
     local_max = cursor.fetchone()[0]
 
     next_id = pg_max + 1 if local_max is None else local_max + 1
     role_id = next_id
 
-    cursor.execute(
+    execute_with_normalization(cursor,
         "INSERT INTO roles (id, name) VALUES (?, ?)",
-        (role_id, role_name)
-    )
+                               (role_id, role_name)
+                               )
 
     return role_id
 
@@ -183,19 +216,19 @@ def insert_many_to_many(
         if not item_id or not item_name:
             continue
 
-        cursor.execute(
+        execute_with_normalization(cursor,
             f"INSERT OR IGNORE INTO {entity_table} (id, name) VALUES (?, ?)",
-            (item_id, item_name),
-        )
+                                   (item_id, item_name),
+                                   )
 
-        cursor.execute(
+        execute_with_normalization(cursor,
             f"""
             INSERT OR IGNORE INTO {join_table}
             ({parent_id_col}, {entity_id_col})
             VALUES (?, ?)
             """,
-            (parent_id, item_id),
-        )
+                                   (parent_id, item_id),
+                                   )
 
 def insert_many_to_one(cursor, entity_name, table_name, manuscript_id, entity_data):
     if not entity_data:
@@ -205,12 +238,12 @@ def insert_many_to_one(cursor, entity_name, table_name, manuscript_id, entity_da
     entity_name_val = entity_data.get("name", "")
 
     if entity_id and entity_name_val:
-        cursor.execute(
+        execute_with_normalization(cursor,
             f"INSERT OR IGNORE INTO {table_name} (id, name) VALUES (?, ?)",
-            (entity_id, entity_name_val)
-        )
-        cursor.execute(
+                                   (entity_id, entity_name_val)
+                                   )
+        execute_with_normalization(cursor,
             f"UPDATE manuscripts SET {entity_name}_id = ? WHERE id = ?",
-            (entity_id, manuscript_id)
-        )
+                                   (entity_id, manuscript_id)
+                                   )
 

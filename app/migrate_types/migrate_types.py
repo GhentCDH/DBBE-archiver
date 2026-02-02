@@ -1,7 +1,6 @@
-from ..common import (
-    get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-    add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, get_postgres_connection
-)
+from ..common import (execute_with_normalization, get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
+                      add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, get_postgres_connection
+                      )
 
 def fetch_type_relations(pg_conn):
     pg_cursor = pg_conn.cursor()
@@ -38,7 +37,7 @@ def create_type_tables(cursor):
     for col, col_type in type_columns.items():
         add_column_if_missing(cursor, "types", col, col_type)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_management (
         type_id INTEGER NOT NULL,
         management_id INTEGER NOT NULL,
@@ -48,7 +47,7 @@ def create_type_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_acknowledgement (
         type_id INTEGER NOT NULL,
         acknowledgement_id INTEGER NOT NULL,
@@ -58,7 +57,7 @@ def create_type_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_tags (
         type_id INTEGER NOT NULL,
         tag_id INTEGER NOT NULL,
@@ -68,7 +67,7 @@ def create_type_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_genre (
         type_id INTEGER NOT NULL,
         genre_id INTEGER NOT NULL,
@@ -78,7 +77,7 @@ def create_type_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_metre (
         type_id INTEGER NOT NULL,
         metre_id INTEGER NOT NULL,
@@ -88,7 +87,7 @@ def create_type_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_editorial_status (
         type_id INTEGER NOT NULL,
         editorial_status_id INTEGER NOT NULL,
@@ -98,7 +97,7 @@ def create_type_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_text_statuses (
         type_id INTEGER NOT NULL,
         text_status_id INTEGER NOT NULL,
@@ -109,7 +108,7 @@ def create_type_tables(cursor):
     """)
 
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_person_roles (
         type_id INTEGER NOT NULL,
         person_id INTEGER NOT NULL,
@@ -121,7 +120,7 @@ def create_type_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_occurrences (
         type_id INTEGER NOT NULL,
         occurrence_id INTEGER NOT NULL,
@@ -131,7 +130,7 @@ def create_type_tables(cursor):
     )
     """)
     
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_related_types (
         type_id INTEGER NOT NULL,
         related_type_id INTEGER NOT NULL,
@@ -145,14 +144,14 @@ def create_type_tables(cursor):
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_relation_definitions (
         id INTEGER PRIMARY KEY,
         definition TEXT NOT NULL UNIQUE
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_related_types (
         type_id INTEGER NOT NULL,
         related_type_id INTEGER NOT NULL,
@@ -165,7 +164,7 @@ def create_type_tables(cursor):
     )
     """)
 
-    cursor.execute("""
+    execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_keyword (
         type_id INTEGER NOT NULL,
         keyword_id INTEGER NOT NULL,
@@ -204,7 +203,7 @@ def migrate_types():
     hits = scroll_all(es, type_index)
     print(f"Total types fetched: {len(hits)}")
     
-    cursor.execute("BEGIN TRANSACTION")
+    execute_with_normalization(cursor, "BEGIN TRANSACTION")
     batch_count = 0
     
     for hit in hits:
@@ -218,7 +217,7 @@ def migrate_types():
         
         number_of_verses = len(verses) if verses else None
 
-        cursor.execute("""
+        execute_with_normalization(cursor, """
         INSERT INTO types (
             id, text_stemmer, text_original, lemma, incipit,
             created, modified, public_comment, private_comment,
@@ -253,14 +252,14 @@ def migrate_types():
             tag_id = str(tag.get('id', ''))
             tag_name = tag.get('name', '')
             if tag_id:
-                cursor.execute(
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO tags (id, name) VALUES (?, ?)",
-                    (tag_id, tag_name)
-                )
-                cursor.execute(
+                                           (tag_id, tag_name)
+                                           )
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO type_tags (type_id, tag_id) VALUES (?, ?)",
-                    (type_id, tag_id)
-                )
+                                           (type_id, tag_id)
+                                           )
 
 
         cs = source.get('critical_status')
@@ -268,28 +267,28 @@ def migrate_types():
             cs_id = str(cs.get('id', ''))
             cs_name = cs.get('name', '')
             if cs_id:
-                cursor.execute(
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO editorial_statuses (id, name) VALUES (?, ?)",
-                    (cs_id, cs_name)
-                )
-                cursor.execute(
+                                           (cs_id, cs_name)
+                                           )
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO type_editorial_status (type_id, editorial_status_id) VALUES (?, ?)",
-                    (type_id, cs_id)
-                )
+                                           (type_id, cs_id)
+                                           )
 
         ts = source.get('text_status')
         if isinstance(ts, dict):
             ts_id = str(ts.get('id', ''))
             ts_name = ts.get('name', '')
             if ts_id:
-                cursor.execute(
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO text_statuses (id, name) VALUES (?, ?)",
-                    (ts_id, ts_name)
-                )
-                cursor.execute(
+                                           (ts_id, ts_name)
+                                           )
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO type_text_statuses (type_id, text_status_id) VALUES (?, ?)",
-                    (type_id, ts_id)
-                )
+                                           (type_id, ts_id)
+                                           )
 
         subjects = source.get("subject", [])
         if isinstance(subjects, dict):
@@ -304,15 +303,15 @@ def migrate_types():
             if not pg_keyword:
                 continue
             keyword_id, keyword_name = pg_keyword
-            cursor.execute(
+            execute_with_normalization(cursor,
                 "INSERT OR IGNORE INTO keyword (id, name) VALUES (?, ?)",
-                (keyword_id, keyword_name)
-            )
+                                       (keyword_id, keyword_name)
+                                       )
 
-            cursor.execute(
+            execute_with_normalization(cursor,
                 "INSERT OR IGNORE INTO type_keyword (type_id, keyword_id) VALUES (?, ?)",
-                (type_id, keyword_id)
-            )
+                                       (type_id, keyword_id)
+                                       )
 
         TYPES_M2M = [
             {
@@ -356,17 +355,17 @@ def migrate_types():
         for occ_id in source.get('occurrence_ids', []):
             occ_id = str(occ_id)
 
-            cursor.execute(
+            execute_with_normalization(cursor,
                 "SELECT 1 FROM occurrences WHERE id=?",
-                (occ_id,)
-            )
+                                       (occ_id,)
+                                       )
             if cursor.fetchone() is None:
                 continue
 
-            cursor.execute(
+            execute_with_normalization(cursor,
                 "INSERT OR IGNORE INTO type_occurrences (type_id, occurrence_id) VALUES (?, ?)",
-                (type_id, occ_id)
-            )
+                                       (type_id, occ_id)
+                                       )
 
         for role_field, role_name_in_table in ROLE_FIELD_TO_ROLE_NAME.items():
             role_id = get_role_id(cursor, role_name_in_table)
@@ -384,35 +383,35 @@ def migrate_types():
                 if not person_id:
                     continue
                 
-                cursor.execute("SELECT 1 FROM persons WHERE id=?", (person_id,))
+                execute_with_normalization(cursor, "SELECT 1 FROM persons WHERE id=?", (person_id,))
                 if cursor.fetchone() is None:
                     continue
                 
-                cursor.execute(
+                execute_with_normalization(cursor,
                     "INSERT OR IGNORE INTO type_person_roles (type_id, person_id, role_id) VALUES (?, ?, ?)",
-                    (type_id, person_id, role_id)
-                )
+                                           (type_id, person_id, role_id)
+                                           )
         
         batch_count += 1
         if batch_count % 1000 == 0:
-            cursor.execute("COMMIT")
-            cursor.execute("BEGIN TRANSACTION")
+            execute_with_normalization(cursor, "COMMIT")
+            execute_with_normalization(cursor, "BEGIN TRANSACTION")
             print(f"Processed {batch_count} types...")
     
-    cursor.execute("COMMIT")
+    execute_with_normalization(cursor, "COMMIT")
 
 
     relations = fetch_type_relations(pg_conn)
-    cursor.execute("BEGIN TRANSACTION")
+    execute_with_normalization(cursor, "BEGIN TRANSACTION")
 
     for _, _, rel_def_id, rel_code in relations:
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO type_relation_definitions (id, definition)
             VALUES (?, ?)
         """, (str(rel_def_id), rel_code))
 
     for type_id, related_type_id, rel_def_id, _ in relations:
-        cursor.execute("""
+        execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO type_related_types
             (type_id, related_type_id, relation_definition_id)
             VALUES (?, ?, ?)
@@ -422,7 +421,7 @@ def migrate_types():
             str(rel_def_id)
         ))
 
-    cursor.execute("COMMIT")
+    execute_with_normalization(cursor, "COMMIT")
     pg_conn.close()
     conn.close()
 

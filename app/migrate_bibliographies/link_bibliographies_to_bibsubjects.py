@@ -1,4 +1,4 @@
-from ..common import get_db_connection, get_postgres_connection
+from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
 from .biblio_type_enum import BiblioType
 from .biblio_entity_enum import BiblioEntity
 
@@ -61,7 +61,7 @@ def link_bibliographies_to_bibsubjects():
     biblio_type_map = {str(r[0]): r[1] for r in pg_cursor.fetchall()}
     BIB_TYPE_ENUM_MAP = {bt.value: bt for bt in BiblioType}
 
-    cursor.execute("BEGIN")
+    execute_with_normalization(cursor, "BEGIN")
     for biblio_id, entity_id, entity_type_str, page_start, page_end, url, image, private_comment in rows:
         if not entity_type_str:
             continue
@@ -79,10 +79,10 @@ def link_bibliographies_to_bibsubjects():
         entity_col = f"{entity_enum.name.lower()}_id"
         bib_col = f"{bib_type_enum.value}_id"
 
-        cursor.execute(
+        execute_with_normalization(cursor,
             f"INSERT OR IGNORE INTO {join_table} ({entity_col}, {bib_col}, page_start, page_end,url, image, private_comment) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (str(entity_id), str(biblio_id), page_start, page_end, url, image, private_comment)
-        )
-    cursor.execute("COMMIT")
+                                   (str(entity_id), str(biblio_id), page_start, page_end, url, image, private_comment)
+                                   )
+    execute_with_normalization(cursor, "COMMIT")
     conn.close()
     pg_conn.close()
