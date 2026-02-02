@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Bibliography - Database of Byzantine Book Epigrams</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-blue: #2563B8;
+            --dark-blue: #1e4a8f;
+            --light-gray: #f5f5f5;
+            --border-gray: #ddd;
+            --text-dark: #333;
+            --text-medium: #666;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+        .top-nav {
+            background: white;
+            padding: 10px 40px;
+            border-bottom: 1px solid var(--border-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .top-nav .nav-links { display: flex; gap: 20px; list-style: none; }
+        .top-nav a { color: var(--text-dark); text-decoration: none; font-size: 14px; }
+        .hero-header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        .logo-icon { font-size: 36px; color: var(--primary-blue); }
+        .logo-text {
+            font-size: 11px;
+            color: var(--primary-blue);
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.2;
+            margin-top: 5px;
+        }
+        .hero-title { font-size: 36px; font-weight: 300; letter-spacing: 1px; }
+        .main-nav {
+            background: white;
+            border-bottom: 2px solid var(--border-gray);
+            padding: 0 40px;
+        }
+        .main-nav ul { list-style: none; display: flex; gap: 30px; }
+        .main-nav a {
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 15px 0;
+            display: block;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .main-nav a:hover, .main-nav a.active {
+            color: var(--primary-blue);
+            border-bottom-color: var(--primary-blue);
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+        .page-title {
+            font-size: 32px;
+            font-weight: 300;
+            color: var(--primary-blue);
+            margin-bottom: 30px;
+        }
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+        }
+        .sidebar {
+            background: var(--light-gray);
+            padding: 20px;
+            border-radius: 4px;
+        }
+        .search-section {
+            margin-bottom: 25px;
+        }
+        .search-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+        .search-input, .search-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-gray);
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+        .language-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .tag {
+            background: var(--primary-blue);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-gray);
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+        .search-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .results-area { background: white; }
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--light-gray);
+            border: 1px solid var(--border-gray);
+            border-radius: 4px 4px 0 0;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border-gray);
+        }
+        .results-table thead {
+            background: white;
+            border-bottom: 2px solid var(--border-gray);
+        }
+        .results-table th {
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .results-table td {
+            padding: 12px 15px;
+            border-top: 1px solid var(--border-gray);
+            font-size: 14px;
+        }
+        .results-table tbody tr:hover { background: #f8f9fa; }
+        .results-table a {
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+        .results-table a:hover { text-decoration: underline; }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            border: 1px solid var(--border-gray);
+            border-top: none;
+        }
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid var(--border-gray);
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="logo-text">GHENT UNIVERSITY</div>
+        <ul class="nav-links">
+            <li><a href="#">Home Faculty of Arts and Philosophy</a></li>
+            <li><a href="#">Home Ghent University</a></li>
+            <li><a href="#">Login</a></li>
+        </ul>
+    </nav>
+
+    <header class="hero-header">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-university"></i></div>
+            <div class="logo-text">GHENT<br>UNIVERSITY</div>
+        </div>
+        <h1 class="hero-title">DATABASE OF BYZANTINE BOOK EPIGRAMS</h1>
+    </header>
+
+    <nav class="main-nav">
+        <ul>
+            <li><a href="byzantine-db.html">HOME</a></li>
+            <li><a href="byzantine-db.html">OCCURRENCES</a></li>
+            <li><a href="../types.html">TYPES</a></li>
+            <li><a href="manuscripts.html">MANUSCRIPTS</a></li>
+            <li><a href="persons.html">PERSONS</a></li>
+            <li><a href="bibliography.html" class="active">BIBLIOGRAPHY</a></li>
+            <li><a href="#">INFO <i class="fas fa-caret-down"></i></a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h2 class="page-title">Search Bibliography</h2>
+
+        <div class="content-wrapper">
+            <aside class="sidebar">
+                <div class="search-section">
+                    <h3>Type</h3>
+                    <select class="search-select" id="bibTypeSelect">
+                        <option value="">Select a type</option>
+                        <option value="article">Article</option>
+                        <option value="book">Book</option>
+                        <option value="book_chapter">Book chapter</option>
+                        <option value="online_source">Online source</option>
+                        <option value="phd">PhD</option>
+                        <option value="bib_varia">Bib varia</option>
+                        <option value="blog_post">Blog post</option>
+                    </select>
+                </div>
+
+                <div class="search-section">
+                    <h3>Title</h3>
+                    <div class="language-tags">
+                        <span class="tag">GREEK</span>
+                        <span class="tag" style="background: #6c757d;">BETACODE</span>
+                        <span class="tag">LATIN</span>
+                    </div>
+                    <input type="text" class="search-input" id="titleInput" placeholder="Search title..." style="margin-top: 10px;">
+                </div>
+
+                <div class="search-section">
+                    <h3>Title search options:</h3>
+                    <div class="button-group">
+                        <button class="btn" data-value="all">all</button>
+                        <button class="btn active" data-value="any">any</button>
+                        <button class="btn" data-value="consecutive">consecutive words</button>
+                    </div>
+                </div>
+
+                <div class="search-section">
+                    <h3>Person</h3>
+                    <select class="search-select" id="personSelect">
+                        <option value="">Select person</option>
+                    </select>
+                </div>
+
+                <div class="search-section">
+                    <h3>Role</h3>
+                    <select class="search-select" id="roleSelect">
+                        <option value="">Select role</option>
+                    </select>
+                </div>
+
+                <div class="search-section">
+                    <h3>Comment</h3>
+                    <div class="language-tags">
+                        <span class="tag">GREEK</span>
+                        <span class="tag" style="background: #6c757d;">BETACODE</span>
+                        <span class="tag">LATIN</span>
+                    </div>
+                </div>
+
+                <div class="search-section">
+                    <button class="search-btn" onclick="searchDatabase()">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </aside>
+
+            <main class="results-area">
+                <div class="results-header">
+                    <div id="resultsCount">Loading...</div>
+                    <div class="records-select">
+                        <label>Records:</label>
+                        <select id="recordsPerPage">
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('type')">Type <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('author')">Author(s) <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('title')">Title <i class="fas fa-sort-up"></i></th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                        <tr><td colspan="3" style="text-align: center; padding: 40px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="pagination">
+                    <button id="prevPage" onclick="changePage(-1)"><i class="fas fa-chevron-left"></i> Previous</button>
+                    <span id="pageInfo">Page 1</span>
+                    <button id="nextPage" onclick="changePage(1)">Next <i class="fas fa-chevron-right"></i></button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let db = null;
+        let currentPage = 1;
+        let totalRecords = 0;
+        let currentResults = [];
+        let sortColumn = 'title';
+        let sortDirection = 'asc';
+
+        async function initDatabase() {
+            try {
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+
+                const response = await fetch('../app/data/export_data.sqlite');
+                if (!response.ok) throw new Error('Database file not found');
+                
+                const buffer = await response.arrayBuffer();
+                db = new SQL.Database(new Uint8Array(buffer));
+                
+                loadData();
+                loadPersonsDropdown();
+                loadRolesDropdown();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('resultsBody').innerHTML = `
+                    <tr><td colspan="3" style="color: red; padding: 20px;">Error: ${error.message}</td></tr>
+                `;
+            }
+        }
+
+        function loadPersonsDropdown() {
+            if (!db) return;
+            try {
+                const query = `SELECT id, first_name, last_name FROM persons ORDER BY last_name, first_name`;
+                const stmt = db.prepare(query);
+                const select = document.getElementById('personSelect');
+                while (stmt.step()) {
+                    const row = stmt.getAsObject();
+                    const option = document.createElement('option');
+                    option.value = row.id;
+                    option.textContent = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+                    select.appendChild(option);
+                }
+                stmt.free();
+            } catch (error) {
+                console.error('Error loading persons:', error);
+            }
+        }
+
+        function loadRolesDropdown() {
+            if (!db) return;
+            try {
+                const query = `SELECT id, name FROM roles ORDER BY name`;
+                const stmt = db.prepare(query);
+                const select = document.getElementById('roleSelect');
+                while (stmt.step()) {
+                    const row = stmt.getAsObject();
+                    const option = document.createElement('option');
+                    option.value = row.id;
+                    option.textContent = row.name;
+                    select.appendChild(option);
+                }
+                stmt.free();
+            } catch (error) {
+                console.error('Error loading roles:', error);
+            }
+        }
+
+        function loadData() {
+            if (!db) return;
+
+            try {
+                const bibType = document.getElementById('bibTypeSelect').value;
+                const titleSearch = document.getElementById('titleInput').value.trim();
+                
+                // Union query to get all bibliography types
+                let queries = [];
+                const tables = ['article', 'book', 'book_chapter', 'online_source', 'phd', 'bib_varia', 'blog_post'];
+                
+                tables.forEach(table => {
+                    if (!bibType || bibType === table) {
+                        let query = `
+                            SELECT 
+                                '${table}' as bib_type,
+                                ${table}.id,
+                                ${table}.title,
+                                GROUP_CONCAT(persons.first_name || ' ' || persons.last_name, ', ') as authors
+                            FROM ${table}
+                            LEFT JOIN ${table}_person_roles ON ${table}.id = ${table}_person_roles.bibliography_id
+                            LEFT JOIN persons ON ${table}_person_roles.person_id = persons.id
+                        `;
+                        
+                        if (titleSearch) {
+                            query += ` WHERE ${table}.title LIKE '%${titleSearch}%'`;
+                        }
+                        
+                        query += ` GROUP BY ${table}.id`;
+                        queries.push(query);
+                    }
+                });
+
+                const fullQuery = queries.join(' UNION ALL ') + ` ORDER BY ${sortColumn} ${sortDirection}`;
+                
+                const stmt = db.prepare(fullQuery);
+                currentResults = [];
+                while (stmt.step()) {
+                    currentResults.push(stmt.getAsObject());
+                }
+                stmt.free();
+
+                totalRecords = currentResults.length;
+                currentPage = 1;
+                displayResults();
+            } catch (error) {
+                console.error('Query error:', error);
+                document.getElementById('resultsBody').innerHTML = `
+                    <tr><td colspan="3" style="color: red;">Error: ${error.message}</td></tr>
+                `;
+            }
+        }
+
+        function displayResults() {
+            const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
+            
+            const resultsBody = document.getElementById('resultsBody');
+            resultsBody.innerHTML = '';
+
+            if (totalRecords === 0) {
+                resultsBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px;">No results found</td></tr>';
+                return;
+            }
+
+            for (let i = startIndex; i < endIndex; i++) {
+                const row = currentResults[i];
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formatBibType(row.bib_type)}</td>
+                    <td><a href="#">${row.authors || ''}</a></td>
+                    <td><a href="#">${row.title || ''}</a></td>
+                `;
+                resultsBody.appendChild(tr);
+            }
+
+            document.getElementById('resultsCount').textContent = 
+                `Showing records ${startIndex + 1} to ${endIndex} out of ${totalRecords}`;
+            
+            const totalPages = Math.ceil(totalRecords / recordsPerPage);
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+            
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages;
+        }
+
+        function formatBibType(type) {
+            const typeMap = {
+                'article': 'Article',
+                'book': 'Book',
+                'book_chapter': 'Book chapter',
+                'online_source': 'Online source',
+                'phd': 'PhD',
+                'bib_varia': 'Bib varia',
+                'blog_post': 'Blog post'
+            };
+            return typeMap[type] || type;
+        }
+
+        function sortTable(column) {
+            sortDirection = (sortColumn === column && sortDirection === 'asc') ? 'desc' : 'asc';
+            sortColumn = column;
+            loadData();
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(totalRecords / parseInt(document.getElementById('recordsPerPage').value));
+            currentPage = Math.max(1, Math.min(currentPage + direction, totalPages));
+            displayResults();
+        }
+
+        function searchDatabase() {
+            loadData();
+        }
+
+        document.getElementById('recordsPerPage').addEventListener('change', () => {
+            currentPage = 1;
+            displayResults();
+        });
+
+        // Button group toggles
+        document.querySelectorAll('.button-group').forEach(group => {
+            group.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn')) {
+                    group.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                }
+            });
+        });
+
+        window.addEventListener('DOMContentLoaded', initDatabase);
+    </script>
+</body>
+</html>

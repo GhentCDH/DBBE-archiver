@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manuscript Detail - Database of Byzantine Book Epigrams</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-blue: #2563B8;
+            --dark-blue: #1e4a8f;
+            --light-gray: #f5f5f5;
+            --border-gray: #ddd;
+            --text-dark: #333;
+            --text-medium: #666;
+            --text-light: #999;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+            background: var(--light-gray);
+        }
+        .top-nav {
+            background: white;
+            padding: 10px 40px;
+            border-bottom: 1px solid var(--border-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .top-nav .nav-links { display: flex; gap: 20px; list-style: none; }
+        .top-nav a { color: var(--text-dark); text-decoration: none; font-size: 14px; }
+        .hero-header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        .logo-icon { font-size: 36px; color: var(--primary-blue); }
+        .logo-text {
+            font-size: 11px;
+            color: var(--primary-blue);
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.2;
+            margin-top: 5px;
+        }
+        .hero-title { font-size: 36px; font-weight: 300; letter-spacing: 1px; }
+        .main-nav {
+            background: white;
+            border-bottom: 2px solid var(--border-gray);
+            padding: 0 40px;
+        }
+        .main-nav ul { list-style: none; display: flex; gap: 30px; }
+        .main-nav a {
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 15px 0;
+            display: block;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .main-nav a:hover, .main-nav a.active {
+            color: var(--text-blue);
+            border-bottom-color: var(--primary-blue);
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 30px 40px; }
+        .page-header {
+            background: white;
+            padding: 30px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-medium);
+            margin-bottom: 10px;
+        }
+        .page-title {
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--primary-blue);
+        }
+        .info-section {
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .info-table { width: 100%; border-collapse: collapse; }
+        .info-table tr { border-bottom: 1px solid var(--light-gray); }
+        .info-table tr:last-child { border-bottom: none; }
+        .info-table td {
+            padding: 15px 20px;
+            font-size: 14px;
+        }
+        .info-table td:first-child {
+            background: var(--light-gray);
+            font-weight: 600;
+            width: 200px;
+        }
+        .info-table a { color: var(--primary-blue); text-decoration: none; }
+        .info-table a:hover { text-decoration: underline; }
+        .info-note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px;
+            font-size: 14px;
+            color: #856404;
+        }
+        .footer {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 4px;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 13px;
+            color: var(--text-medium);
+            text-align: right;
+        }
+        .loading { text-align: center; padding: 60px 20px; color: var(--text-medium); }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="logo-text">GHENT UNIVERSITY</div>
+        <ul class="nav-links">
+            <li><a href="#">Home Faculty of Arts and Philosophy</a></li>
+            <li><a href="#">Home Ghent University</a></li>
+            <li><a href="#">Login</a></li>
+        </ul>
+    </nav>
+
+    <header class="hero-header">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-university"></i></div>
+            <div class="logo-text">GHENT<br>UNIVERSITY</div>
+        </div>
+        <h1 class="hero-title">DATABASE OF BYZANTINE BOOK EPIGRAMS</h1>
+    </header>
+
+    <nav class="main-nav">
+        <ul>
+            <li><a href="byzantine-db.html">HOME</a></li>
+            <li><a href="byzantine-db.html">OCCURRENCES</a></li>
+            <li><a href="types.html">TYPES</a></li>
+            <li><a href="manuscripts.html" class="active">MANUSCRIPTS</a></li>
+            <li><a href="persons.html">PERSONS</a></li>
+            <li><a href="bibliography.html">BIBLIOGRAPHY</a></li>
+            <li><a href="#">INFO <i class="fas fa-caret-down"></i></a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div id="contentArea">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin fa-3x"></i>
+                <p style="margin-top: 20px;">Loading manuscript details...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db = null;
+        let manuscriptId = null;
+
+        async function initDatabase() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                manuscriptId = urlParams.get('id');
+
+                if (!manuscriptId) throw new Error('No manuscript ID specified');
+
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+
+                const response = await fetch('../app/data/export_data.sqlite');
+                if (!response.ok) throw new Error('Database file not found');
+                
+                const buffer = await response.arrayBuffer();
+                db = new SQL.Database(new Uint8Array(buffer));
+                
+                loadManuscriptDetail();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('contentArea').innerHTML = `
+                    <div style="background: #f8d7da; color: #721c24; padding: 20px; border-radius: 4px;">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function loadManuscriptDetail() {
+            if (!db || !manuscriptId) return;
+
+            try {
+                // Get manuscript details
+                const msQuery = `
+                    SELECT 
+                        m.*,
+                        l.name as library_name,
+                        loc.name as location_name,
+                        c.name as collection_name
+                    FROM manuscripts m
+                    LEFT JOIN libraries l ON m.library_id = l.id
+                    LEFT JOIN locations loc ON l.location_id = loc.id
+                    LEFT JOIN collections c ON m.collection_id = c.id
+                    WHERE m.id = ?
+                `;
+                
+                const msStmt = db.prepare(msQuery);
+                msStmt.bind([manuscriptId]);
+                
+                let manuscript = null;
+                if (msStmt.step()) {
+                    manuscript = msStmt.getAsObject();
+                }
+                msStmt.free();
+
+                if (!manuscript) throw new Error('Manuscript not found');
+
+                // Get content
+                const contentQuery = `
+                    SELECT c.name
+                    FROM content c
+                    JOIN manuscript_content mc ON c.id = mc.content_id
+                    WHERE mc.manuscript_id = ?
+                `;
+                const contentStmt = db.prepare(contentQuery);
+                contentStmt.bind([manuscriptId]);
+                const content = [];
+                while (contentStmt.step()) {
+                    content.push(contentStmt.getAsObject().name);
+                }
+                contentStmt.free();
+
+                // Get persons with roles
+                const personsQuery = `
+                    SELECT 
+                        p.first_name,
+                        p.last_name,
+                        p.id as person_id,
+                        r.name as role_name,
+                        GROUP_CONCAT(i.identifier_value, '; ') as identifiers
+                    FROM persons p
+                    JOIN manuscript_person_roles mpr ON p.id = mpr.person_id
+                    JOIN roles r ON mpr.role_id = r.id
+                    LEFT JOIN person_identification pi ON p.id = pi.person_id
+                    LEFT JOIN identifications i ON pi.identification_id = i.id
+                    WHERE mpr.manuscript_id = ?
+                    GROUP BY p.id, r.id
+                `;
+                const personsStmt = db.prepare(personsQuery);
+                personsStmt.bind([manuscriptId]);
+                const persons = [];
+                while (personsStmt.step()) {
+                    persons.push(personsStmt.getAsObject());
+                }
+                personsStmt.free();
+
+                // Get bibliography
+                const biblioQuery = `
+                    SELECT b.title, b.id
+                    FROM book b
+                    JOIN manuscript_book mb ON b.id = mb.book_id
+                    WHERE mb.manuscript_id = ?
+                    UNION
+                    SELECT a.title, a.id
+                    FROM article a
+                    JOIN manuscript_article ma ON a.id = ma.article_id
+                    WHERE ma.manuscript_id = ?
+                `;
+                const biblioStmt = db.prepare(biblioQuery);
+                biblioStmt.bind([manuscriptId, manuscriptId]);
+                const bibliography = [];
+                while (biblioStmt.step()) {
+                    bibliography.push(biblioStmt.getAsObject());
+                }
+                biblioStmt.free();
+
+                // Get identifications
+                const identQuery = `
+                    SELECT i.type, i.identifier_value
+                    FROM identifications i
+                    JOIN manuscript_identification mi ON i.id = mi.identification_id
+                    WHERE mi.manuscript_id = ?
+                `;
+                const identStmt = db.prepare(identQuery);
+                identStmt.bind([manuscriptId]);
+                const identifications = [];
+                while (identStmt.step()) {
+                    identifications.push(identStmt.getAsObject());
+                }
+                identStmt.free();
+
+                // Get occurrences count
+                const occQuery = `
+                    SELECT COUNT(*) as count
+                    FROM occurrences
+                    WHERE manuscript_id = ?
+                `;
+                const occStmt = db.prepare(occQuery);
+                occStmt.bind([manuscriptId]);
+                let occCount = 0;
+                if (occStmt.step()) {
+                    occCount = occStmt.getAsObject().count;
+                }
+                occStmt.free();
+
+                // Get acknowledgements
+                const ackQuery = `
+                    SELECT a.name
+                    FROM acknowledgements a
+                    JOIN manuscript_acknowledgement ma ON a.id = ma.acknowledgement_id
+                    WHERE ma.manuscript_id = ?
+                `;
+                const ackStmt = db.prepare(ackQuery);
+                ackStmt.bind([manuscriptId]);
+                const acknowledgements = [];
+                while (ackStmt.step()) {
+                    acknowledgements.push(ackStmt.getAsObject().name);
+                }
+                ackStmt.free();
+
+                displayManuscript(manuscript, content, persons, bibliography, identifications, occCount, acknowledgements);
+                
+            } catch (error) {
+                console.error('Error loading manuscript:', error);
+                document.getElementById('contentArea').innerHTML = `
+                    <div style="background: #f8d7da; color: #721c24; padding: 20px;">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayManuscript(ms, content, persons, bibliography, identifications, occCount, acknowledgements) {
+            const manuscriptName = buildManuscriptName(ms);
+            
+            let html = `
+                <div class="page-header">
+                    <p class="page-subtitle">Manuscript</p>
+                    <h1 class="page-title">${manuscriptName}</h1>
+                </div>
+
+                <div class="info-section">
+                    <table class="info-table">
+            `;
+
+            if (content.length > 0) {
+                html += `
+                    <tr>
+                        <td>Content</td>
+                        <td>${content.join(' > ')}</td>
+                    </tr>
+                `;
+            }
+
+            if (persons.length > 0) {
+                const scribePersons = persons.filter(p => p.role_name === 'Scribe');
+                if (scribePersons.length > 0) {
+                    html += `
+                        <tr>
+                            <td>Person(s)</td>
+                            <td>
+                                <strong>Scribe</strong><br>
+                                ${scribePersons.map(p => {
+                                    const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+                                    const ident = p.identifiers ? ` - ${p.identifiers}` : '';
+                                    return `<a href="person-detail.html?id=${p.person_id}">${name}</a>${ident}`;
+                                }).join('<br>')}
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+
+            if (ms.date_floor_year || ms.date_ceiling_year) {
+                html += `
+                    <tr>
+                        <td>Date</td>
+                        <td>${ms.date_floor_year || ''} ${ms.date_ceiling_year ? '- ' + ms.date_ceiling_year : ''}</td>
+                    </tr>
+                `;
+            }
+
+            if (bibliography.length > 0) {
+                html += `
+                    <tr>
+                        <td>Bibliography</td>
+                        <td>${bibliography.map(b => `<a href="#">${b.title}</a>`).join('<br>')}</td>
+                    </tr>
+                `;
+            }
+
+            if (identifications.length > 0) {
+                html += `
+                    <tr>
+                        <td>Identification</td>
+                        <td>${identifications.map(i => `${i.type}: ${i.identifier_value}`).join('<br>')}</td>
+                    </tr>
+                `;
+            }
+
+            html += `
+                    <tr>
+                        <td>Occurrences</td>
+                        <td><a href="byzantine-db.html">${occCount} ${occCount === 1 ? 'Stav' : 'Stav'}</a> [<a href="#">${occCount} occor</a>]</td>
+                    </tr>
+            `;
+
+            if (acknowledgements.length > 0) {
+                html += `
+                    <tr>
+                        <td>Acknowledgements</td>
+                        <td>
+                            <strong>Creator(s)</strong><br>
+                            ${acknowledgements.join('<br>')}
+                            <br><br>
+                            <strong>Contributor(s)</strong><br>
+                            ${acknowledgements.join('<br>')}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            html += `
+                    </table>
+                    <div class="info-note">
+                        The credits system has been implemented in 2019. Credits from before the new system was in use might be incomplete.
+                    </div>
+                </div>
+
+                <div class="footer">
+                    Last modified: ${ms.modified ? new Date(ms.modified).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'N/A'}
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = html;
+        }
+
+        function buildManuscriptName(ms) {
+            let parts = [];
+            if (ms.location_name) parts.push(ms.location_name.toUpperCase());
+            if (ms.library_name) parts.push(ms.library_name);
+            if (ms.shelf) parts.push(ms.shelf);
+            return parts.join(' - ') || ms.name || 'Unknown Manuscript';
+        }
+
+        window.addEventListener('DOMContentLoaded', initDatabase);
+    </script>
+</body>
+</html>

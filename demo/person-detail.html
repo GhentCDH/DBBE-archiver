@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Person Detail - Database of Byzantine Book Epigrams</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-blue: #2563B8;
+            --dark-blue: #1e4a8f;
+            --light-gray: #f5f5f5;
+            --border-gray: #ddd;
+            --text-dark: #333;
+            --text-medium: #666;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+            background: var(--light-gray);
+        }
+        .top-nav {
+            background: white;
+            padding: 10px 40px;
+            border-bottom: 1px solid var(--border-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .top-nav .nav-links { display: flex; gap: 20px; list-style: none; }
+        .top-nav a { color: var(--text-dark); text-decoration: none; font-size: 14px; }
+        .hero-header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        .logo-icon { font-size: 36px; color: var(--primary-blue); }
+        .logo-text {
+            font-size: 11px;
+            color: var(--primary-blue);
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.2;
+            margin-top: 5px;
+        }
+        .hero-title { font-size: 36px; font-weight: 300; letter-spacing: 1px; }
+        .main-nav {
+            background: white;
+            border-bottom: 2px solid var(--border-gray);
+            padding: 0 40px;
+        }
+        .main-nav ul { list-style: none; display: flex; gap: 30px; }
+        .main-nav a {
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 15px 0;
+            display: block;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .main-nav a:hover, .main-nav a.active {
+            color: var(--primary-blue);
+            border-bottom-color: var(--primary-blue);
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 30px 40px; }
+        .page-header {
+            background: white;
+            padding: 30px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-medium);
+            margin-bottom: 10px;
+        }
+        .page-title {
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--primary-blue);
+        }
+        .info-section {
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .info-table { width: 100%; border-collapse: collapse; }
+        .info-table tr { border-bottom: 1px solid var(--light-gray); }
+        .info-table tr:last-child { border-bottom: none; }
+        .info-table td {
+            padding: 15px 20px;
+            font-size: 14px;
+            vertical-align: top;
+        }
+        .info-table td:first-child {
+            background: var(--light-gray);
+            font-weight: 600;
+            width: 200px;
+        }
+        .info-table a { color: var(--primary-blue); text-decoration: none; }
+        .info-table a:hover { text-decoration: underline; }
+        .info-table ul { margin: 0; padding-left: 20px; }
+        .info-table li { margin: 5px 0; }
+        .footer {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 4px;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 13px;
+            color: var(--text-medium);
+            text-align: right;
+        }
+        .loading { text-align: center; padding: 60px 20px; color: var(--text-medium); }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="logo-text">GHENT UNIVERSITY</div>
+        <ul class="nav-links">
+            <li><a href="#">Home Faculty of Arts and Philosophy</a></li>
+            <li><a href="#">Home Ghent University</a></li>
+            <li><a href="#">Login</a></li>
+        </ul>
+    </nav>
+
+    <header class="hero-header">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-university"></i></div>
+            <div class="logo-text">GHENT<br>UNIVERSITY</div>
+        </div>
+        <h1 class="hero-title">DATABASE OF BYZANTINE BOOK EPIGRAMS</h1>
+    </header>
+
+    <nav class="main-nav">
+        <ul>
+            <li><a href="byzantine-db.html">HOME</a></li>
+            <li><a href="byzantine-db.html">OCCURRENCES</a></li>
+            <li><a href="types.html">TYPES</a></li>
+            <li><a href="manuscripts.html">MANUSCRIPTS</a></li>
+            <li><a href="persons.html" class="active">PERSONS</a></li>
+            <li><a href="bibliography.html">BIBLIOGRAPHY</a></li>
+            <li><a href="#">INFO <i class="fas fa-caret-down"></i></a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div id="contentArea">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin fa-3x"></i>
+                <p style="margin-top: 20px;">Loading person details...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db = null;
+        let personId = null;
+
+        async function initDatabase() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                personId = urlParams.get('id');
+
+                if (!personId) throw new Error('No person ID specified');
+
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+
+                const response = await fetch('../app/data/export_data.sqlite');
+                if (!response.ok) throw new Error('Database file not found');
+                
+                const buffer = await response.arrayBuffer();
+                db = new SQL.Database(new Uint8Array(buffer));
+                
+                loadPersonDetail();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('contentArea').innerHTML = `
+                    <div style="background: #f8d7da; color: #721c24; padding: 20px; border-radius: 4px;">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function loadPersonDetail() {
+            if (!db || !personId) return;
+
+            try {
+                // Get person details
+                const personQuery = `
+                    SELECT p.*, loc.name as origin_location
+                    FROM persons p
+                    LEFT JOIN locations loc ON p.location_id = loc.id
+                    WHERE p.id = ?
+                `;
+                const personStmt = db.prepare(personQuery);
+                personStmt.bind([personId]);
+                
+                let person = null;
+                if (personStmt.step()) {
+                    person = personStmt.getAsObject();
+                }
+                personStmt.free();
+
+                if (!person) throw new Error('Person not found');
+
+                // Get identifications
+                const identQuery = `
+                    SELECT i.type, i.identifier_value
+                    FROM identifications i
+                    JOIN person_identification pi ON i.id = pi.identification_id
+                    WHERE pi.person_id = ?
+                `;
+                const identStmt = db.prepare(identQuery);
+                identStmt.bind([personId]);
+                const identifications = [];
+                while (identStmt.step()) {
+                    identifications.push(identStmt.getAsObject());
+                }
+                identStmt.free();
+
+                // Get manuscripts with roles
+                const msQuery = `
+                    SELECT m.id, m.name, m.shelf, l.name as library, loc.name as location, r.name as role
+                    FROM manuscripts m
+                    JOIN manuscript_person_roles mpr ON m.id = mpr.manuscript_id
+                    JOIN roles r ON mpr.role_id = r.id
+                    LEFT JOIN libraries l ON m.library_id = l.id
+                    LEFT JOIN locations loc ON l.location_id = loc.id
+                    WHERE mpr.person_id = ?
+                `;
+                const msStmt = db.prepare(msQuery);
+                msStmt.bind([personId]);
+                const manuscripts = [];
+                while (msStmt.step()) {
+                    manuscripts.push(msStmt.getAsObject());
+                }
+                msStmt.free();
+
+                // Get occurrences with roles
+                const occQuery = `
+                    SELECT o.id, o.incipit, r.name as role
+                    FROM occurrences o
+                    JOIN occurrence_person_roles opr ON o.id = opr.occurrence_id
+                    JOIN roles r ON opr.role_id = r.id
+                    WHERE opr.person_id = ?
+                    LIMIT 10
+                `;
+                const occStmt = db.prepare(occQuery);
+                occStmt.bind([personId]);
+                const occurrences = [];
+                while (occStmt.step()) {
+                    occurrences.push(occStmt.getAsObject());
+                }
+                occStmt.free();
+
+                // Get bibliography
+                const biblioQuery = `
+                    SELECT 'Book' as type, b.id, b.title
+                    FROM book b
+                    JOIN person_book pb ON b.id = pb.book_id
+                    WHERE pb.person_id = ?
+                    UNION
+                    SELECT 'Article' as type, a.id, a.title
+                    FROM article a
+                    JOIN person_article pa ON a.id = pa.article_id
+                    WHERE pa.person_id = ?
+                    LIMIT 5
+                `;
+                const biblioStmt = db.prepare(biblioQuery);
+                biblioStmt.bind([personId, personId]);
+                const bibliography = [];
+                while (biblioStmt.step()) {
+                    bibliography.push(biblioStmt.getAsObject());
+                }
+                biblioStmt.free();
+
+                displayPerson(person, identifications, manuscripts, occurrences, bibliography);
+                
+            } catch (error) {
+                console.error('Error loading person:', error);
+                document.getElementById('contentArea').innerHTML = `
+                    <div style="background: #f8d7da; color: #721c24; padding: 20px;">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayPerson(person, identifications, manuscripts, occurrences, bibliography) {
+            const fullName = `${person.first_name || ''} ${person.last_name || ''}`.trim();
+            const dateDisplay = buildDateDisplay(person.born_date_floor_year, person.born_date_ceiling_year, person.death_date_floor_year, person.death_date_ceiling_year);
+            
+            let html = `
+                <div class="page-header">
+                    <p class="page-subtitle">Person</p>
+                    <h1 class="page-title">${fullName}${dateDisplay ? ' (' + dateDisplay + ')' : ''}</h1>
+                </div>
+
+                <div class="info-section">
+                    <table class="info-table">
+                        <tr>
+                            <td>Name</td>
+                            <td>${fullName}</td>
+                        </tr>
+            `;
+
+            if (dateDisplay) {
+                html += `
+                    <tr>
+                        <td>Date</td>
+                        <td>${dateDisplay}</td>
+                    </tr>
+                `;
+            }
+
+            if (person.born_date_floor_year || person.born_date_ceiling_year) {
+                html += `
+                    <tr>
+                        <td>Attested dates and intervals</td>
+                        <td>${person.born_date_floor_year || ''}-${person.born_date_ceiling_year || ''}</td>
+                    </tr>
+                `;
+            }
+
+            if (identifications.length > 0) {
+                html += `
+                    <tr>
+                        <td>Identification</td>
+                        <td>
+                            <ul style="list-style: none; padding: 0;">
+                                ${identifications.map(i => `<li>→ ${i.type}: <a href="#">${i.identifier_value}</a></li>`).join('')}
+                            </ul>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            if (manuscripts.length > 0) {
+                const groupedMs = {};
+                manuscripts.forEach(m => {
+                    if (!groupedMs[m.role]) groupedMs[m.role] = [];
+                    groupedMs[m.role].push(m);
+                });
+
+                html += `
+                    <tr>
+                        <td>Manuscript(s)</td>
+                        <td>
+                `;
+                
+                for (const [role, msList] of Object.entries(groupedMs)) {
+                    html += `<strong>As ${role}:</strong><br>`;
+                    html += '<ul style="list-style: none; padding: 0; margin-bottom: 10px;">';
+                    msList.forEach(m => {
+                        const msName = buildManuscriptName(m);
+                        html += `<li>→ <a href="manuscript-detail.html?id=${m.id}">${msName}</a></li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                html += `
+                        </td>
+                    </tr>
+                `;
+            }
+
+            if (occurrences.length > 0) {
+                const groupedOcc = {};
+                occurrences.forEach(o => {
+                    if (!groupedOcc[o.role]) groupedOcc[o.role] = [];
+                    groupedOcc[o.role].push(o);
+                });
+
+                html += `
+                    <tr>
+                        <td>Occurrence(s)</td>
+                        <td>
+                `;
+                
+                for (const [role, occList] of Object.entries(groupedOcc)) {
+                    html += `<strong>As ${role}:</strong><br>`;
+                    html += '<ul style="list-style: none; padding: 0; margin-bottom: 10px;">';
+                    occList.forEach(o => {
+                        html += `<li>→ <a href="occurrence-detail.html?id=${o.id}">[${o.id}] ${o.incipit || '...'}</a></li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                html += `
+                        </td>
+                    </tr>
+                `;
+            }
+
+            if (bibliography.length > 0) {
+                html += `
+                    <tr>
+                        <td>Bibliography</td>
+                        <td>
+                            ${bibliography.map(b => `<a href="#">${b.title}</a>`).join('<br>')}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            html += `
+                    </table>
+                </div>
+
+                <div class="footer">
+                    Last modified: ${person.modified ? new Date(person.modified).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'N/A'}
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = html;
+        }
+
+        function buildDateDisplay(bornFloor, bornCeiling, deathFloor, deathCeiling) {
+            if (bornFloor && bornCeiling && bornFloor === bornCeiling) {
+                return `${bornFloor} c.`;
+            }
+            return '';
+        }
+
+        function buildManuscriptName(m) {
+            let parts = [];
+            if (m.location) parts.push(m.location.toUpperCase());
+            if (m.library) parts.push(m.library);
+            if (m.shelf) parts.push(m.shelf);
+            return parts.join(' - ') || m.name || 'Unknown';
+        }
+
+        window.addEventListener('DOMContentLoaded', initDatabase);
+    </script>
+</body>
+</html>

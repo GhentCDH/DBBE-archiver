@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Occurrence Detail - Database of Byzantine Book Epigrams</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #2563B8;
+            --dark-blue: #1e4a8f;
+            --light-gray: #f5f5f5;
+            --border-gray: #ddd;
+            --text-dark: #333;
+            --text-medium: #666;
+            --text-light: #999;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+            background: var(--light-gray);
+        }
+
+        /* Header */
+        .top-nav {
+            background: white;
+            padding: 10px 40px;
+            border-bottom: 1px solid var(--border-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-nav .nav-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+        }
+
+        .top-nav a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .top-nav a:hover {
+            color: var(--primary-blue);
+        }
+
+        /* Hero Header */
+        .hero-header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .logo-icon {
+            font-size: 36px;
+            color: var(--primary-blue);
+        }
+
+        .logo-text {
+            font-size: 11px;
+            color: var(--primary-blue);
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.2;
+            margin-top: 5px;
+        }
+
+        .hero-title {
+            font-size: 36px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        /* Main Navigation */
+        .main-nav {
+            background: white;
+            border-bottom: 2px solid var(--border-gray);
+            padding: 0 40px;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+
+        .main-nav a {
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 15px 0;
+            display: block;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .main-nav a:hover,
+        .main-nav a.active {
+            color: var(--primary-blue);
+            border-bottom-color: var(--primary-blue);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 40px;
+        }
+
+        /* Page Header */
+        .page-header {
+            background: white;
+            padding: 30px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 300;
+            color: var(--primary-blue);
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: var(--text-medium);
+            font-style: italic;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            background: var(--light-gray);
+            color: var(--primary-blue);
+            border: 1px solid var(--border-gray);
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        /* Text Display */
+        .text-display {
+            background: white;
+            padding: 30px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .verse-line {
+            display: grid;
+            grid-template-columns: 60px 40px 1fr 40px;
+            gap: 15px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--light-gray);
+            align-items: start;
+        }
+
+        .verse-line:last-child {
+            border-bottom: none;
+        }
+
+        .verse-title {
+            color: var(--text-light);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .verse-number {
+            color: var(--text-light);
+            font-size: 13px;
+            text-align: right;
+        }
+
+        .verse-text {
+            font-family: 'Times New Roman', Georgia, serif;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .verse-link {
+            text-align: right;
+        }
+
+        .verse-link a {
+            color: var(--text-light);
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .verse-link a:hover {
+            color: var(--primary-blue);
+        }
+
+        /* Info Table */
+        .info-section {
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .info-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .info-table td {
+            padding: 15px 20px;
+            font-size: 14px;
+        }
+
+        .info-table td:first-child {
+            background: var(--light-gray);
+            font-weight: 600;
+            width: 200px;
+            color: var(--text-dark);
+        }
+
+        .info-table td:last-child {
+            color: var(--text-dark);
+        }
+
+        .info-table a {
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        .info-table a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-medium);
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .verse-line {
+                grid-template-columns: 40px 30px 1fr 30px;
+                gap: 10px;
+            }
+
+            .info-table td:first-child {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="logo-text">GHENT UNIVERSITY</div>
+        <ul class="nav-links">
+            <li><a href="#">Home Faculty of Arts and Philosophy</a></li>
+            <li><a href="#">Home Ghent University</a></li>
+            <li><a href="#">Login</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero Header -->
+    <header class="hero-header">
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-university"></i>
+            </div>
+            <div class="logo-text">GHENT<br>UNIVERSITY</div>
+        </div>
+        <h1 class="hero-title">DATABASE OF BYZANTINE BOOK EPIGRAMS</h1>
+    </header>
+
+    <!-- Main Navigation -->
+    <nav class="main-nav">
+        <ul>
+            <li><a href="byzantine-db.html">HOME</a></li>
+            <li><a href="byzantine-db.html" class="active">OCCURRENCES</a></li>
+            <li><a href="types.html">TYPES</a></li>
+            <li><a href="#">MANUSCRIPTS</a></li>
+            <li><a href="#">PERSONS</a></li>
+            <li><a href="#">BIBLIOGRAPHY</a></li>
+            <li><a href="#">INFO <i class="fas fa-caret-down"></i></a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div id="contentArea">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin fa-3x"></i>
+                <p style="margin-top: 20px;">Loading occurrence details...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db = null;
+        let occurrenceId = null;
+
+        async function initDatabase() {
+            try {
+                // Get occurrence ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                occurrenceId = urlParams.get('id');
+
+                if (!occurrenceId) {
+                    throw new Error('No occurrence ID specified');
+                }
+
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+
+                const response = await fetch('../app/data/export_data.sqlite');
+                if (!response.ok) {
+                    throw new Error('Database file not found at app/data/export_data.sqlite');
+                }
+                
+                const buffer = await response.arrayBuffer();
+                db = new SQL.Database(new Uint8Array(buffer));
+                
+                loadOccurrenceDetail();
+            } catch (error) {
+                console.error('Error loading database:', error);
+                document.getElementById('contentArea').innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Error loading database: ${error.message}
+                        <br><br>
+                        Please ensure the database file exists at: <code>app/data/export_data.sqlite</code>
+                    </div>
+                `;
+            }
+        }
+
+        function loadOccurrenceDetail() {
+            if (!db || !occurrenceId) return;
+
+            try {
+                // Get occurrence details
+                const occQuery = `
+                    SELECT 
+                        o.*,
+                        m.name as manuscript_name,
+                        m.shelf,
+                        l.name as library_name,
+                        loc.name as location_name
+                    FROM occurrences o
+                    LEFT JOIN manuscripts m ON o.manuscript_id = m.id
+                    LEFT JOIN libraries l ON m.library_id = l.id
+                    LEFT JOIN locations loc ON l.location_id = loc.id
+                    WHERE o.id = ?
+                `;
+                
+                const occStmt = db.prepare(occQuery);
+                occStmt.bind([occurrenceId]);
+                
+                let occurrence = null;
+                if (occStmt.step()) {
+                    occurrence = occStmt.getAsObject();
+                }
+                occStmt.free();
+
+                if (!occurrence) {
+                    throw new Error('Occurrence not found');
+                }
+
+                // Get verses
+                const versesQuery = `
+                    SELECT *
+                    FROM verses
+                    WHERE occurrence_id = ?
+                    ORDER BY order_in_occurrence
+                `;
+                
+                const versesStmt = db.prepare(versesQuery);
+                versesStmt.bind([occurrenceId]);
+                
+                const verses = [];
+                while (versesStmt.step()) {
+                    verses.push(versesStmt.getAsObject());
+                }
+                versesStmt.free();
+
+                // Get related types
+                const typesQuery = `
+                    SELECT t.id, t.incipit, t.title
+                    FROM types t
+                    JOIN type_occurrences to2 ON t.id = to2.type_id
+                    WHERE to2.occurrence_id = ?
+                `;
+                
+                const typesStmt = db.prepare(typesQuery);
+                typesStmt.bind([occurrenceId]);
+                
+                const types = [];
+                while (typesStmt.step()) {
+                    types.push(typesStmt.getAsObject());
+                }
+                typesStmt.free();
+
+                // Get genres
+                const genresQuery = `
+                    SELECT g.name
+                    FROM genres g
+                    JOIN occurrence_genres og ON g.id = og.genre_id
+                    WHERE og.occurrence_id = ?
+                `;
+                
+                const genresStmt = db.prepare(genresQuery);
+                genresStmt.bind([occurrenceId]);
+                
+                const genres = [];
+                while (genresStmt.step()) {
+                    genres.push(genresStmt.getAsObject().name);
+                }
+                genresStmt.free();
+
+                // Get metres
+                const metresQuery = `
+                    SELECT m.name
+                    FROM metres m
+                    JOIN occurrence_metres om ON m.id = om.metre_id
+                    WHERE om.occurrence_id = ?
+                `;
+                
+                const metresStmt = db.prepare(metresQuery);
+                metresStmt.bind([occurrenceId]);
+                
+                const metres = [];
+                while (metresStmt.step()) {
+                    metres.push(metresStmt.getAsObject().name);
+                }
+                metresStmt.free();
+
+                displayOccurrence(occurrence, verses, types, genres, metres);
+                
+            } catch (error) {
+                console.error('Error loading occurrence:', error);
+                document.getElementById('contentArea').innerHTML = `
+                    <div class="error">
+                        Error loading occurrence: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayOccurrence(occ, verses, types, genres, metres) {
+            const manuscriptDisplay = buildManuscriptDisplay(occ);
+            const dateDisplay = buildDateDisplay(occ.date_floor_year, occ.date_ceiling_year);
+            
+            // Get previous and next occurrence IDs
+            const prevNextIds = getPreviousNextIds(occ.id);
+            
+            let html = `
+                <div class="page-header">
+                    <h1 class="page-title">Occurrence ${occ.id}</h1>
+                    ${occ.title ? `<p class="page-subtitle">(formerly ${occ.title})</p>` : ''}
+                    <div class="nav-buttons">
+                        ${prevNextIds.prev ? 
+                            `<a href="occurrence-detail.html?id=${prevNextIds.prev}" class="nav-btn">« Previous ms. occ.</a>` :
+                            `<span class="nav-btn" style="opacity: 0.5; cursor: not-allowed;">« Previous ms. occ.</span>`
+                        }
+                        ${prevNextIds.next ? 
+                            `<a href="occurrence-detail.html?id=${prevNextIds.next}" class="nav-btn">Next ms. occ. »</a>` :
+                            `<span class="nav-btn" style="opacity: 0.5; cursor: not-allowed;">Next ms. occ. »</span>`
+                        }
+                    </div>
+                </div>
+
+                <div class="text-display">
+                    <div class="verse-line" style="font-weight: 600; border-bottom: 2px solid var(--border-gray);">
+                        <div class="verse-title">T</div>
+                        <div class="verse-number"></div>
+                        <div>οἱ ἡρωικοί:</div>
+                        <div></div>
+                    </div>
+            `;
+
+            if (verses && verses.length > 0) {
+                verses.forEach((verse, index) => {
+                    html += `
+                        <div class="verse-line">
+                            <div class="verse-title"></div>
+                            <div class="verse-number">${index + 1}</div>
+                            <div class="verse-text">${verse.text || ''}</div>
+                            <div class="verse-link">
+                                <a href="#"><i class="fas fa-link"></i></a>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else if (occ.text_original) {
+                // If no verses, display the text_original
+                const lines = occ.text_original.split('\n');
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        html += `
+                            <div class="verse-line">
+                                <div class="verse-title"></div>
+                                <div class="verse-number">${index + 1}</div>
+                                <div class="verse-text">${line}</div>
+                                <div class="verse-link">
+                                    <a href="#"><i class="fas fa-link"></i></a>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+
+            html += `</div>`;
+
+            // Info table
+            html += `
+                <div class="info-section">
+                    <table class="info-table">
+            `;
+
+            if (types && types.length > 0) {
+                html += `
+                    <tr>
+                        <td>Type(s)</td>
+                        <td>
+                            ${types.map(t => `<a href="type-detail.html?id=${t.id}">${t.incipit || t.title || t.id}</a> (14 verses)`).join('<br>')}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            html += `
+                <tr>
+                    <td>Text source</td>
+                    <td>${occ.public_comment || 'DBBE (inspection of a reproduction of the manuscript)'}</td>
+                </tr>
+                <tr>
+                    <td>Text status</td>
+                    <td>${occ.private_comment || 'Text completely known'}</td>
+                </tr>
+                <tr>
+                    <td>Date</td>
+                    <td>${dateDisplay}</td>
+                </tr>
+                <tr>
+                    <td>Manuscript</td>
+                    <td><a href="manuscript-detail.html?id=${occ.manuscript_id}">${manuscriptDisplay}</a></td>
+                </tr>
+                <tr>
+                    <td>Place in Manuscript</td>
+                    <td>${occ.location_in_ms || 'f. 171r'}</td>
+                </tr>
+            `;
+
+            if (occ.palaeographical_info) {
+                html += `
+                    <tr>
+                        <td>Palaeographical information</td>
+                        <td>${occ.palaeographical_info}</td>
+                    </tr>
+                `;
+            }
+
+            if (occ.contextual_info) {
+                html += `
+                    <tr>
+                        <td>Contextual information</td>
+                        <td>${occ.contextual_info}</td>
+                    </tr>
+                `;
+            }
+
+            if (metres && metres.length > 0) {
+                html += `
+                    <tr>
+                        <td>Metre(s)</td>
+                        <td><a href="#">${metres.join(', ')}</a></td>
+                    </tr>
+                `;
+            }
+
+            if (genres && genres.length > 0) {
+                html += `
+                    <tr>
+                        <td>Genre(s)</td>
+                        <td><a href="#">${genres.join(', ')}</a></td>
+                    </tr>
+                `;
+            }
+
+            html += `
+                    </table>
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = html;
+        }
+
+        function buildManuscriptDisplay(row) {
+            let parts = [];
+            
+            if (row.location_name) parts.push(row.location_name.toUpperCase());
+            if (row.library_name) parts.push(row.library_name);
+            if (row.shelf) parts.push(row.shelf);
+            
+            return parts.length > 0 ? parts.join(' - ') : 'Unknown manuscript';
+        }
+
+        function buildDateDisplay(floorYear, ceilingYear) {
+            if (floorYear && ceilingYear) {
+                return `${floorYear}-${ceilingYear}`;
+            } else if (floorYear) {
+                return floorYear;
+            } else if (ceilingYear) {
+                return ceilingYear;
+            }
+            return '';
+        }
+
+        function getPreviousNextIds(currentId) {
+            if (!db) return { prev: null, next: null };
+
+            try {
+                // Get previous ID
+                const prevQuery = `SELECT id FROM occurrences WHERE id < ? ORDER BY id DESC LIMIT 1`;
+                const prevStmt = db.prepare(prevQuery);
+                prevStmt.bind([currentId]);
+                let prevId = null;
+                if (prevStmt.step()) {
+                    prevId = prevStmt.getAsObject().id;
+                }
+                prevStmt.free();
+
+                // Get next ID
+                const nextQuery = `SELECT id FROM occurrences WHERE id > ? ORDER BY id ASC LIMIT 1`;
+                const nextStmt = db.prepare(nextQuery);
+                nextStmt.bind([currentId]);
+                let nextId = null;
+                if (nextStmt.step()) {
+                    nextId = nextStmt.getAsObject().id;
+                }
+                nextStmt.free();
+
+                return { prev: prevId, next: nextId };
+            } catch (error) {
+                console.error('Error getting prev/next IDs:', error);
+                return { prev: null, next: null };
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initDatabase);
+    </script>
+</body>
+</html>
