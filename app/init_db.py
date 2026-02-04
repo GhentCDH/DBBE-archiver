@@ -64,7 +64,7 @@ def create_base_tables():
     """)
     
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS acknowledgements (
+    CREATE TABLE IF NOT EXISTS acknowledgement (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )

@@ -330,22 +330,22 @@
                 }
                 occStmt.free();
 
-                // Get acknowledgements
+                // Get acknowledgement
                 const ackQuery = `
                     SELECT a.name
-                    FROM acknowledgements a
+                    FROM acknowledgement a
                     JOIN manuscript_acknowledgement ma ON a.id = ma.acknowledgement_id
                     WHERE ma.manuscript_id = ?
                 `;
                 const ackStmt = db.prepare(ackQuery);
                 ackStmt.bind([manuscriptId]);
-                const acknowledgements = [];
+                const acknowledgement = [];
                 while (ackStmt.step()) {
-                    acknowledgements.push(ackStmt.getAsObject().name);
+                    acknowledgement.push(ackStmt.getAsObject().name);
                 }
                 ackStmt.free();
 
-                displayManuscript(manuscript, content, persons, bibliography, identifications, occCount, acknowledgements);
+                displayManuscript(manuscript, content, persons, bibliography, identifications, occCount, acknowledgement);
                 
             } catch (error) {
                 console.error('Error loading manuscript:', error);
@@ -357,7 +357,7 @@
             }
         }
 
-        function displayManuscript(ms, content, persons, bibliography, identifications, occCount, acknowledgements) {
+        function displayManuscript(ms, content, persons, bibliography, identifications, occCount, acknowledgement) {
             const manuscriptName = buildManuscriptName(ms);
             
             let html = `
@@ -432,16 +432,16 @@
                     </tr>
             `;
 
-            if (acknowledgements.length > 0) {
+            if (acknowledgement.length > 0) {
                 html += `
                     <tr>
-                        <td>Acknowledgements</td>
+                        <td>acknowledgement</td>
                         <td>
                             <strong>Creator(s)</strong><br>
-                            ${acknowledgements.join('<br>')}
+                            ${acknowledgement.join('<br>')}
                             <br><br>
                             <strong>Contributor(s)</strong><br>
-                            ${acknowledgements.join('<br>')}
+                            ${acknowledgement.join('<br>')}
                         </td>
                     </tr>
                 `;

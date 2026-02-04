@@ -40,7 +40,7 @@ def create_schema():
         acknowledgement_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, acknowledgement_id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
-        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgements(id)
+        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgement(id)
     )
     """)
 

@@ -53,7 +53,7 @@ def create_type_tables(cursor):
         acknowledgement_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, acknowledgement_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
-        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgements(id)
+        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgement(id)
     )
     """)
     
@@ -330,7 +330,7 @@ def migrate_types():
             },
             {
                 "source_key": "acknowledgement",
-                "entity_table": "acknowledgements",
+                "entity_table": "acknowledgement",
                 "join_table": "type_acknowledgement",
                 "parent_id_col": "type_id",
                 "entity_id_col": "acknowledgement_id",

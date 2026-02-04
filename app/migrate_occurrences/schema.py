@@ -73,7 +73,7 @@ def create_schema():
         acknowledgement_id INTEGER NOT NULL,
         PRIMARY KEY (occurrence_id, acknowledgement_id),
         FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgements(id)
+        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgement(id)
     )
     """)
 

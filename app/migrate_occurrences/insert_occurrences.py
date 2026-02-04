@@ -160,7 +160,7 @@ def run_occurrence_migration():
             },
             {
                 "source_key": "acknowledgement",
-                "entity_table": "acknowledgements",
+                "entity_table": "acknowledgement",
                 "join_table": "occurrence_acknowledgement",
                 "parent_id_col": "occurrence_id",
                 "entity_id_col": "acknowledgement_id",

@@ -70,7 +70,7 @@ def create_manuscript_tables(cursor):
         acknowledgement_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, acknowledgement_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
-        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgements(id)
+        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgement(id)
     )
     """)
     
@@ -309,7 +309,7 @@ def migrate_manuscripts():
             },
             {
                 "source_key": "acknowledgement",
-                "entity_table": "acknowledgements",
+                "entity_table": "acknowledgement",
                 "join_table": "manuscript_acknowledgement",
                 "parent_id_col": "manuscript_id",
                 "entity_id_col": "acknowledgement_id",

@@ -179,7 +179,7 @@ Verse_groups allow grouping of related verses.
 - ```metres``` — metre classification.
 - ```genres``` — genre classification.
 - ```management``` — administrative metadata.
-- ```acknowledgements``` — acknowledgements linked to occurrences, manuscripts, types, or persons.
+- ```acknowledgement``` — acknowledgement linked to occurrences, manuscripts, types, or persons.
 - ```editorial_statuses``` — editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
 - ```self_designations``` — how a scribe describes himself
 - ```offices``` — the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
