@@ -313,7 +313,7 @@
 
         function displayPerson(person, identifications, manuscripts, occurrences, bibliography) {
             const fullName = `${person.first_name || ''} ${person.last_name || ''}`.trim();
-            const dateDisplay = buildDateDisplay(person.born_date_floor_year, person.born_date_ceiling_year, person.death_date_floor_year, person.death_date_ceiling_year);
+            const dateDisplay = buildDateDisplay(person.born_date_floor, person.born_date_ceiling, person.death_date_floor, person.death_date_ceiling);
             
             let html = `
                 <div class="page-header">
@@ -338,11 +338,11 @@
                 `;
             }
 
-            if (person.born_date_floor_year || person.born_date_ceiling_year) {
+            if (person.born_date_floor || person.born_date_ceiling) {
                 html += `
                     <tr>
                         <td>Attested dates and intervals</td>
-                        <td>${person.born_date_floor_year || ''}-${person.born_date_ceiling_year || ''}</td>
+                        <td>${person.born_date_floor || ''}-${person.born_date_ceiling || ''}</td>
                     </tr>
                 `;
             }

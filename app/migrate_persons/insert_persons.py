@@ -125,7 +125,7 @@ def run_person_migration():
             born_date_floor = excluded.born_date_floor,
             born_date_ceiling = excluded.born_date_ceiling,
             death_date_floor = excluded.death_date_floor,
-            death_date_ceiling_year = excluded.death_date_ceiling_year,
+            death_date_ceiling = excluded.death_date_ceiling,
             is_dbbe_person = excluded.is_dbbe_person,
             is_modern_person = excluded.is_modern_person,
             is_historical_person = excluded.is_historical_person

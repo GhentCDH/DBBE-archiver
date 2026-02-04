@@ -572,10 +572,10 @@
                         p.id,
                         p.first_name,
                         p.last_name,
-                        p.born_date_floor_year,
-                        p.born_date_ceiling_year,
-                        p.death_date_floor_year,
-                        p.death_date_ceiling_year,
+                        p.born_date_floor,
+                        p.born_date_ceiling,
+                        p.death_date_floor,
+                        p.death_date_ceiling,
                         p.created,
                         GROUP_CONCAT(i.identifier_value, '; ') as identifications,
                         GROUP_CONCAT(sd.name, ', ') as designations,
@@ -598,12 +598,12 @@
                 }
 
                 if (yearFrom) {
-                    conditions.push('(p.death_date_ceiling_year >= ? OR p.born_date_ceiling_year >= ?)');
+                    conditions.push('(p.death_date_ceiling >= ? OR p.born_date_ceiling >= ?)');
                     params.push(yearFrom, yearFrom);
                 }
 
                 if (yearTo) {
-                    conditions.push('(p.born_date_floor_year <= ? OR p.death_date_floor_year <= ?)');
+                    conditions.push('(p.born_date_floor <= ? OR p.death_date_floor <= ?)');
                     params.push(yearTo, yearTo);
                 }
 
@@ -650,7 +650,7 @@
             for (let i = startIndex; i < endIndex; i++) {
                 const row = currentResults[i];
                 const fullName = `${row.first_name || ''} ${row.last_name || ''}`.trim();
-                const dateDisplay = buildDateDisplay(row.born_date_floor_year, row.born_date_ceiling_year, row.death_date_floor_year, row.death_date_ceiling_year);
+                const dateDisplay = buildDateDisplay(row.born_date_floor, row.born_date_ceiling, row.death_date_floor, row.death_date_ceiling);
                 const createdDate = row.created ? new Date(row.created).toLocaleDateString('en-GB') : '';
                 
                 const tr = document.createElement('tr');
