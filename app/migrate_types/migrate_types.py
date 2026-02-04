@@ -83,7 +83,7 @@ def create_type_tables(cursor):
         metre_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, metre_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
-        FOREIGN KEY (metre_id) REFERENCES metres(id)
+        FOREIGN KEY (metre_id) REFERENCES metre(id)
     )
     """)
     
@@ -323,7 +323,7 @@ def migrate_types():
             },
             {
                 "source_key": "metre",
-                "entity_table": "metres",
+                "entity_table": "metre",
                 "join_table": "type_metre",
                 "parent_id_col": "type_id",
                 "entity_id_col": "metre_id",

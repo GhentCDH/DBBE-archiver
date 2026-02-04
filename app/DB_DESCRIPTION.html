@@ -48,7 +48,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <ul>
 <li><code>occurrence_person_role</code>: Any possible role a person could play in the publication of this occurrence. Example: Scribe ( = historical person), transcriber (=modern person), contributor (=modern person)...</li>
 <li><code>occurrence_genres</code>: Genres attributed to this occurrence (Can be more than 1)</li>
-<li><code>occurrence_metres</code>: Metres attributed to this occurrence (Can be more than 1)</li>
+<li><code>occurrence_metre</code>: metre attributed to this occurrence (Can be more than 1)</li>
 <li><code>occurrence_management</code>: Internal information. For example: To do's in the processing of this occurrence</li>
 <li><code>occurrence_acknowledgement</code>: Plain text shout out to people who helped in the publication of this occurrence. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>occurrence_person_role</code>.</li>
 <li><code>occurrence_text_statuses</code>: An occurrence text can be partially/completely (un)known</li>
@@ -65,7 +65,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <ul>
 <li><code>Type_person_role</code>: Any possible role a person could play in the construction and publication of this Type.</li>
 <li><code>Type_genre</code>: Genres attributed to this Type. More than 1 Genre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.</li>
-<li><code>Type_metre</code>: Metres attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.</li>
+<li><code>Type_metre</code>: metre attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.</li>
 <li><code>Type_management</code>: Internal information. For example: To do's in the processing of this Type</li>
 <li><code>Type_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Type. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>type_person_role</code>.</li>
 <li><code>Type_text_statuses</code>: Type text can be either completely known or partially unknown</li>
@@ -154,7 +154,7 @@ Verse_groups allows grouping of related verses.
 <li><code>text_statuses</code>: textual status of occurrences or types.</li>
 <li><code>keywords</code>: keywords for occurrences and types.</li>
 <li><code>tags</code>: tags for types: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.</li>
-<li><code>metres</code>: metre classification.</li>
+<li><code>metre</code>: metre classification.</li>
 <li><code>genres</code>: genre classification.</li>
 <li><code>management</code>: administrative metadata.</li>
 <li><code>acknowledgement</code>: acknowledgement linked to occurrences, manuscripts, types, or persons.</li>

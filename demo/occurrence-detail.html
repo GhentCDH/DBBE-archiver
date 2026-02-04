@@ -479,24 +479,24 @@
                 }
                 genresStmt.free();
 
-                // Get metres
-                const metresQuery = `
+                // Get metre
+                const metreQuery = `
                     SELECT m.name
-                    FROM metres m
-                    JOIN occurrence_metres om ON m.id = om.metre_id
+                    FROM metre m
+                    JOIN occurrence_metre om ON m.id = om.metre_id
                     WHERE om.occurrence_id = ?
                 `;
                 
-                const metresStmt = db.prepare(metresQuery);
-                metresStmt.bind([occurrenceId]);
+                const metreStmt = db.prepare(metreQuery);
+                metreStmt.bind([occurrenceId]);
                 
-                const metres = [];
-                while (metresStmt.step()) {
-                    metres.push(metresStmt.getAsObject().name);
+                const metre = [];
+                while (metreStmt.step()) {
+                    metre.push(metreStmt.getAsObject().name);
                 }
-                metresStmt.free();
+                metreStmt.free();
 
-                displayOccurrence(occurrence, verses, types, genres, metres);
+                displayOccurrence(occurrence, verses, types, genres, metre);
                 
             } catch (error) {
                 console.error('Error loading occurrence:', error);
@@ -508,7 +508,7 @@
             }
         }
 
-        function displayOccurrence(occ, verses, types, genres, metres) {
+        function displayOccurrence(occ, verses, types, genres, metre) {
             const manuscriptDisplay = buildManuscriptDisplay(occ);
             const dateDisplay = buildDateDisplay(occ.date_floor_year, occ.date_ceiling_year);
             
@@ -632,11 +632,11 @@
                 `;
             }
 
-            if (metres && metres.length > 0) {
+            if (metre && metre.length > 0) {
                 html += `
                     <tr>
                         <td>Metre(s)</td>
-                        <td><a href="#">${metres.join(', ')}</a></td>
+                        <td><a href="#">${metre.join(', ')}</a></td>
                     </tr>
                 `;
             }

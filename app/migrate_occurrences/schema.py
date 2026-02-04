@@ -48,12 +48,12 @@ def create_schema():
     """)
 
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS occurrence_metres (
+    CREATE TABLE IF NOT EXISTS occurrence_metre (
         occurrence_id INTEGER NOT NULL,
         metre_id INTEGER NOT NULL,
         PRIMARY KEY (occurrence_id, metre_id),
         FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (metre_id) REFERENCES metres(id)
+        FOREIGN KEY (metre_id) REFERENCES metre(id)
     )
     """)
 

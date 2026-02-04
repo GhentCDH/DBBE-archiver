@@ -153,8 +153,8 @@ def run_occurrence_migration():
             },
             {
                 "source_key": "metre",
-                "entity_table": "metres",
-                "join_table": "occurrence_metres",
+                "entity_table": "metre",
+                "join_table": "occurrence_metre",
                 "parent_id_col": "occurrence_id",
                 "entity_id_col": "metre_id",
             },

@@ -80,7 +80,7 @@ Related tables:
 
 - ```occurrence_person_role```: Any possible role a person could play in the publication of this occurrence. Example: Scribe ( = historical person), transcriber (=modern person), contributor (=modern person)...
 - ```occurrence_genres```: Genres attributed to this occurrence (Can be more than 1)
-- ```occurrence_metres```: Metres attributed to this occurrence (Can be more than 1)
+- ```occurrence_metre```: metre attributed to this occurrence (Can be more than 1)
 - ```occurrence_management```: Internal information. For example: To do's in the processing of this occurrence
 - ```occurrence_acknowledgement```: Plain text shout out to people who helped in the publication of this occurrence. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to occurrence_person_role._
 - ```occurrence_text_statuses```: An occurrence text can be partially/completely (un)known
@@ -95,7 +95,7 @@ Related tables:
 
 - ```Type_person_role```: Any possible role a person could play in the construction and publication of this Type. 
 - ```Type_genre```: Genres attributed to this Type. More than 1 Genre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.
-- ```Type_metre```: Metres attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.
+- ```Type_metre```: metre attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.
 - ```Type_management```: Internal information. For example: To do's in the processing of this Type
 - ```Type_acknowledgement```: Plain text shout out to people who helped in the publication of this Type. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to type_person_role._
 - ```Type_text_statuses```: Type text can be either completely known or partially unknown
@@ -176,7 +176,7 @@ Verse_groups allow grouping of related verses.
 - ```text_statuses``` — textual status of occurrences or types.
 - ```keywords``` — keywords for occurrences and types.
 - ```tags``` — tags for types: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.
-- ```metres``` — metre classification.
+- ```metre``` — metre classification.
 - ```genres``` — genre classification.
 - ```management``` — administrative metadata.
 - ```acknowledgement``` — acknowledgement linked to occurrences, manuscripts, types, or persons.

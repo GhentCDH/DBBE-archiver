@@ -246,22 +246,22 @@
                 }
                 genresStmt.free();
 
-                // Get metres
-                const metresQuery = `
+                // Get metre
+                const metreQuery = `
                     SELECT m.name
-                    FROM metres m
+                    FROM metre m
                     JOIN type_metre tm ON m.id = tm.metre_id
                     WHERE tm.type_id = ?
                 `;
-                const metresStmt = db.prepare(metresQuery);
-                metresStmt.bind([typeId]);
-                const metres = [];
-                while (metresStmt.step()) {
-                    metres.push(metresStmt.getAsObject().name);
+                const metreStmt = db.prepare(metreQuery);
+                metreStmt.bind([typeId]);
+                const metre = [];
+                while (metreStmt.step()) {
+                    metre.push(metreStmt.getAsObject().name);
                 }
-                metresStmt.free();
+                metreStmt.free();
 
-                displayType(type, genres, metres);
+                displayType(type, genres, metre);
             } catch (error) {
                 console.error('Error loading type:', error);
                 document.getElementById('contentArea').innerHTML = `
@@ -272,7 +272,7 @@
             }
         }
 
-        function displayType(type, genres, metres) {
+        function displayType(type, genres, metre) {
             let html = `
                 <div class="page-header">
                     <h1 class="page-title">Type ${type.id}</h1>
@@ -346,11 +346,11 @@
                 `;
             }
 
-            if (metres.length > 0) {
+            if (metre.length > 0) {
                 html += `
                     <tr>
                         <td>Metre(s)</td>
-                        <td><a href="#">${metres.join(', ')}</a></td>
+                        <td><a href="#">${metre.join(', ')}</a></td>
                     </tr>
                 `;
             }
