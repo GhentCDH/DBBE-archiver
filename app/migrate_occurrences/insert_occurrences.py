@@ -146,8 +146,8 @@ def run_occurrence_migration():
         OCCURRENCE_M2M = [
             {
                 "source_key": "genre",
-                "entity_table": "genres",
-                "join_table": "occurrence_genres",
+                "entity_table": "genre",
+                "join_table": "occurrence_genre",
                 "parent_id_col": "occurrence_id",
                 "entity_id_col": "genre_id",
             },
