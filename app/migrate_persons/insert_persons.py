@@ -161,14 +161,14 @@ def run_person_migration():
     pg_cursor.execute("SELECT id, name FROM data.self_designation")
     for sd_id, sd_name in pg_cursor.fetchall():
         execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO self_designations (id, name)
+            INSERT OR IGNORE INTO self_designation (id, name)
             VALUES (?, ?)
         """, (str(sd_id), sd_name))
 
     pg_cursor.execute("SELECT idperson, idself_designation FROM data.person_self_designation")
     for person_id, sd_id in pg_cursor.fetchall():
         execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO person_self_designations (person_id, self_designation_id)
+            INSERT OR IGNORE INTO person_self_designation (person_id, self_designation_id)
             VALUES (?, ?)
         """, (str(person_id), str(sd_id)))
 

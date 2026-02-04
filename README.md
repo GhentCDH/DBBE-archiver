@@ -131,7 +131,7 @@ Related tables:
 - ```Person_acknowledgement```: Plain text shout out to people who helped in the publication of the information on this (historical) person. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a person_person_role table which would be confusing._
 - ```person_identification```: Used to link persons to canonical IDs set by different authorities.
 - ```person_management```: Internal information. For example: To do's in the processing of this person
-- ```person_self_designations```: How a scribe describes himself
+- ```person_self_designation```: How a scribe describes himself
 - ```person_office```: the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
 
 
@@ -181,7 +181,7 @@ Verse_groups allow grouping of related verses.
 - ```management``` — administrative metadata.
 - ```acknowledgement``` — acknowledgement linked to occurrences, manuscripts, types, or persons.
 - ```editorial_status``` — editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
-- ```self_designations``` — how a scribe describes himself
+- ```self_designation``` — how a scribe describes himself
 - ```office``` — the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
 - ```locations``` - Locations that could be linked to manuscripts, libraries, persons,... . This is based upon the postgrs 'region' table. Note that a region used to have a flag is_city in the Postgres' Region table. I want to avoid keeping this approach so for now I did not add it. We might want to consider making this cleaner. 
 - ```libraries``` — library name and location. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)

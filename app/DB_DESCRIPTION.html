@@ -102,7 +102,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <li><code>Person_acknowledgement</code>: Plain text shout out to people who helped in the publication of the information on this (historical) person. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a <code>person_person_role</code>table which would be confusing.</li>
 <li><code>person_identification</code>:  Used to link persons to canonical IDs set by different authorities. </li>
 <li><code>person_management</code>: Internal information. For example: To do's in the processing of this person</li>
-<li><code>person_self_designations</code>: How a scribe describes himself</li>
+<li><code>person_self_designation</code>: How a scribe describes himself</li>
 <li><code>person_office</code>: the official title of a person. To do: These are currently stored entirely separate from <code>self designation</code>, even tho a person could describe himself using his official title too...</li>
 </ul>
 
@@ -159,7 +159,7 @@ Verse_groups allows grouping of related verses.
 <li><code>management</code>: administrative metadata.</li>
 <li><code>acknowledgement</code>: acknowledgement linked to occurrences, manuscripts, types, or persons.</li>
 <li><code>editorial_status</code>: editorial states for types. Currently only (not) a critical text. This might become just a boolean value but since it's not sure yet, we stored it like this</li>
-<li><code>self_designations</code>: how a scribe describes himself</li>
+<li><code>self_designation</code>: how a scribe describes himself</li>
 <li><code>office</code>: the official title of a person. To do: These are currently stored entirely separate from <code>self designation</code>, even tho a person could describe himself using his official title too...</li>
 <li><code>locations</code>:
 <li><code>libraries</code>: library metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>

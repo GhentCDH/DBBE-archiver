@@ -524,7 +524,7 @@
         function loadDesignationsDropdown() {
             if (!db) return;
             try {
-                const query = `SELECT id, name FROM self_designations ORDER BY name`;
+                const query = `SELECT id, name FROM self_designation ORDER BY name`;
                 const stmt = db.prepare(query);
                 const select = document.getElementById('designationSelect');
                 while (stmt.step()) {
@@ -583,8 +583,8 @@
                     FROM persons p
                     LEFT JOIN person_identification pi ON p.id = pi.person_id
                     LEFT JOIN identifications i ON pi.identification_id = i.id
-                    LEFT JOIN person_self_designations psd ON p.id = psd.person_id
-                    LEFT JOIN self_designations sd ON psd.self_designation_id = sd.id
+                    LEFT JOIN person_self_designation psd ON p.id = psd.person_id
+                    LEFT JOIN self_designation sd ON psd.self_designation_id = sd.id
                     LEFT JOIN person_office po ON p.id = po.person_id
                     LEFT JOIN office o ON po.office_id = o.id
                 `;

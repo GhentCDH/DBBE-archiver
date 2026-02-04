@@ -45,12 +45,12 @@ def create_schema():
     """)
 
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS person_self_designations (
+    CREATE TABLE IF NOT EXISTS person_self_designation (
         person_id INTEGER NOT NULL,
         self_designation_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, self_designation_id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
-        FOREIGN KEY (self_designation_id) REFERENCES self_designations(id)
+        FOREIGN KEY (self_designation_id) REFERENCES self_designation(id)
     )
     """)
 

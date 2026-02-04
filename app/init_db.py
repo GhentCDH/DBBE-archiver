@@ -140,7 +140,7 @@ def create_base_tables():
     """)
     
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS self_designations (
+    CREATE TABLE IF NOT EXISTS self_designation (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
