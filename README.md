@@ -150,7 +150,7 @@ Bibliographies are modelled as concrete entity types, rather than a single table
 Each bibliographic entity has:
 - its own table
 - a corresponding *_person_role table
-- a corresponding *_managements table
+- a corresponding *_management table
 - linking tables to the item the bibliography is about:
   - manuscripts (manuscript_*)
   - occurrences (occurrence_*)

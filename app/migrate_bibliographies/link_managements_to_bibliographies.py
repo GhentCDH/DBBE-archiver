@@ -5,7 +5,7 @@ def migrate_managements():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
 
-    sqlite_managements = {row[0] for row in execute_with_normalization(cursor, "SELECT id FROM management").fetchall()}
+    sqlite_management = {row[0] for row in execute_with_normalization(cursor, "SELECT id FROM management").fetchall()}
 
     pg_cursor.execute("""
         SELECT
@@ -47,7 +47,7 @@ def migrate_managements():
         doc_id = int(doc_id)
         mgmt_id = int(mgmt_id)
 
-        if mgmt_id not in sqlite_managements:
+        if mgmt_id not in sqlite_management:
             pg_cursor.execute("SELECT id, name FROM data.management WHERE id = %s", (mgmt_id,))
             mgmt_row = pg_cursor.fetchone()
             if not mgmt_row:
@@ -56,11 +56,11 @@ def migrate_managements():
                 "INSERT INTO management (id, name) VALUES (?, ?)",
                                        (mgmt_row[0], mgmt_row[1])
                                        )
-            sqlite_managements.add(mgmt_id)
+            sqlite_management.add(mgmt_id)
 
         execute_with_normalization(cursor,
             f"""
-            INSERT OR IGNORE INTO {bib_type_enum.value}_managements
+            INSERT OR IGNORE INTO {bib_type_enum.value}_management
                 (bibliography_id, management_id)
             VALUES (?, ?)
             """,

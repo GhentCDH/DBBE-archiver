@@ -205,7 +205,7 @@ def create_base_tables():
            """)
 
         execute_with_normalization(cursor, f"""
-               CREATE TABLE IF NOT EXISTS {bib_type}_managements (
+               CREATE TABLE IF NOT EXISTS {bib_type}_management (
                    bibliography_id INTEGER NOT NULL,
                    management_id INTEGER NOT NULL,
                    PRIMARY KEY (bibliography_id, management_id),
@@ -233,7 +233,7 @@ def create_base_tables():
            """)
 
         execute_with_normalization(cursor, f"""
-               CREATE TABLE IF NOT EXISTS {bib_type}_managements (
+               CREATE TABLE IF NOT EXISTS {bib_type}_management (
                    bibliography_id INTEGER NOT NULL,
                    management_id INTEGER NOT NULL,
                    PRIMARY KEY (bibliography_id, management_id),
