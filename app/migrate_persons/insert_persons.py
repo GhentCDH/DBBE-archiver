@@ -175,14 +175,14 @@ def run_person_migration():
     pg_cursor.execute("SELECT idoccupation, occupation FROM data.occupation")
     for office_id, office_name in pg_cursor.fetchall():
         execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO offices (id, name)
+            INSERT OR IGNORE INTO office (id, name)
             VALUES (?, ?)
         """, (str(office_id), office_name))
 
     pg_cursor.execute("SELECT idperson, idoccupation FROM data.person_occupation")
     for person_id, office_id in pg_cursor.fetchall():
         execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO person_offices (person_id, office_id)
+            INSERT OR IGNORE INTO person_office (person_id, office_id)
             VALUES (?, ?)
         """, (str(person_id), str(office_id)))
 

@@ -55,12 +55,12 @@ def create_schema():
     """)
 
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS person_offices (
+    CREATE TABLE IF NOT EXISTS person_office (
         person_id INTEGER NOT NULL,
         office_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, office_id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
-        FOREIGN KEY (office_id) REFERENCES offices(id)
+        FOREIGN KEY (office_id) REFERENCES office(id)
     )
     """)
 

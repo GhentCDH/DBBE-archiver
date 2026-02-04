@@ -351,7 +351,7 @@
                             <span class="slider"></span>
                         </label>
                     </div>
-                    <select class="search-select" id="officeSelect" style="margin-top: 10px;">
+                    <select class="search-select" id="officeelect" style="margin-top: 10px;">
                         <option value="">Select office</option>
                     </select>
                 </div>
@@ -472,7 +472,7 @@
                 
                 loadData();
                 loadRolesDropdown();
-                loadOfficesDropdown();
+                loadofficeDropdown();
                 loadDesignationsDropdown();
                 loadProvenanceDropdown();
             } catch (error) {
@@ -502,12 +502,12 @@
             }
         }
 
-        function loadOfficesDropdown() {
+        function loadofficeDropdown() {
             if (!db) return;
             try {
-                const query = `SELECT id, name FROM offices ORDER BY name`;
+                const query = `SELECT id, name FROM office ORDER BY name`;
                 const stmt = db.prepare(query);
-                const select = document.getElementById('officeSelect');
+                const select = document.getElementById('officeelect');
                 while (stmt.step()) {
                     const row = stmt.getAsObject();
                     const option = document.createElement('option');
@@ -517,7 +517,7 @@
                 }
                 stmt.free();
             } catch (error) {
-                console.error('Error loading offices:', error);
+                console.error('Error loading office:', error);
             }
         }
 
@@ -579,14 +579,14 @@
                         p.created,
                         GROUP_CONCAT(i.identifier_value, '; ') as identifications,
                         GROUP_CONCAT(sd.name, ', ') as designations,
-                        GROUP_CONCAT(o.name, ', ') as offices
+                        GROUP_CONCAT(o.name, ', ') as office
                     FROM persons p
                     LEFT JOIN person_identification pi ON p.id = pi.person_id
                     LEFT JOIN identifications i ON pi.identification_id = i.id
                     LEFT JOIN person_self_designations psd ON p.id = psd.person_id
                     LEFT JOIN self_designations sd ON psd.self_designation_id = sd.id
-                    LEFT JOIN person_offices po ON p.id = po.person_id
-                    LEFT JOIN offices o ON po.office_id = o.id
+                    LEFT JOIN person_office po ON p.id = po.person_id
+                    LEFT JOIN office o ON po.office_id = o.id
                 `;
 
                 let conditions = [];
@@ -658,7 +658,7 @@
                     <td><a href="person-detail.html?id=${row.id}">${fullName}</a></td>
                     <td>${row.identifications || ''}</td>
                     <td>${row.designations || ''}</td>
-                    <td>${row.offices || ''}</td>
+                    <td>${row.office || ''}</td>
                     <td>${dateDisplay}</td>
                     <td>${createdDate}</td>
                 `;

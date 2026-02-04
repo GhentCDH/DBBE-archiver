@@ -147,7 +147,7 @@ def create_base_tables():
     """)
     
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS offices (
+    CREATE TABLE IF NOT EXISTS office (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )
