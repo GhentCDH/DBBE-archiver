@@ -231,20 +231,20 @@
 
                 if (!type) throw new Error('Type not found');
 
-                // Get genres
-                const genresQuery = `
+                // Get genre
+                const genreQuery = `
                     SELECT g.name
-                    FROM genres g
+                    FROM genre g
                     JOIN type_genre tg ON g.id = tg.genre_id
                     WHERE tg.type_id = ?
                 `;
-                const genresStmt = db.prepare(genresQuery);
-                genresStmt.bind([typeId]);
-                const genres = [];
-                while (genresStmt.step()) {
-                    genres.push(genresStmt.getAsObject().name);
+                const genreStmt = db.prepare(genreQuery);
+                genreStmt.bind([typeId]);
+                const genre = [];
+                while (genreStmt.step()) {
+                    genre.push(genreStmt.getAsObject().name);
                 }
-                genresStmt.free();
+                genreStmt.free();
 
                 // Get metre
                 const metreQuery = `
@@ -261,7 +261,7 @@
                 }
                 metreStmt.free();
 
-                displayType(type, genres, metre);
+                displayType(type, genre, metre);
             } catch (error) {
                 console.error('Error loading type:', error);
                 document.getElementById('contentArea').innerHTML = `
@@ -272,7 +272,7 @@
             }
         }
 
-        function displayType(type, genres, metre) {
+        function displayType(type, genre, metre) {
             let html = `
                 <div class="page-header">
                     <h1 class="page-title">Type ${type.id}</h1>
@@ -337,11 +337,11 @@
                 </tr>
             `;
 
-            if (genres.length > 0) {
+            if (genre.length > 0) {
                 html += `
                     <tr>
                         <td>Genre(s)</td>
-                        <td>${genres.map(g => `<a href="#">${g}</a>`).join('<br>')}</td>
+                        <td>${genre.map(g => `<a href="#">${g}</a>`).join('<br>')}</td>
                     </tr>
                 `;
             }

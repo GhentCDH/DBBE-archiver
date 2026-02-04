@@ -71,7 +71,7 @@ def create_base_tables():
     """)
     
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS genres (
+    CREATE TABLE IF NOT EXISTS genre (
         id INTEGER PRIMARY KEY,
         name TEXT
     )

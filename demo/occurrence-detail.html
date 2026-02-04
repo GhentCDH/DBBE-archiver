@@ -462,22 +462,22 @@
                 }
                 typesStmt.free();
 
-                // Get genres
-                const genresQuery = `
+                // Get genre
+                const genreQuery = `
                     SELECT g.name
-                    FROM genres g
-                    JOIN occurrence_genres og ON g.id = og.genre_id
+                    FROM genre g
+                    JOIN occurrence_genre og ON g.id = og.genre_id
                     WHERE og.occurrence_id = ?
                 `;
                 
-                const genresStmt = db.prepare(genresQuery);
-                genresStmt.bind([occurrenceId]);
+                const genreStmt = db.prepare(genreQuery);
+                genreStmt.bind([occurrenceId]);
                 
-                const genres = [];
-                while (genresStmt.step()) {
-                    genres.push(genresStmt.getAsObject().name);
+                const genre = [];
+                while (genreStmt.step()) {
+                    genre.push(genreStmt.getAsObject().name);
                 }
-                genresStmt.free();
+                genreStmt.free();
 
                 // Get metre
                 const metreQuery = `
@@ -496,7 +496,7 @@
                 }
                 metreStmt.free();
 
-                displayOccurrence(occurrence, verses, types, genres, metre);
+                displayOccurrence(occurrence, verses, types, genre, metre);
                 
             } catch (error) {
                 console.error('Error loading occurrence:', error);
@@ -508,7 +508,7 @@
             }
         }
 
-        function displayOccurrence(occ, verses, types, genres, metre) {
+        function displayOccurrence(occ, verses, types, genre, metre) {
             const manuscriptDisplay = buildManuscriptDisplay(occ);
             const dateDisplay = buildDateDisplay(occ.date_floor_year, occ.date_ceiling_year);
             
@@ -641,11 +641,11 @@
                 `;
             }
 
-            if (genres && genres.length > 0) {
+            if (genre && genre.length > 0) {
                 html += `
                     <tr>
                         <td>Genre(s)</td>
-                        <td><a href="#">${genres.join(', ')}</a></td>
+                        <td><a href="#">${genre.join(', ')}</a></td>
                     </tr>
                 `;
             }

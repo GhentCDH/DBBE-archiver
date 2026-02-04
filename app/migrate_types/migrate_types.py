@@ -73,7 +73,7 @@ def create_type_tables(cursor):
         genre_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, genre_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
-        FOREIGN KEY (genre_id) REFERENCES genres(id)
+        FOREIGN KEY (genre_id) REFERENCES genre(id)
     )
     """)
     
@@ -316,7 +316,7 @@ def migrate_types():
         TYPES_M2M = [
             {
                 "source_key": "genre",
-                "entity_table": "genres",
+                "entity_table": "genre",
                 "join_table": "type_genre",
                 "parent_id_col": "type_id",
                 "entity_id_col": "genre_id",

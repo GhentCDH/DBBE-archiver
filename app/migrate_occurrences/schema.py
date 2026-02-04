@@ -38,12 +38,12 @@ def create_schema():
     """)
 
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS occurrence_genres (
+    CREATE TABLE IF NOT EXISTS occurrence_genre (
         occurrence_id INTEGER NOT NULL,
         genre_id INTEGER NOT NULL,
         PRIMARY KEY (occurrence_id, genre_id),
         FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (genre_id) REFERENCES genres(id)
+        FOREIGN KEY (genre_id) REFERENCES genre(id)
     )
     """)
 

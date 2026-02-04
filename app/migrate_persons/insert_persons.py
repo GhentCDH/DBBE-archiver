@@ -115,16 +115,16 @@ def run_person_migration():
         execute_with_normalization(cursor, """
         INSERT INTO persons (
             id, first_name, last_name,
-            born_date_floor_year, born_date_ceiling_year,
-            death_date_floor_year, death_date_ceiling_year,
+            born_date_floor, born_date_ceiling,
+            death_date_floor, death_date_ceiling,
             is_dbbe_person, is_modern_person, is_historical_person
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
             first_name = excluded.first_name,
             last_name = excluded.last_name,
-            born_date_floor_year = excluded.born_date_floor_year,
-            born_date_ceiling_year = excluded.born_date_ceiling_year,
-            death_date_floor_year = excluded.death_date_floor_year,
+            born_date_floor = excluded.born_date_floor,
+            born_date_ceiling = excluded.born_date_ceiling,
+            death_date_floor = excluded.death_date_floor,
             death_date_ceiling_year = excluded.death_date_ceiling_year,
             is_dbbe_person = excluded.is_dbbe_person,
             is_modern_person = excluded.is_modern_person,
