@@ -35,7 +35,7 @@ def create_base_tables():
         library_id INTEGER,
         collection_id INTEGER,
         FOREIGN KEY (library_id) REFERENCES libraries(id),
-        FOREIGN KEY (collection_id) REFERENCES collections(id)
+        FOREIGN KEY (collection_id) REFERENCES collection(id)
     )
     """)
 
@@ -162,7 +162,7 @@ def create_base_tables():
         );
     """)
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS collections (
+    CREATE TABLE IF NOT EXISTS collection (
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     )

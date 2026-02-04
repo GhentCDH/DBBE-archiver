@@ -324,7 +324,7 @@ def migrate_manuscripts():
                 **cfg,
             )
 
-        insert_many_to_one(cursor, "collection", "collections", manuscript_id, source.get("collection"))
+        insert_many_to_one(cursor, "collection", "collection", manuscript_id, source.get("collection"))
 
         lib = get_library_for_manuscript(pg_cursor, manuscript_id)
 

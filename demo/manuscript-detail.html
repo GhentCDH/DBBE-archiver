@@ -227,7 +227,7 @@
                     FROM manuscripts m
                     LEFT JOIN libraries l ON m.library_id = l.id
                     LEFT JOIN locations loc ON l.location_id = loc.id
-                    LEFT JOIN collections c ON m.collection_id = c.id
+                    LEFT JOIN collection c ON m.collection_id = c.id
                     WHERE m.id = ?
                 `;
                 
