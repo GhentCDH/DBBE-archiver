@@ -435,8 +435,8 @@
                                 ${table}.title,
                                 GROUP_CONCAT(persons.first_name || ' ' || persons.last_name, ', ') as authors
                             FROM ${table}
-                            LEFT JOIN ${table}_person_roles ON ${table}.id = ${table}_person_roles.bibliography_id
-                            LEFT JOIN persons ON ${table}_person_roles.person_id = persons.id
+                            LEFT JOIN ${table}_person_role ON ${table}.id = ${table}_person_role.bibliography_id
+                            LEFT JOIN persons ON ${table}_person_role.person_id = persons.id
                         `;
                         
                         if (titleSearch) {

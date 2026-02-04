@@ -266,7 +266,7 @@
                         r.name as role_name,
                         GROUP_CONCAT(i.identifier_value, '; ') as identifiers
                     FROM persons p
-                    JOIN manuscript_person_roles mpr ON p.id = mpr.person_id
+                    JOIN manuscript_person_role mpr ON p.id = mpr.person_id
                     JOIN roles r ON mpr.role_id = r.id
                     LEFT JOIN person_identification pi ON p.id = pi.person_id
                     LEFT JOIN identifications i ON pi.identification_id = i.id

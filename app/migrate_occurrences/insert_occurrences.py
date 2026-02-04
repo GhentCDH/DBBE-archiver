@@ -210,7 +210,7 @@ def run_occurrence_migration():
                 person_id = str(p.get('id', ''))
                 if person_id:
                     execute_with_normalization(cursor,
-                        "INSERT OR IGNORE INTO occurrence_person_roles (occurrence_id, person_id, role_id) VALUES (?, ?, ?)",
+                        "INSERT OR IGNORE INTO occurrence_person_role (occurrence_id, person_id, role_id) VALUES (?, ?, ?)",
                                                (occ_id, person_id, role_id)
                                                )
 

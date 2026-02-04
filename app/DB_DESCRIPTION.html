@@ -46,11 +46,11 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <p>Related tables:</p>
 
 <ul>
-<li><code>occurrence_person_roles</code>: Any possible role a person could play in the publication of this occurrence. Example: Scribe ( = historical person), transcriber (=modern person), contributor (=modern person)...</li>
+<li><code>occurrence_person_role</code>: Any possible role a person could play in the publication of this occurrence. Example: Scribe ( = historical person), transcriber (=modern person), contributor (=modern person)...</li>
 <li><code>occurrence_genres</code>: Genres attributed to this occurrence (Can be more than 1)</li>
 <li><code>occurrence_metres</code>: Metres attributed to this occurrence (Can be more than 1)</li>
 <li><code>occurrence_management</code>: Internal information. For example: To do's in the processing of this occurrence</li>
-<li><code>occurrence_acknowledgement</code>: Plain text shout out to people who helped in the publication of this occurrence. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>occurrence_person_roles</code>.</li>
+<li><code>occurrence_acknowledgement</code>: Plain text shout out to people who helped in the publication of this occurrence. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>occurrence_person_role</code>.</li>
 <li><code>occurrence_text_statuses</code>: An occurrence text can be partially/completely (un)known</li>
 <li><code>occurrence_keyword</code>: Keywords telling what the occurrence is about</li>
 <li><code>occurrence_related_occurrences</code>and <code>occurrence_relation_definitions</code>: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in <code>occurrence_relation_definitions</code></li>
@@ -63,11 +63,11 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <p>Related tables:</p>
 
 <ul>
-<li><code>Type_person_roles</code>: Any possible role a person could play in the construction and publication of this Type.</li>
+<li><code>Type_person_role</code>: Any possible role a person could play in the construction and publication of this Type.</li>
 <li><code>Type_genre</code>: Genres attributed to this Type. More than 1 Genre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.</li>
 <li><code>Type_metre</code>: Metres attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.</li>
 <li><code>Type_management</code>: Internal information. For example: To do's in the processing of this Type</li>
-<li><code>Type_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Type. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>type_person_roles</code>.</li>
+<li><code>Type_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Type. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>type_person_role</code>.</li>
 <li><code>Type_text_statuses</code>: Type text can be either completely known or partially unknown</li>
 <li><code>Type_related_types</code>(linked via <code>type_relation_definitions</code>) Groups of similar types</li>
   <li><code>Type_tags</code>:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...).</li>
@@ -84,12 +84,12 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <p>Related tables:</p>
 
 <ul>
-<li><code>Manuscript_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Acknowledgement. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>manuscript_person_roles</code>.</li>
+<li><code>Manuscript_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Acknowledgement. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>manuscript_person_role</code>.</li>
 <li><code>Manuscript_content</code>: Explains what the manuscript is about. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. </li>
 <li><code>Manuscript_identification</code>: Links a manuscript to one or more IDs that were used in canonical works to refer to this manuscript (ex: Diktyon)</li>
 <li><code>Manuscript_management</code>: Internal information. For example: To do's in the processing of this manuscript</li>
 <li><code>Manuscript_location</code>: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the locations table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "Locations".</li>
-<li><code>Manuscript_person_roles</code>: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...</li>
+<li><code>Manuscript_person_role</code>: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...</li>
 </ul>
 
 <h3>4. Persons</h3>
@@ -99,7 +99,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <p>Related tables:</p>
 
 <ul>
-<li><code>Person_acknowledgement</code>: Plain text shout out to people who helped in the publication of the information on this (historical) person. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a <code>person_person_roles</code>table which would be confusing.</li>
+<li><code>Person_acknowledgement</code>: Plain text shout out to people who helped in the publication of the information on this (historical) person. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a <code>person_person_role</code>table which would be confusing.</li>
 <li><code>person_identification</code>:  Used to link persons to canonical IDs set by different authorities. </li>
 <li><code>person_management</code>: Internal information. For example: To do's in the processing of this person</li>
 <li><code>person_self_designations</code>: How a scribe describes himself</li>
@@ -124,7 +124,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 
 <ul>
   <li>its own table</li>
-  <li>a corresponding <code>*_person_roles</code> table</li>
+  <li>a corresponding <code>*_person_role</code> table</li>
   <li>a corresponding <code>*_managements</code> table</li>
   <li>linking tables to the item the bibliography is about:
     <ul>

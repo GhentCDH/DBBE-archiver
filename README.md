@@ -78,11 +78,11 @@ Columns include:
 
 Related tables:
 
-- ```occurrence_person_roles```: Any possible role a person could play in the publication of this occurrence. Example: Scribe ( = historical person), transcriber (=modern person), contributor (=modern person)...
+- ```occurrence_person_role```: Any possible role a person could play in the publication of this occurrence. Example: Scribe ( = historical person), transcriber (=modern person), contributor (=modern person)...
 - ```occurrence_genres```: Genres attributed to this occurrence (Can be more than 1)
 - ```occurrence_metres```: Metres attributed to this occurrence (Can be more than 1)
 - ```occurrence_management```: Internal information. For example: To do's in the processing of this occurrence
-- ```occurrence_acknowledgement```: Plain text shout out to people who helped in the publication of this occurrence. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to occurrence_person_roles._
+- ```occurrence_acknowledgement```: Plain text shout out to people who helped in the publication of this occurrence. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to occurrence_person_role._
 - ```occurrence_text_statuses```: An occurrence text can be partially/completely (un)known
 - ```occurrence_related_occurrences``` and ```occurrence_relation_definitions```: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in occurrence_relation_definitions
 - ```occurrence_keyword```: Keywords telling what the occurrence is about
@@ -93,11 +93,11 @@ These are prototypes of occurrences. A lot of occurrences have a high level of s
 
 Related tables:
 
-- ```Type_person_roles```: Any possible role a person could play in the construction and publication of this Type. 
+- ```Type_person_role```: Any possible role a person could play in the construction and publication of this Type. 
 - ```Type_genre```: Genres attributed to this Type. More than 1 Genre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.
 - ```Type_metre```: Metres attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the Genres of the linked Occurrences.
 - ```Type_management```: Internal information. For example: To do's in the processing of this Type
-- ```Type_acknowledgement```: Plain text shout out to people who helped in the publication of this Type. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to type_person_roles._
+- ```Type_acknowledgement```: Plain text shout out to people who helped in the publication of this Type. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to type_person_role._
 - ```Type_text_statuses```: Type text can be either completely known or partially unknown
 - ```Type_related_types (linked via type_relation_definitions)```: Groups of similar types
 - ```Type_tags```:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). 
@@ -113,12 +113,12 @@ Contains metadata about manuscripts.
 
 Related tables:
 
-- ```Manuscript_acknowledgement```: Plain text shout out to people who helped in the publication of this Acknowledgement. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to manuscript_person_roles._
+- ```Manuscript_acknowledgement```: Plain text shout out to people who helped in the publication of this Acknowledgement. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to manuscript_person_role._
 - ```Manuscript_content```: Explains what the manuscript is about. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
 - ```Manuscript_identification```: Links a manuscript to one or more IDs that were used in canonical works to refer to this manuscript (ex: Diktyon)
 - ```Manuscript_management```: Internal information. For example: To do's in the processing of this manuscript
 - ```Manuscript_location```: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the locations table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "Locations"
-- ```Manuscript_person_roles```: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...
+- ```Manuscript_person_role```: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...
 
 
 
@@ -128,7 +128,7 @@ Contains metadata about persons involved (authors, editors, patrons, etc.).
 
 Related tables:
 
-- ```Person_acknowledgement```: Plain text shout out to people who helped in the publication of the information on this (historical) person. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a person_person_roles table which would be confusing._
+- ```Person_acknowledgement```: Plain text shout out to people who helped in the publication of the information on this (historical) person. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a person_person_role table which would be confusing._
 - ```person_identification```: Used to link persons to canonical IDs set by different authorities.
 - ```person_management```: Internal information. For example: To do's in the processing of this person
 - ```person_self_designations```: How a scribe describes himself
@@ -149,7 +149,7 @@ Bibliographies are modelled as concrete entity types, rather than a single table
 
 Each bibliographic entity has:
 - its own table
-- a corresponding *_person_roles table
+- a corresponding *_person_role table
 - a corresponding *_managements table
 - linking tables to the item the bibliography is about:
   - manuscripts (manuscript_*)

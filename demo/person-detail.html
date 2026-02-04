@@ -247,7 +247,7 @@
                 const msQuery = `
                     SELECT m.id, m.name, m.shelf, l.name as library, loc.name as location, r.name as role
                     FROM manuscripts m
-                    JOIN manuscript_person_roles mpr ON m.id = mpr.manuscript_id
+                    JOIN manuscript_person_role mpr ON m.id = mpr.manuscript_id
                     JOIN roles r ON mpr.role_id = r.id
                     LEFT JOIN libraries l ON m.library_id = l.id
                     LEFT JOIN locations loc ON l.location_id = loc.id
@@ -265,7 +265,7 @@
                 const occQuery = `
                     SELECT o.id, o.incipit, r.name as role
                     FROM occurrences o
-                    JOIN occurrence_person_roles opr ON o.id = opr.occurrence_id
+                    JOIN occurrence_person_role opr ON o.id = opr.occurrence_id
                     JOIN roles r ON opr.role_id = r.id
                     WHERE opr.person_id = ?
                     LIMIT 10

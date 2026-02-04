@@ -11,7 +11,7 @@ def exists(cursor, table, id_):
     return cursor.fetchone() is not None
 
 
-def migrate_person_roles():
+def migrate_person_role():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
 
@@ -65,7 +65,7 @@ def migrate_person_roles():
         try:
             execute_with_normalization(cursor,
                 f"""
-                INSERT INTO {bib_type_enum.value}_person_roles
+                INSERT INTO {bib_type_enum.value}_person_role
                     (bibliography_id, person_id, role_id)
                 VALUES (?, ?, ?)
                 """,
@@ -83,7 +83,7 @@ def migrate_person_roles():
 
         execute_with_normalization(cursor,
             f"""
-            INSERT OR IGNORE INTO {bib_type_enum.value}_person_roles
+            INSERT OR IGNORE INTO {bib_type_enum.value}_person_role
                 (bibliography_id, person_id, role_id)
             VALUES (?, ?, ?)
             """,

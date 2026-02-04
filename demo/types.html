@@ -729,7 +729,7 @@
                     
                     if (personId) {
                         query = query.replace('LEFT JOIN type_occurrences', 
-                            'LEFT JOIN type_person_roles tpr ON t.id = tpr.type_id LEFT JOIN type_occurrences');
+                            'LEFT JOIN type_person_role tpr ON t.id = tpr.type_id LEFT JOIN type_occurrences');
                         conditions.push('tpr.person_id = ?');
                         params.push(personId);
                         

@@ -26,7 +26,7 @@ def create_schema():
         add_column_if_missing(cursor, "occurrences", col, col_type)
 
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS occurrence_person_roles (
+    CREATE TABLE IF NOT EXISTS occurrence_person_role (
         occurrence_id INTEGER NOT NULL,
         person_id INTEGER NOT NULL,
         role_id INTEGER NOT NULL,

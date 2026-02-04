@@ -109,7 +109,7 @@ def create_type_tables(cursor):
 
     
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS type_person_roles (
+    CREATE TABLE IF NOT EXISTS type_person_role (
         type_id INTEGER NOT NULL,
         person_id INTEGER NOT NULL,
         role_id INTEGER NOT NULL,
@@ -388,7 +388,7 @@ def migrate_types():
                     continue
                 
                 execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO type_person_roles (type_id, person_id, role_id) VALUES (?, ?, ?)",
+                    "INSERT OR IGNORE INTO type_person_role (type_id, person_id, role_id) VALUES (?, ?, ?)",
                                            (type_id, person_id, role_id)
                                            )
         

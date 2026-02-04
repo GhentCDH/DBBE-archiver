@@ -193,7 +193,7 @@ def create_base_tables():
 
         # Type-specific roles table
         execute_with_normalization(cursor, f"""
-               CREATE TABLE IF NOT EXISTS {bib_type}_person_roles (
+               CREATE TABLE IF NOT EXISTS {bib_type}_person_role (
                    bibliography_id INTEGER NOT NULL,
                    person_id INTEGER NOT NULL,
                    role_id INTEGER NOT NULL,

@@ -43,7 +43,7 @@ def create_manuscript_tables(cursor):
         add_column_if_missing(cursor, "manuscripts", col, col_type)
 
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS manuscript_person_roles (
+    CREATE TABLE IF NOT EXISTS manuscript_person_role (
         manuscript_id INTEGER NOT NULL,
         person_id INTEGER NOT NULL,
         role_id INTEGER NOT NULL,
@@ -293,7 +293,7 @@ def migrate_manuscripts():
                 person_id = int(p.get('id', ''))
                 if person_id:
                     execute_with_normalization(cursor,
-                        "INSERT INTO manuscript_person_roles (manuscript_id, person_id, role_id) VALUES (?, ?, ?)",
+                        "INSERT INTO manuscript_person_role (manuscript_id, person_id, role_id) VALUES (?, ?, ?)",
                                                (manuscript_id, person_id, role_id)
                                                )
 
