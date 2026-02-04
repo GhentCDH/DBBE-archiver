@@ -534,7 +534,7 @@
                 const query = `
                     SELECT 
                         m.id,
-                        m.name,
+                        m."name",
                         m.shelf,
                         m.date_floor_year,
                         m.date_ceiling_year,
@@ -548,7 +548,7 @@
                     LEFT JOIN manuscript_content mc ON m.id = mc.manuscript_id
                     LEFT JOIN content c ON mc.content_id = c.id
                     GROUP BY m.id
-                    ORDER BY ${sortColumn} ${sortDirection}
+                    ORDER BY m.${sortColumn} ${sortDirection}
                 `;
 
                 const stmt = db.prepare(query);
@@ -599,13 +599,10 @@
             document.getElementById('nextPage').disabled = currentPage >= totalPages;
         }
 
-        function buildManuscriptName(row) {
-            let parts = [];
-            if (row.location_name) parts.push(row.location_name.toUpperCase());
-            if (row.library_name) parts.push(row.library_name);
-            if (row.shelf) parts.push(row.shelf);
-            return parts.join(' - ') || row.name || 'Unknown';
-        }
+            function buildManuscriptName(row) {
+                return row.name || 'Unknown';
+            }
+
 
         function buildDateDisplay(floorYear, ceilingYear) {
             if (floorYear && ceilingYear) return `${floorYear} - ${ceilingYear}`;
