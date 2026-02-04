@@ -462,13 +462,10 @@
             document.getElementById('contentArea').innerHTML = html;
         }
 
-        function buildManuscriptName(ms) {
-            let parts = [];
-            if (ms.location_name) parts.push(ms.location_name.toUpperCase());
-            if (ms.library_name) parts.push(ms.library_name);
-            if (ms.shelf) parts.push(ms.shelf);
-            return parts.join(' - ') || ms.name || 'Unknown Manuscript';
+        function buildManuscriptName(row) {
+            return row.name || 'Unknown';
         }
+
 
         window.addEventListener('DOMContentLoaded', initDatabase);
     </script>
