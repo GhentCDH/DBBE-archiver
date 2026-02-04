@@ -93,7 +93,7 @@ def create_type_tables(cursor):
         editorial_status_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, editorial_status_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
-        FOREIGN KEY (editorial_status_id) REFERENCES editorial_statuses(id)
+        FOREIGN KEY (editorial_status_id) REFERENCES editorial_status(id)
     )
     """)
     
@@ -268,7 +268,7 @@ def migrate_types():
             cs_name = cs.get('name', '')
             if cs_id:
                 execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO editorial_statuses (id, name) VALUES (?, ?)",
+                    "INSERT OR IGNORE INTO editorial_status (id, name) VALUES (?, ?)",
                                            (cs_id, cs_name)
                                            )
                 execute_with_normalization(cursor,
