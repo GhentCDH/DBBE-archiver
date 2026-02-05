@@ -77,39 +77,47 @@ def upload_sqlite_files_to_zenodo(folder_path, publish, deposition_id):
         print(f"Created new deposition ID: {new_deposition_id}")
 
     else:
-        print("Creating new version...")
-        r = requests.post(f"{ZENODO_API_URL}/{deposition_id}/actions/newversion", headers=headers)
+        r = requests.get(f"{ZENODO_API_URL}/{deposition_id}", headers=headers)
         r.raise_for_status()
-        response = r.json()
+        details = r.json()
 
-        latest_draft_url = response['links']['latest_draft']
-        new_deposition_id = latest_draft_url.rstrip("/").split("/")[-1]
-        deposition_id = new_deposition_id
-        print(f"Created new version with draft ID: {new_deposition_id}")
+        latest_draft_url = details['links'].get('latest_draft')
+        if latest_draft_url:
+            new_deposition_id = latest_draft_url.rstrip("/").split("/")[-1]
+            print(f"Using existing draft: {new_deposition_id}")
+        else:
+            print("Creating new version...")
+            r = requests.post(f"{ZENODO_API_URL}/{deposition_id}/actions/newversion", headers=headers)
+            r.raise_for_status()
+            response = r.json()
 
-        # Step 3: Update the metadata (including updated publication date)
-        r_update = requests.put(f"{ZENODO_API_URL}/{deposition_id}", headers=headers, json=deposition_data)
-        r_update.raise_for_status()
-        print(f"Updated publication date to {today_str}")
+            latest_draft_url = response['links']['latest_draft']
+            new_deposition_id = latest_draft_url.rstrip("/").split("/")[-1]
+            deposition_id = new_deposition_id
+            print(f"Created new version with draft ID: {new_deposition_id}")
 
-        r_files = requests.get(f"{ZENODO_API_URL}/{deposition_id}", headers=headers)
-        r_files.raise_for_status()
-        deposition_details = r_files.json()
+            r_update = requests.put(f"{ZENODO_API_URL}/{deposition_id}", headers=headers, json=deposition_data)
+            r_update.raise_for_status()
+            print(f"Updated publication date to {today_str}")
 
-        filename_to_find = "export_data.sqlite"
-        file_id = None
-        for f in deposition_details.get("files", []):
-            if f["filename"] == filename_to_find:
-                file_id = f["id"]
-                break
+            r_files = requests.get(f"{ZENODO_API_URL}/{deposition_id}", headers=headers)
+            r_files.raise_for_status()
+            deposition_details = r_files.json()
 
-        if file_id:
-            try:
-                r = requests.delete(f"{ZENODO_API_URL}/{deposition_id}/files/{file_id}", headers=headers)
-                r.raise_for_status()
-                print(f"✓ Deleted old {filename_to_find}")
-            except Exception as e:
-                print(f'Failed removing old SQL file: {e}')
+            filename_to_find = "export_data.sqlite"
+            file_id = None
+            for f in deposition_details.get("files", []):
+                if f["filename"] == filename_to_find:
+                    file_id = f["id"]
+                    break
+
+            if file_id:
+                try:
+                    r = requests.delete(f"{ZENODO_API_URL}/{deposition_id}/files/{file_id}", headers=headers)
+                    r.raise_for_status()
+                    print(f"✓ Deleted old {filename_to_find}")
+                except Exception as e:
+                    print(f'Failed removing old SQL file: {e}')
 
     # Upload SQLite files
     sqlite_files = [f for f in os.listdir(folder_path) if f.endswith(".sqlite")]
