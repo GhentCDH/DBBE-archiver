@@ -140,7 +140,7 @@ def create_type_tables(cursor):
         FOREIGN KEY (related_type_id) REFERENCES types(id),
         FOREIGN KEY (related_type_id) REFERENCES types(id),
         FOREIGN KEY (relation_definition_id) REFERENCES type_relation_definition(id),
-        CHECK (type_id <> related_type_id)
+        CHECK (type_id < related_type_id)
     )
     """)
 
@@ -151,18 +151,6 @@ def create_type_tables(cursor):
     )
     """)
 
-    execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS type_related_types (
-        type_id INTEGER NOT NULL,
-        related_type_id INTEGER NOT NULL,
-        relation_definition_id INTEGER NOT NULL,
-        PRIMARY KEY (type_id, related_type_id, relation_definition_id),
-        FOREIGN KEY (type_id) REFERENCES types(id),
-        FOREIGN KEY (related_type_id) REFERENCES types(id),
-        FOREIGN KEY (relation_definition_id) REFERENCES type_relation_definition(id),
-        CHECK (type_id <> related_type_id)
-    )
-    """)
 
     execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS type_keyword (
@@ -410,14 +398,19 @@ def migrate_types():
             VALUES (?, ?)
         """, (str(rel_def_id), rel_code))
 
+
     for type_id, related_type_id, rel_def_id, _ in relations:
+        a = int(type_id)
+        b = int(related_type_id)
+        type_id_norm, related_type_id_norm = sorted((a, b))
+
         execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO type_related_types
             (type_id, related_type_id, relation_definition_id)
             VALUES (?, ?, ?)
         """, (
-            str(type_id),
-            str(related_type_id),
+            type_id_norm,
+            related_type_id_norm,
             str(rel_def_id)
         ))
 

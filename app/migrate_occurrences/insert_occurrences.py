@@ -13,7 +13,7 @@ def preload_related_occurrences(pg_cursor):
                 b.idoriginal_poem AS dst
             FROM data.original_poem_verse a
             JOIN data.original_poem_verse b ON a.idgroup = b.idgroup
-            WHERE a.idoriginal_poem <> b.idoriginal_poem
+            WHERE a.idoriginal_poem < b.idoriginal_poem
         ),
         factoid_links AS (
             SELECT

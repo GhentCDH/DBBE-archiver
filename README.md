@@ -101,7 +101,7 @@ Related tables:
 - ```Type_text_statuses```: Type text can be either completely known or partially unknown
 - ```Type_related_types (linked via type_relation_definition)```: Groups of similar types
 - ```Type_tags```:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). 
-- ```Type_occurrences```: Occurrences linked to this type
+- ```Type_occurrences```: Occurrences linked to this type. Note that this is a many-to-many relationship: one occurrence can be linked to several types, one type can have several occurrences linked to it. 
 - ```Type_editorial_status```: editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
 - ```type_keyword```: Keywords telling what the type is about
 
