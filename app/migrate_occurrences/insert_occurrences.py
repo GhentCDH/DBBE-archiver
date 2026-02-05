@@ -4,6 +4,12 @@ from ..common import (execute_with_normalization,
                       insert_many_to_many, get_postgres_connection
                       )
 
+import os
+
+def str_to_bool(value: str) -> bool:
+    return value.lower() in {"1", "true", "yes", "on"}
+
+PUBLIC_RELEASE = str_to_bool(os.getenv("PUBLIC_RELEASE", "true"))
 
 def preload_related_occurrence(pg_cursor):
     pg_cursor.execute("""
@@ -82,8 +88,38 @@ def run_occurrence_migration():
 
     for hit in hits:
         source = hit['_source']
-        occ_id = str(source.get('id', hit['_id']))
         manuscript_id = str(source.get('manuscript', {}).get('id', ''))
+
+        source = hit['_source']
+        occ_id = str(source.get('id', hit['_id']))
+        is_public = bool(source.get('public', False))
+
+        if not is_public and PUBLIC_RELEASE:
+            print(f"Skipping occurrence {occ_id} because public=False during public release")
+
+            tables_to_clean = [
+                "verses",
+                "occurrence_keyword",
+                "occurrence_genre",
+                "occurrence_metre",
+                "occurrence_acknowledgement",
+                "occurrence_management",
+                "occurrence_person_role",
+                "occurrence_text_statuses",
+                "occurrence_related_occurrence",
+            ]
+
+            for table in tables_to_clean:
+                execute_with_normalization(cursor,
+                                           f"DELETE FROM {table} WHERE occurrence_id = ?",
+                                           (occ_id,))
+            execute_with_normalization(cursor,
+                                       "DELETE FROM occurrence WHERE id = ?",
+                                       (occ_id,))
+
+            execute_with_normalization(cursor, "COMMIT")
+            execute_with_normalization(cursor, "BEGIN")
+            continue
 
         execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO occurrence (id)
