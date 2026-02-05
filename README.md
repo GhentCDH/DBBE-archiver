@@ -99,7 +99,7 @@ Related tables:
 - ```Type_management```: Internal information. For example: To do's in the processing of this Type
 - ```Type_acknowledgement```: Plain text shout out to people who helped in the publication of this Type. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to type_person_role._
 - ```Type_text_statuses```: Type text can be either completely known or partially unknown
-- ```Type_related_types (linked via type_relation_definitions)```: Groups of similar types
+- ```Type_related_types (linked via type_relation_definition)```: Groups of similar types
 - ```Type_tags```:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). 
 - ```Type_occurrences```: Occurrences linked to this type
 - ```Type_editorial_status```: editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this

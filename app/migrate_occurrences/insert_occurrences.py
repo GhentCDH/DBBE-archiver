@@ -94,7 +94,7 @@ def run_occurrence_migration():
         UPDATE occurrences SET
             created=?, modified=?, public_comment=?, private_comment=?,
             is_dbbe=?, incipit=?, text_stemmer=?, text_original=?,
-            location_in_ms=?, date_floor_year=?, date_ceiling_year=?,
+            location_in_ms=?, completion_date_floor=?, completion_date_ceiling=?,
             palaeographical_info=?, contextual_info=?, manuscript_id=?, title=?
         WHERE id=?
         """, (
@@ -107,8 +107,8 @@ def run_occurrence_migration():
             source.get('text_stemmer', ''),
             source.get('text_original', ''),
             source.get('location', ''),
-            source.get('date_floor_year', ''),
-            source.get('date_ceiling_year', ''),
+            source.get('completion_floor', ''),
+            source.get('completion_ceiling', ''),
             source.get('palaeographical_info', ''),
             source.get('contextual_info', ''),
             manuscript_id,

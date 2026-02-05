@@ -176,7 +176,7 @@ def create_base_tables():
     """)
     
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS type_relation_definitions (
+    CREATE TABLE IF NOT EXISTS type_relation_definition (
         id INTEGER PRIMARY KEY,
         definition TEXT NOT NULL UNIQUE
     )
