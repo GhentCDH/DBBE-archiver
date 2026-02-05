@@ -26,8 +26,8 @@ def create_base_tables():
     CREATE TABLE IF NOT EXISTS manuscripts (
         id INTEGER PRIMARY KEY,
         name TEXT,
-        date_floor_year INTEGER,
-        date_ceiling_year INTEGER,
+        completion_date_floor TEXT,
+        completion_date_ceiling TEXT,
         created TEXT,
         modified TEXT,
         number_of_occurrences INTEGER,

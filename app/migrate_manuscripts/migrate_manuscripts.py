@@ -255,14 +255,14 @@ def migrate_manuscripts():
 
         execute_with_normalization(cursor, """
         INSERT INTO manuscripts (
-            id, name, date_floor, date_ceiling,
+            id, name, completion_date_floor, completion_date_ceiling,
             created, modified, number_of_occurrences, shelf
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
             name = excluded.name,
-            date_floor_year = excluded.date_floor_year,
-            date_ceiling_year = excluded.date_ceiling_year,
+            completion_date_floor = excluded.completion_date_floor,
+            completion_date_ceiling = excluded.completion_date_ceiling,
             created = excluded.created,
             modified = excluded.modified,
             number_of_occurrences = excluded.number_of_occurrences,
