@@ -647,8 +647,8 @@
                         o.id,
                         o.incipit,
                         o.created,
-                        o.date_floor_year,
-                        o.date_ceiling_year,
+                        o.completion_date_floor,
+                        o.completion_date_ceiling,
                         o.manuscript_id,
                         m.name as manuscript_name,
                         m.shelf,
@@ -684,12 +684,12 @@
                     }
                     
                     if (yearFrom) {
-                        conditions.push('o.date_ceiling_year >= ?');
+                        conditions.push('o.completion_date_ceiling >= ?');
                         params.push(yearFrom);
                     }
                     
                     if (yearTo) {
-                        conditions.push('o.date_floor_year <= ?');
+                        conditions.push('o.completion_date_floor <= ?');
                         params.push(yearTo);
                     }
                     
@@ -752,7 +752,7 @@
                     const row = currentResults[i];
                     
                     const manuscriptDisplay = buildManuscriptDisplay(row);
-                    const dateDisplay = buildDateDisplay(row.date_floor_year, row.date_ceiling_year);
+                    const dateDisplay = buildDateDisplay(row.completion_date_floor, row.completion_date_ceiling);
                     const createdDate = row.created ? new Date(row.created).toLocaleDateString('en-GB') : '';
                     
                     const tr = document.createElement('tr');

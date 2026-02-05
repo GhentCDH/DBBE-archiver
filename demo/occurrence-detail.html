@@ -510,7 +510,7 @@
 
         function displayOccurrence(occ, verses, types, genre, metre) {
             const manuscriptDisplay = buildManuscriptDisplay(occ);
-            const dateDisplay = buildDateDisplay(occ.date_floor_year, occ.date_ceiling_year);
+            const dateDisplay = buildDateDisplay(occ.completion_date_floor, occ.completion_date_ceiling);
             
             // Get previous and next occurrence IDs
             const prevNextIds = getPreviousNextIds(occ.id);

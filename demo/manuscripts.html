@@ -536,8 +536,8 @@
                         m.id,
                         m."name",
                         m.shelf,
-                        m.date_floor_year,
-                        m.date_ceiling_year,
+                        m.completion_date_floor,
+                        m.completion_date_ceiling,
                         m.created,
                         l.name as library_name,
                         loc.name as location_name,
@@ -576,7 +576,7 @@
             for (let i = startIndex; i < endIndex; i++) {
                 const row = currentResults[i];
                 const manuscriptName = buildManuscriptName(row);
-                const dateDisplay = buildDateDisplay(row.date_floor_year, row.date_ceiling_year);
+                const dateDisplay = buildDateDisplay(row.completion_date_floor, row.completion_date_ceiling);
                 const createdDate = row.created ? new Date(row.created).toLocaleDateString('en-GB') : '';
                 
                 const tr = document.createElement('tr');
