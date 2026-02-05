@@ -69,7 +69,7 @@ For a full visual of the database schema, please visit
 <a href="https://www.yworks.com/yed-live/?file=https://gist.githubusercontent.com/PaulienLem/03b10297a226b54e4b09f34364cefb2e/raw/432961c90bd5cf0e3768773093e662499855a574/Imported%20Document">yEd live</a>.
 ### Core Tables
 
-#### **1. occurrence**
+#### **1. Occurrences**
 
 Stores individual occurrence (= short epigrams or poems, literally how they've been found in a manuscript, so including marks for gaps and missing text.)
 

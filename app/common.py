@@ -243,7 +243,7 @@ def insert_many_to_one(cursor, entity_name, table_name, manuscript_id, entity_da
                                    (entity_id, entity_name_val)
                                    )
         execute_with_normalization(cursor,
-            f"UPDATE manuscripts SET {entity_name}_id = ? WHERE id = ?",
+            f"UPDATE manuscript SET {entity_name}_id = ? WHERE id = ?",
                                    (entity_id, manuscript_id)
                                    )
 

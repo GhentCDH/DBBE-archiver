@@ -156,7 +156,7 @@
     <nav class="main-nav">
         <ul>
             <li><a href="byzantine-db.html">HOME</a></li>
-            <li><a href="byzantine-db.html">occurrence</a></li>
+            <li><a href="byzantine-db.html">OCCURRENCE</a></li>
             <li><a href="types.html">TYPES</a></li>
             <li><a href="manuscripts.html">MANUSCRIPTS</a></li>
             <li><a href="persons.html" class="active">PERSONS</a></li>
@@ -243,10 +243,10 @@
                 }
                 identStmt.free();
 
-                // Get manuscripts with roles
+                // Get manuscript with roles
                 const msQuery = `
                     SELECT m.id, m.name, m.shelf, l.name as library, loc.name as location, r.name as role
-                    FROM manuscripts m
+                    FROM manuscript m
                     JOIN manuscript_person_role mpr ON m.id = mpr.manuscript_id
                     JOIN roles r ON mpr.role_id = r.id
                     LEFT JOIN library l ON m.library_id = l.id
@@ -255,9 +255,9 @@
                 `;
                 const msStmt = db.prepare(msQuery);
                 msStmt.bind([personId]);
-                const manuscripts = [];
+                const manuscript = [];
                 while (msStmt.step()) {
-                    manuscripts.push(msStmt.getAsObject());
+                    manuscript.push(msStmt.getAsObject());
                 }
                 msStmt.free();
 
@@ -299,7 +299,7 @@
                 }
                 biblioStmt.free();
 
-                displayPerson(person, identifications, manuscripts, occurrence, bibliography);
+                displayPerson(person, identifications, manuscript, occurrence, bibliography);
                 
             } catch (error) {
                 console.error('Error loading person:', error);
@@ -311,7 +311,7 @@
             }
         }
 
-        function displayPerson(person, identifications, manuscripts, occurrence, bibliography) {
+        function displayPerson(person, identifications, manuscript, occurrence, bibliography) {
             const fullName = `${person.first_name || ''} ${person.last_name || ''}`.trim();
             const dateDisplay = buildDateDisplay(person.born_date_floor, person.born_date_ceiling, person.death_date_floor, person.death_date_ceiling);
             
@@ -360,9 +360,9 @@
                 `;
             }
 
-            if (manuscripts.length > 0) {
+            if (manuscript.length > 0) {
                 const groupedMs = {};
-                manuscripts.forEach(m => {
+                manuscript.forEach(m => {
                     if (!groupedMs[m.role]) groupedMs[m.role] = [];
                     groupedMs[m.role].push(m);
                 });

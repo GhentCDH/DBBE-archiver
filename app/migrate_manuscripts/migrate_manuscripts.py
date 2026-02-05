@@ -40,7 +40,7 @@ def create_manuscript_tables(cursor):
     ]
     
     for col, col_type in manuscript_columns:
-        add_column_if_missing(cursor, "manuscripts", col, col_type)
+        add_column_if_missing(cursor, "manuscript", col, col_type)
 
     execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS manuscript_person_role (
@@ -48,7 +48,7 @@ def create_manuscript_tables(cursor):
         person_id INTEGER NOT NULL,
         role_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, person_id, role_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
+        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
         FOREIGN KEY (person_id) REFERENCES persons(id),
         FOREIGN KEY (role_id) REFERENCES roles(id)
     )
@@ -59,7 +59,7 @@ def create_manuscript_tables(cursor):
         manuscript_id INTEGER NOT NULL,
         management_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, management_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
+        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
         FOREIGN KEY (management_id) REFERENCES management(id)
     )
     """)
@@ -69,7 +69,7 @@ def create_manuscript_tables(cursor):
         manuscript_id INTEGER NOT NULL,
         acknowledgement_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, acknowledgement_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
+        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
         FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgement(id)
     )
     """)
@@ -79,7 +79,7 @@ def create_manuscript_tables(cursor):
         manuscript_id INTEGER NOT NULL,
         content_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, content_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
+        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
         FOREIGN KEY (content_id) REFERENCES content(id)
     )
     """)
@@ -89,7 +89,7 @@ def create_manuscript_tables(cursor):
         manuscript_id INTEGER NOT NULL,
         identification_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, identification_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
+        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
         FOREIGN KEY (identification_id) REFERENCES identifications(id)
     )
     """)
@@ -99,7 +99,7 @@ def create_manuscript_tables(cursor):
         manuscript_id INTEGER NOT NULL,
         origin_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, origin_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
+        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
         FOREIGN KEY (origin_id) REFERENCES location(id)
     )
     """)
@@ -254,7 +254,7 @@ def migrate_manuscripts():
         manuscript_id = int(source.get('id', hit['_id']))
 
         execute_with_normalization(cursor, """
-        INSERT INTO manuscripts (
+        INSERT INTO manuscript (
             id, name, completion_date_floor, completion_date_ceiling,
             created, modified, number_of_occurrences, shelf
         )
@@ -337,7 +337,7 @@ def migrate_manuscripts():
 
             insert_library(cursor, library_id, library_name, location_id)
             execute_with_normalization(cursor, """
-                UPDATE manuscripts
+                UPDATE manuscript
                 SET library_id = ?
                 WHERE id = ?
             """, (int(library_id), manuscript_id))

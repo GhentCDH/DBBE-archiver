@@ -11,7 +11,7 @@ BIBLIO_TYPES = {
 }
 
 BIBLIO_ENTITY_TYPES = {
-    "manuscript": "manuscripts",
+    "manuscript": "manuscript",
     "person": "persons",
     "occurrence": "occurrence",
     "type": "types",
@@ -23,7 +23,7 @@ def create_base_tables():
     execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS persons (id INTEGER PRIMARY KEY)")
     execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS occurrence (id INTEGER PRIMARY KEY)")
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS manuscripts (
+    CREATE TABLE IF NOT EXISTS manuscript (
         id INTEGER PRIMARY KEY,
         name TEXT,
         completion_date_floor TEXT,

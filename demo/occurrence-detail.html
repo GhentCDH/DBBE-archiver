@@ -337,7 +337,7 @@
     <nav class="main-nav">
         <ul>
             <li><a href="byzantine-db.html">HOME</a></li>
-            <li><a href="byzantine-db.html" class="active">occurrence</a></li>
+            <li><a href="byzantine-db.html" class="active">OCCURRENCE</a></li>
             <li><a href="types.html">TYPES</a></li>
             <li><a href="#">MANUSCRIPTS</a></li>
             <li><a href="#">PERSONS</a></li>
@@ -409,7 +409,7 @@
                         l.name as library_name,
                         loc.name as location_name
                     FROM occurrence o
-                    LEFT JOIN manuscripts m ON o.manuscript_id = m.id
+                    LEFT JOIN manuscript m ON o.manuscript_id = m.id
                     LEFT JOIN library l ON m.library_id = l.id
                     LEFT JOIN location loc ON l.location_id = loc.id
                     WHERE o.id = ?

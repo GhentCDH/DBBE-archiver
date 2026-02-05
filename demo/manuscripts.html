@@ -348,7 +348,7 @@
     <nav class="main-nav">
         <ul>
             <li><a href="byzantine-db.html">HOME</a></li>
-            <li><a href="byzantine-db.html">occurrence</a></li>
+            <li><a href="byzantine-db.html">OCCURRENCES</a></li>
             <li><a href="types.html">TYPES</a></li>
             <li><a href="manuscripts.html" class="active">MANUSCRIPTS</a></li>
             <li><a href="persons.html">PERSONS</a></li>
@@ -542,7 +542,7 @@
                         l.name as library_name,
                         loc.name as location_name,
                         GROUP_CONCAT(DISTINCT c.name) as content
-                    FROM manuscripts m
+                    FROM manuscript m
                     LEFT JOIN library l ON m.library_id = l.id
                     LEFT JOIN location loc ON l.location_id = loc.id
                     LEFT JOIN manuscript_content mc ON m.id = mc.manuscript_id
