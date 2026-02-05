@@ -2,18 +2,56 @@ import os
 import requests
 from dotenv import load_dotenv
 from datetime import date
+import re
+import subprocess
+import markdown
 
 load_dotenv()
 ZENODO_TOKEN = os.getenv("ZENODO_TOKEN", "")
 ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
 DEPOSITION_TITLE = os.getenv("DEPOSITION_TITLE", "Database of Byzantine Book Epigrams - Archive")
 
+
+def markdown_to_html(md_text):
+    return markdown.markdown(
+        md_text,
+        extensions=[
+            "extra",        # tables, fenced code, etc.
+            "sane_lists",
+            "toc"
+        ]
+    )
+
+def extract_db_schema_from_readme(readme_path):
+    with open(readme_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    match = re.search(
+        r"<!-- BEGIN DB_SCHEMA -->(.*?)<!-- END DB_SCHEMA -->",
+        content,
+        re.DOTALL
+    )
+
+    if not match:
+        raise RuntimeError("DB_SCHEMA section not found in README.md")
+
+    return match.group(1).strip()
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-description_file_path = os.path.join(BASE_DIR, "DB_DESCRIPTION.html")
 
-with open(description_file_path, "r", encoding="utf-8") as f:
-    description_text = f.read()
+readme_path = os.path.join(BASE_DIR, "../README.md")
+html_template_path = os.path.join(BASE_DIR, "DB_DESCRIPTION.html")
 
+with open(html_template_path, "r", encoding="utf-8") as f:
+    html_template = f.read()
+
+schema_md = extract_db_schema_from_readme(readme_path)
+schema_html = markdown_to_html(schema_md)
+
+description_text = html_template.replace(
+    "<!-- DB_SCHEMA_PLACEHOLDER -->",
+    schema_html
+)
 
 def upload_sqlite_files_to_zenodo(folder_path, publish, deposition_id):
     headers = {"Authorization": f"Bearer {ZENODO_TOKEN}"}

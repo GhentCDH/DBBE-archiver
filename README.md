@@ -68,7 +68,7 @@ From these, we construct the relational database in SQLite, building supporting 
 For a full visual of the database schema, please visit 
 <a href="https://www.yworks.com/yed-live/?file=https://gist.githubusercontent.com/PaulienLem/03b10297a226b54e4b09f34364cefb2e/raw/432961c90bd5cf0e3768773093e662499855a574/Imported%20Document">yEd live</a>.
 ### Core Tables
-
+<!-- BEGIN DB_SCHEMA -->
 #### **1. Occurrences**
 
 Stores individual occurrence (= short epigrams or poems, literally how they've been found in a manuscript, so including marks for gaps and missing text.)
@@ -189,7 +189,7 @@ Verse_groups allow grouping of related verses.
 - ```biblio_category``` — categories for bibliographies.
 - ```content``` -  Used for storing manuscript content. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
 - ```identifications``` -canonical ways to refer to persons or manuscripts
-
+<!-- END DB_SCHEMA -->
 ----
 
 ## Zenodo
@@ -198,11 +198,12 @@ This repository uses the Zenodo API for the automatic publication of datasets. F
 
 In order to use the API, you need an access token, which you can generate by creating a Zenodo account and going to "My Account" > "Applications".
 
+The database description part of this README is automatically synced to Zenodo so that database description only has to be maintained in one single place. 
+
 ---
 
 ## Next steps
 
-- Link the Zenodo html readme and the github markdown readme so that we only have to maintain info on 1 place
 - Script the database schema visualization so that it stays up to date
 - Implement GCDH feedback
 - Decide on an approach on what to do if the actual DBBE schema changes. 
