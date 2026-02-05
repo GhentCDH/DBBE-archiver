@@ -380,9 +380,9 @@
         function loadPersonsDropdown() {
             if (!db) return;
             try {
-                const query = `SELECT id, first_name, last_name FROM persons ORDER BY last_name, first_name`;
+                const query = `SELECT id, first_name, last_name FROM person ORDER BY last_name, first_name`;
                 const stmt = db.prepare(query);
-                const select = document.getElementById('personSelect');
+                const select = document.getElementById('personelect');
                 while (stmt.step()) {
                     const row = stmt.getAsObject();
                     const option = document.createElement('option');
@@ -392,7 +392,7 @@
                 }
                 stmt.free();
             } catch (error) {
-                console.error('Error loading persons:', error);
+                console.error('Error loading person:', error);
             }
         }
 
@@ -433,10 +433,10 @@
                                 '${table}' as bib_type,
                                 ${table}.id,
                                 ${table}.title,
-                                GROUP_CONCAT(persons.first_name || ' ' || persons.last_name, ', ') as authors
+                                GROUP_CONCAT(person.first_name || ' ' || person.last_name, ', ') as authors
                             FROM ${table}
                             LEFT JOIN ${table}_person_role ON ${table}.id = ${table}_person_role.bibliography_id
-                            LEFT JOIN persons ON ${table}_person_role.person_id = persons.id
+                            LEFT JOIN person ON ${table}_person_role.person_id = person.id
                         `;
                         
                         if (titleSearch) {

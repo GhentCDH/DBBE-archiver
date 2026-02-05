@@ -1,4 +1,4 @@
-# app/migrate_bibliographies/link_persons_to_bibliographies.py
+# app/migrate_bibliographies/link_person_to_bibliographies.py
 import sqlite3
 from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
 from .biblio_type_enum import BiblioType

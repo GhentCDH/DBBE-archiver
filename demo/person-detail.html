@@ -213,18 +213,18 @@
                 // Get person details
                 const personQuery = `
                     SELECT p.*, loc.name as origin_location
-                    FROM persons p
+                    FROM person p
                     LEFT JOIN location loc ON p.location_id = loc.id
                     WHERE p.id = ?
                 `;
-                const personStmt = db.prepare(personQuery);
-                personStmt.bind([personId]);
+                const persontmt = db.prepare(personQuery);
+                persontmt.bind([personId]);
                 
                 let person = null;
-                if (personStmt.step()) {
-                    person = personStmt.getAsObject();
+                if (persontmt.step()) {
+                    person = persontmt.getAsObject();
                 }
-                personStmt.free();
+                persontmt.free();
 
                 if (!person) throw new Error('Person not found');
 

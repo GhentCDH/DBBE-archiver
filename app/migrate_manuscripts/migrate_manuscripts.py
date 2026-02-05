@@ -49,7 +49,7 @@ def create_manuscript_tables(cursor):
         role_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, person_id, role_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
+        FOREIGN KEY (person_id) REFERENCES person(id),
         FOREIGN KEY (role_id) REFERENCES roles(id)
     )
     """)
@@ -283,13 +283,13 @@ def migrate_manuscripts():
             if not role_id:
                 continue
             
-            persons = source.get(role_field, [])
-            if isinstance(persons, dict):
-                persons = [persons]
-            elif not isinstance(persons, list):
-                persons = []
+            person = source.get(role_field, [])
+            if isinstance(person, dict):
+                person = [person]
+            elif not isinstance(person, list):
+                person = []
 
-            for p in persons:
+            for p in person:
                 person_id = int(p.get('id', ''))
                 if person_id:
                     execute_with_normalization(cursor,

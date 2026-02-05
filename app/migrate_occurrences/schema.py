@@ -32,7 +32,7 @@ def create_schema():
         role_id INTEGER NOT NULL,
         PRIMARY KEY (occurrence_id, person_id, role_id),
         FOREIGN KEY (occurrence_id) REFERENCES occurrence(id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
+        FOREIGN KEY (person_id) REFERENCES person(id),
         FOREIGN KEY (role_id) REFERENCES roles(id)
     )
     """)

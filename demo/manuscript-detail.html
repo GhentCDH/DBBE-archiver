@@ -257,15 +257,15 @@
                 }
                 contentStmt.free();
 
-                // Get persons with roles
-                const personsQuery = `
+                // Get person with roles
+                const personQuery = `
                     SELECT 
                         p.first_name,
                         p.last_name,
                         p.id as person_id,
                         r.name as role_name,
                         GROUP_CONCAT(i.identifier_value, '; ') as identifiers
-                    FROM persons p
+                    FROM person p
                     JOIN manuscript_person_role mpr ON p.id = mpr.person_id
                     JOIN roles r ON mpr.role_id = r.id
                     LEFT JOIN person_identification pi ON p.id = pi.person_id
@@ -273,13 +273,13 @@
                     WHERE mpr.manuscript_id = ?
                     GROUP BY p.id, r.id
                 `;
-                const personsStmt = db.prepare(personsQuery);
-                personsStmt.bind([manuscriptId]);
-                const persons = [];
-                while (personsStmt.step()) {
-                    persons.push(personsStmt.getAsObject());
+                const personStmt = db.prepare(personQuery);
+                personStmt.bind([manuscriptId]);
+                const person = [];
+                while (personStmt.step()) {
+                    person.push(personStmt.getAsObject());
                 }
-                personsStmt.free();
+                personStmt.free();
 
                 // Get bibliography
                 const biblioQuery = `
@@ -345,7 +345,7 @@
                 }
                 ackStmt.free();
 
-                displayManuscript(manuscript, content, persons, bibliography, identifications, occCount, acknowledgement);
+                displayManuscript(manuscript, content, person, bibliography, identifications, occCount, acknowledgement);
                 
             } catch (error) {
                 console.error('Error loading manuscript:', error);
@@ -357,7 +357,7 @@
             }
         }
 
-        function displayManuscript(ms, content, persons, bibliography, identifications, occCount, acknowledgement) {
+        function displayManuscript(ms, content, person, bibliography, identifications, occCount, acknowledgement) {
             const manuscriptName = buildManuscriptName(ms);
             
             let html = `
@@ -379,15 +379,15 @@
                 `;
             }
 
-            if (persons.length > 0) {
-                const scribePersons = persons.filter(p => p.role_name === 'Scribe');
-                if (scribePersons.length > 0) {
+            if (person.length > 0) {
+                const scribeperson = person.filter(p => p.role_name === 'Scribe');
+                if (scribeperson.length > 0) {
                     html += `
                         <tr>
                             <td>Person(s)</td>
                             <td>
                                 <strong>Scribe</strong><br>
-                                ${scribePersons.map(p => {
+                                ${scribeperson.map(p => {
                                     const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
                                     const ident = p.identifiers ? ` - ${p.identifiers}` : '';
                                     return `<a href="person-detail.html?id=${p.person_id}">${name}</a>${ident}`;

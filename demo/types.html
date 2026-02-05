@@ -782,9 +782,9 @@
         function loadPersonsDropdown() {
             if (!db) return;
             try {
-                const query = `SELECT id, first_name, last_name FROM persons ORDER BY last_name, first_name LIMIT 100`;
+                const query = `SELECT id, first_name, last_name FROM person ORDER BY last_name, first_name LIMIT 100`;
                 const stmt = db.prepare(query);
-                const select = document.getElementById('personSelect');
+                const select = document.getElementById('personelect');
                 while (stmt.step()) {
                     const row = stmt.getAsObject();
                     const option = document.createElement('option');

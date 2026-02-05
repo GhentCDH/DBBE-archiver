@@ -200,13 +200,13 @@ def run_occurrence_migration():
             if not role_id:
                 continue
 
-            persons = source.get(role_field, [])
-            if isinstance(persons, dict):
-                persons = [persons]
-            elif not isinstance(persons, list):
-                persons = []
+            person = source.get(role_field, [])
+            if isinstance(person, dict):
+                person = [person]
+            elif not isinstance(person, list):
+                person = []
 
-            for p in persons:
+            for p in person:
                 person_id = str(p.get('id', ''))
                 if person_id:
                     execute_with_normalization(cursor,

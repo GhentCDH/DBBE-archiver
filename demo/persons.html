@@ -580,7 +580,7 @@
                         GROUP_CONCAT(i.identifier_value, '; ') as identifications,
                         GROUP_CONCAT(sd.name, ', ') as designations,
                         GROUP_CONCAT(o.name, ', ') as office
-                    FROM persons p
+                    FROM person p
                     LEFT JOIN person_identification pi ON p.id = pi.person_id
                     LEFT JOIN identifications i ON pi.identification_id = i.id
                     LEFT JOIN person_self_designation psd ON p.id = psd.person_id

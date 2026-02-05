@@ -22,14 +22,14 @@ def create_schema():
     }
 
     for col, col_type in person_columns.items():
-        add_column_if_missing(cursor, "persons", col, col_type)
+        add_column_if_missing(cursor, "person", col, col_type)
 
     execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS person_management (
         person_id INTEGER NOT NULL,
         management_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, management_id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
+        FOREIGN KEY (person_id) REFERENCES person(id),
         FOREIGN KEY (management_id) REFERENCES management(id)
     )
     """)
@@ -39,7 +39,7 @@ def create_schema():
         person_id INTEGER NOT NULL,
         acknowledgement_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, acknowledgement_id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
+        FOREIGN KEY (person_id) REFERENCES person(id),
         FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgement(id)
     )
     """)
@@ -49,7 +49,7 @@ def create_schema():
         person_id INTEGER NOT NULL,
         self_designation_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, self_designation_id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
+        FOREIGN KEY (person_id) REFERENCES person(id),
         FOREIGN KEY (self_designation_id) REFERENCES self_designation(id)
     )
     """)
@@ -59,7 +59,7 @@ def create_schema():
         person_id INTEGER NOT NULL,
         office_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, office_id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
+        FOREIGN KEY (person_id) REFERENCES person(id),
         FOREIGN KEY (office_id) REFERENCES office(id)
     )
     """)
@@ -69,7 +69,7 @@ def create_schema():
         person_id INTEGER NOT NULL,
         identification_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, identification_id),
-        FOREIGN KEY (person_id) REFERENCES persons(id),
+        FOREIGN KEY (person_id) REFERENCES person(id),
         FOREIGN KEY (identification_id) REFERENCES identifications(id)
     )
     """)

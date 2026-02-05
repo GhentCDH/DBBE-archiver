@@ -113,7 +113,7 @@ def run_person_migration():
         death_floor, death_ceiling = parse_fuzzy_date(death_date)
 
         execute_with_normalization(cursor, """
-        INSERT INTO persons (
+        INSERT INTO person (
             id, first_name, last_name,
             born_date_floor, born_date_ceiling,
             death_date_floor, death_date_ceiling,
@@ -153,7 +153,7 @@ def run_person_migration():
                 region_id = row_region[0]
                 leaf_id = get_location_hierarchy_and_leaf(cursor, pg_cursor, region_id)
                 execute_with_normalization(cursor, """
-                    UPDATE persons
+                    UPDATE person
                     SET location_id = ?
                     WHERE id = ?
                 """, (leaf_id, person_id))
