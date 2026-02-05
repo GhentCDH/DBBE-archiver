@@ -54,7 +54,7 @@ def migrate_verses():
 
         if occurrence_id is not None:
             execute_with_normalization(cursor,
-                "INSERT OR IGNORE INTO occurrences (id) VALUES (?)",
+                "INSERT OR IGNORE INTO occurrence (id) VALUES (?)",
                                        (occurrence_id,)
                                        )
 

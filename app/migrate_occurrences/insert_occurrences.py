@@ -5,7 +5,7 @@ from ..common import (execute_with_normalization,
                       )
 
 
-def preload_related_occurrences(pg_cursor):
+def preload_related_occurrence(pg_cursor):
     pg_cursor.execute("""
         WITH verse_links AS (
             SELECT
@@ -52,7 +52,7 @@ def run_occurrence_migration():
     es = get_es_client()
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
-    related_occurrence_map = preload_related_occurrences(pg_cursor)
+    related_occurrence_map = preload_related_occurrence(pg_cursor)
 
     execute_with_normalization(cursor, "PRAGMA foreign_keys = OFF")
     print("Foreign key constraints disabled for migration")
@@ -66,9 +66,9 @@ def run_occurrence_migration():
         conn.close()
         return
 
-    print(f"Migrating occurrences from index: {occ_index}")
+    print(f"Migrating occurrence from index: {occ_index}")
     hits = scroll_all(es, occ_index, size=500)
-    print(f"Total occurrences fetched: {len(hits)}")
+    print(f"Total occurrence fetched: {len(hits)}")
 
     execute_with_normalization(cursor, "BEGIN")
     batch_count = 0
@@ -86,12 +86,12 @@ def run_occurrence_migration():
         manuscript_id = str(source.get('manuscript', {}).get('id', ''))
 
         execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO occurrences (id)
+            INSERT OR IGNORE INTO occurrence (id)
             VALUES (?)
         """, (occ_id,))
 
         execute_with_normalization(cursor, """
-        UPDATE occurrences SET
+        UPDATE occurrence SET
             created=?, modified=?, public_comment=?, private_comment=?,
             is_dbbe=?, incipit=?, text_stemmer=?, text_original=?,
             location_in_ms=?, completion_date_floor=?, completion_date_ceiling=?,
@@ -219,7 +219,7 @@ def run_occurrence_migration():
         if related_ids:
             related_rows = [(occ_id, rid, '0') for rid in related_ids]
             cursor.executemany("""
-                INSERT OR IGNORE INTO occurrence_related_occurrences
+                INSERT OR IGNORE INTO occurrence_related_occurrence
                 (occurrence_id, related_occurrence_id, relation_definition_id)
                 VALUES (?, ?, ?)
             """, related_rows)

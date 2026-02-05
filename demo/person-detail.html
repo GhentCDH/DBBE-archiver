@@ -156,7 +156,7 @@
     <nav class="main-nav">
         <ul>
             <li><a href="byzantine-db.html">HOME</a></li>
-            <li><a href="byzantine-db.html">OCCURRENCES</a></li>
+            <li><a href="byzantine-db.html">occurrence</a></li>
             <li><a href="types.html">TYPES</a></li>
             <li><a href="manuscripts.html">MANUSCRIPTS</a></li>
             <li><a href="persons.html" class="active">PERSONS</a></li>
@@ -261,10 +261,10 @@
                 }
                 msStmt.free();
 
-                // Get occurrences with roles
+                // Get occurrence with roles
                 const occQuery = `
                     SELECT o.id, o.incipit, r.name as role
-                    FROM occurrences o
+                    FROM occurrence o
                     JOIN occurrence_person_role opr ON o.id = opr.occurrence_id
                     JOIN roles r ON opr.role_id = r.id
                     WHERE opr.person_id = ?
@@ -272,9 +272,9 @@
                 `;
                 const occStmt = db.prepare(occQuery);
                 occStmt.bind([personId]);
-                const occurrences = [];
+                const occurrence = [];
                 while (occStmt.step()) {
-                    occurrences.push(occStmt.getAsObject());
+                    occurrence.push(occStmt.getAsObject());
                 }
                 occStmt.free();
 
@@ -299,7 +299,7 @@
                 }
                 biblioStmt.free();
 
-                displayPerson(person, identifications, manuscripts, occurrences, bibliography);
+                displayPerson(person, identifications, manuscripts, occurrence, bibliography);
                 
             } catch (error) {
                 console.error('Error loading person:', error);
@@ -311,7 +311,7 @@
             }
         }
 
-        function displayPerson(person, identifications, manuscripts, occurrences, bibliography) {
+        function displayPerson(person, identifications, manuscripts, occurrence, bibliography) {
             const fullName = `${person.first_name || ''} ${person.last_name || ''}`.trim();
             const dateDisplay = buildDateDisplay(person.born_date_floor, person.born_date_ceiling, person.death_date_floor, person.death_date_ceiling);
             
@@ -389,9 +389,9 @@
                 `;
             }
 
-            if (occurrences.length > 0) {
+            if (occurrence.length > 0) {
                 const groupedOcc = {};
-                occurrences.forEach(o => {
+                occurrence.forEach(o => {
                     if (!groupedOcc[o.role]) groupedOcc[o.role] = [];
                     groupedOcc[o.role].push(o);
                 });

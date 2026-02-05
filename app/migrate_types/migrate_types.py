@@ -58,12 +58,12 @@ def create_type_tables(cursor):
     """)
     
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS type_tags (
+    CREATE TABLE IF NOT EXISTS type_tag (
         type_id INTEGER NOT NULL,
         tag_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, tag_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
-        FOREIGN KEY (tag_id) REFERENCES tags(id)
+        FOREIGN KEY (tag_id) REFERENCES tag(id)
     )
     """)
     
@@ -121,12 +121,12 @@ def create_type_tables(cursor):
     """)
     
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS type_occurrences (
+    CREATE TABLE IF NOT EXISTS type_occurrence (
         type_id INTEGER NOT NULL,
         occurrence_id INTEGER NOT NULL,
         PRIMARY KEY (type_id, occurrence_id),
         FOREIGN KEY (type_id) REFERENCES types(id),
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id)
+        FOREIGN KEY (occurrence_id) REFERENCES occurrence(id)
     )
     """)
     
@@ -241,11 +241,11 @@ def migrate_types():
             tag_name = tag.get('name', '')
             if tag_id:
                 execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO tags (id, name) VALUES (?, ?)",
+                    "INSERT OR IGNORE INTO tag (id, name) VALUES (?, ?)",
                                            (tag_id, tag_name)
                                            )
                 execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO type_tags (type_id, tag_id) VALUES (?, ?)",
+                    "INSERT OR IGNORE INTO type_tag (type_id, tag_id) VALUES (?, ?)",
                                            (type_id, tag_id)
                                            )
 
@@ -344,14 +344,14 @@ def migrate_types():
             occ_id = str(occ_id)
 
             execute_with_normalization(cursor,
-                "SELECT 1 FROM occurrences WHERE id=?",
+                "SELECT 1 FROM occurrence WHERE id=?",
                                        (occ_id,)
                                        )
             if cursor.fetchone() is None:
                 continue
 
             execute_with_normalization(cursor,
-                "INSERT OR IGNORE INTO type_occurrences (type_id, occurrence_id) VALUES (?, ?)",
+                "INSERT OR IGNORE INTO type_occurrence (type_id, occurrence_id) VALUES (?, ?)",
                                        (type_id, occ_id)
                                        )
 

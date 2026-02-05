@@ -163,7 +163,7 @@
     <nav class="main-nav">
         <ul>
             <li><a href="byzantine-db.html">HOME</a></li>
-            <li><a href="byzantine-db.html">OCCURRENCES</a></li>
+            <li><a href="byzantine-db.html">occurrence</a></li>
             <li><a href="types.html">TYPES</a></li>
             <li><a href="manuscripts.html" class="active">MANUSCRIPTS</a></li>
             <li><a href="persons.html">PERSONS</a></li>
@@ -316,10 +316,10 @@
                 }
                 identStmt.free();
 
-                // Get occurrences count
+                // Get occurrence count
                 const occQuery = `
                     SELECT COUNT(*) as count
-                    FROM occurrences
+                    FROM occurrence
                     WHERE manuscript_id = ?
                 `;
                 const occStmt = db.prepare(occQuery);
@@ -427,7 +427,7 @@
 
             html += `
                     <tr>
-                        <td>Occurrences</td>
+                        <td>occurrence</td>
                         <td><a href="byzantine-db.html">${occCount} ${occCount === 1 ? 'Stav' : 'Stav'}</a> [<a href="#">${occCount} occor</a>]</td>
                     </tr>
             `;

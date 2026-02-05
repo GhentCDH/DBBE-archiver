@@ -56,7 +56,7 @@ Note: if you ran this locally earlier, you might already have a sqlite file in y
 This SQLite database is built from six primary Elasticsearch indices:
 
 - verses
-- occurrences
+- occurrence
 - types
 - manuscripts
 - persons
@@ -69,9 +69,9 @@ For a full visual of the database schema, please visit
 <a href="https://www.yworks.com/yed-live/?file=https://gist.githubusercontent.com/PaulienLem/03b10297a226b54e4b09f34364cefb2e/raw/432961c90bd5cf0e3768773093e662499855a574/Imported%20Document">yEd live</a>.
 ### Core Tables
 
-#### **1. Occurrences**
+#### **1. occurrence**
 
-Stores individual occurrences (= short epigrams or poems, literally how they've been found in a manuscript, so including marks for gaps and missing text.)
+Stores individual occurrence (= short epigrams or poems, literally how they've been found in a manuscript, so including marks for gaps and missing text.)
 
 Columns include:
 ```id, created, modified, public_comment, private_comment, incipit, text_stemmer, text_original, location_in_ms, date_floor_year, date_ceiling_year, palaeographical_info, contextual_info, manuscript_id, title, is_dbbe.```
@@ -84,24 +84,24 @@ Related tables:
 - ```occurrence_management```: Internal information. For example: To do's in the processing of this occurrence
 - ```occurrence_acknowledgement```: Plain text shout out to people who helped in the publication of this occurrence. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to occurrence_person_role._
 - ```occurrence_text_statuses```: An occurrence text can be partially/completely (un)known
-- ```occurrence_related_occurrences``` and ```occurrence_relation_definition```: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in occurrence_relation_definition. This works in one direction: if occurrenceA --> related to --> occurrenceB is set, then occurrenceB --> related to --> occurrenceA is not set.
+- ```occurrence_related_occurrence``` and ```occurrence_relation_definition```: An occurrence can be related to other occurrence if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in occurrence_relation_definition. This works in one direction: if occurrenceA --> related to --> occurrenceB is set, then occurrenceB --> related to --> occurrenceA is not set.
 - ```occurrence_keyword```: Keywords telling what the occurrence is about
 
 #### **2. Types**
 
-These are prototypes of occurrences. A lot of occurrences have a high level of similarity. DBBE proposes prototypes for every group of similar occurrences.
+These are prototypes of occurrence. A lot of occurrence have a high level of similarity. DBBE proposes prototypes for every group of similar occurrence.
 
 Related tables:
 
 - ```Type_person_role```: Any possible role a person could play in the construction and publication of this Type. 
-- ```Type_genre```: genre attributed to this Type. More than 1 Genre can be attributed, and this is not necessarily an accumulation of the genre of the linked Occurrences.
-- ```Type_metre```: metre attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the genre of the linked Occurrences.
+- ```Type_genre```: genre attributed to this Type. More than 1 Genre can be attributed, and this is not necessarily an accumulation of the genre of the linked occurrence.
+- ```Type_metre```: metre attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the genre of the linked occurrence.
 - ```Type_management```: Internal information. For example: To do's in the processing of this Type
 - ```Type_acknowledgement```: Plain text shout out to people who helped in the publication of this Type. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to type_person_role._
 - ```Type_text_statuses```: Type text can be either completely known or partially unknown
 - ```Type_related_types (linked via type_relation_definition)```: Groups of similar types. This works in one direction: if typeA --> related to --> typeB is set, then typeB --> related to --> typeA is not set.
-- ```Type_tags```:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). 
-- ```Type_occurrences```: Occurrences linked to this type. Note that this is a many-to-many relationship: one occurrence can be linked to several types, one type can have several occurrences linked to it. 
+- ```Type_tag```:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). 
+- ```Type_occurrence```: occurrence linked to this type. Note that this is a many-to-many relationship: one occurrence can be linked to several types, one type can have several occurrence linked to it. 
 - ```Type_editorial_status```: editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
 - ```type_keyword```: Keywords telling what the type is about
 
@@ -153,7 +153,7 @@ Each bibliographic entity has:
 - a corresponding *_management table
 - linking tables to the item the bibliography is about:
   - manuscripts (manuscript_*)
-  - occurrences (occurrence_*)
+  - occurrence (occurrence_*)
   - persons (persons_*)
   - types (types_*)
 
@@ -164,7 +164,7 @@ Note that, for now, some of these bibliography tables were added for completenes
 
 #### **6. Verses**
 
-Contains verse-level data for occurrences.
+Contains verse-level data for occurrence.
 
 Columns include ```id, occurrence_id, manuscript_id, text, order_in_occurrence, verse_group_id.```
 
@@ -173,13 +173,13 @@ Verse_groups allow grouping of related verses.
 ### **Lookup / Metadata Tables**
 
 - ```roles``` — defines role types for persons.
-- ```text_statuses``` — textual status of occurrences or types.
-- ```keywords``` — keywords for occurrences and types.
-- ```tags``` — tags for types: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.
+- ```text_statuses``` — textual status of occurrence or types.
+- ```keywords``` — keywords for occurrence and types.
+- ```tag``` — tag for types: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.
 - ```metre``` — metre classification.
 - ```genre``` — genre classification.
 - ```management``` — administrative metadata.
-- ```acknowledgement``` — acknowledgement linked to occurrences, manuscripts, types, or persons.
+- ```acknowledgement``` — acknowledgement linked to occurrence, manuscripts, types, or persons.
 - ```editorial_status``` — editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
 - ```self_designation``` — how a scribe describes himself
 - ```office``` — the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
@@ -197,3 +197,14 @@ Verse_groups allow grouping of related verses.
 This repository uses the Zenodo API for the automatic publication of datasets. Full API docs can be found on <a href="https://developers.zenodo.org/#rest-api">https://developers.zenodo.org/#rest-api</a>. You can do all of these calls to <a href="https://sandbox.zenodo.org/">https://sandbox.zenodo.org/</a> as well. This environment functions in the exact same way as production so it's perfect for testing.  
 
 In order to use the API, you need an access token, which you can generate by creating a Zenodo account and going to "My Account" > "Applications".
+
+---
+
+## Next steps
+
+- Link the Zenodo html readme and the github markdown readme so that we only have to maintain info on 1 place
+- Script the database schema visualization so that it stays up to date
+- Implement GCDH feedback
+- Decide on an approach on what to do if the actual DBBE schema changes. 
+- Add privacy flag => Have a public and a private data publication?
+- Can we implement some sort of validation?

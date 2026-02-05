@@ -1,15 +1,15 @@
 <p>This dataset provides structured access to the data behind <a href="https://dbbe.ugent.be">dbbe.ugent.be</a>, enabling intuitive exploration and reuse. It is based on production PostgreSQL and Elasticsearch instances and is organized around six core concepts. The data is updated weekly to reflect the latest research and additions.</p>
 
 <ul>
-  <li><strong>Occurrences:</strong> Individual epigrams reproduced as faithfully as possible from manuscripts, preserving orthography, punctuation, and textual idiosyncrasies, with sources clearly indicated.</li>
+  <li><strong>occurrence:</strong> Individual epigrams reproduced as faithfully as possible from manuscripts, preserving orthography, punctuation, and textual idiosyncrasies, with sources clearly indicated.</li>
 
-  <li><strong>Types:</strong> Normalized or critically established texts linked to one or more Occurrences, enabling comparison across similar epigrams and providing interpretive metadata such as translations, author, and subject.</li>
+  <li><strong>Types:</strong> Normalized or critically established texts linked to one or more occurrence, enabling comparison across similar epigrams and providing interpretive metadata such as translations, author, and subject.</li>
 
-  <li><strong>Verses:</strong> Lines of epigrams, grouped in Verse Variant records to visualize textual parallels and deviations across Occurrences.</li>
+  <li><strong>Verses:</strong> Lines of epigrams, grouped in Verse Variant records to visualize textual parallels and deviations across occurrence.</li>
 
   <li><strong>Manuscripts:</strong> Metadata on the physical and historical context of manuscripts, including provenance and related documentation.</li>
 
-  <li><strong>Persons:</strong> Information on authors, scribes, editors, and other historical or modern contributors linked to Occurrences, Types, or Manuscripts.</li>
+  <li><strong>Persons:</strong> Information on authors, scribes, editors, and other historical or modern contributors linked to occurrence, Types, or Manuscripts.</li>
 
   <li><strong>Bibliographies:</strong> Structured references connecting literature and publications to the relevant entities in the corpus, supporting traceable scholarship.</li>
 </ul>
@@ -25,7 +25,7 @@
 
   <li><strong>Graphical interface and export:</strong> <a href="https://sqlitebrowser.org/" target="_blank">DB Browser for SQLite</a> offers an intuitive interface for browsing the data and exporting tables to CSV for further analysis, making it accessible to users without programming experience.</li>
 
-  <li><strong>AI-assisted semantic querying:</strong> The database file—or selected columns from it—can be uploaded to a large language model for natural language queries. For example, one could ask: <em>"Give me five occurrences from the eleventh century discussing harbours."</em> To protect sensitive data, consider using self-hosted models or paid, secure AI services rather than free online tools.</li>
+  <li><strong>AI-assisted semantic querying:</strong> The database file—or selected columns from it—can be uploaded to a large language model for natural language queries. For example, one could ask: <em>"Give me five occurrence from the eleventh century discussing harbours."</em> To protect sensitive data, consider using self-hosted models or paid, secure AI services rather than free online tools.</li>
 
   <li><strong>Custom development:</strong> The well-structured SQLite format provides a robust foundation for programmatic analysis, integration with other tools like <a href="https://datasette.io/">datasette</a>, or the development of custom applications tailored to specific research questions.</li>
 </ul>
@@ -36,9 +36,9 @@
 
 For a full visual of the database schema, please visit <a href="https://www.yworks.com/yed-live/?file=https://gist.githubusercontent.com/PaulienLem/3cac2a338071a907f976a57008549939/raw/dcab7e67ac8dd3232e7a09521678349ff4d7d685/Imported%20Document">yED live</a>.
 
-<h3>1. Occurrences</h3>
+<h3>1. occurrence</h3>
 
-<p>The main occurrences table stores individual occurrences (= short epigrams or poems, literally how they've been found in a manuscript, so including marks for gaps and missing text.)</p>
+<p>The main occurrence table stores individual occurrence (= short epigrams or poems, literally how they've been found in a manuscript, so including marks for gaps and missing text.)</p>
 
 <p>Columns include:<br>
 <code>id</code>, <code>created</code>, <code>modified</code>, <code>public_comment</code>, <code>private_comment</code>, <code>incipit</code>, <code>text_stemmer</code>, <code>text_original</code>, <code>location_in_ms</code>, <code>date_floor_year</code>, <code>date_ceiling_year</code>, <code>palaeographical_info</code>, <code>contextual_info</code>, <code>manuscript_id</code>, <code>title</code>, <code>is_dbbe</code>.</p>
@@ -53,25 +53,25 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <li><code>occurrence_acknowledgement</code>: Plain text shout out to people who helped in the publication of this occurrence. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>occurrence_person_role</code>.</li>
 <li><code>occurrence_text_statuses</code>: An occurrence text can be partially/completely (un)known</li>
 <li><code>occurrence_keyword</code>: Keywords telling what the occurrence is about</li>
-<li><code>occurrence_related_occurrences</code>and <code>occurrence_relation_definition</code>: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in <code>occurrence_relation_definition</code>. This works in one direction: if occurrenceA --> related to --> occurrenceB is set, then occurrenceB --> related to --> occurrenceA is not set.</li>
+<li><code>occurrence_related_occurrence</code>and <code>occurrence_relation_definition</code>: An occurrence can be related to other occurrence if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in <code>occurrence_relation_definition</code>. This works in one direction: if occurrenceA --> related to --> occurrenceB is set, then occurrenceB --> related to --> occurrenceA is not set.</li>
 </ul>
 
 <h3>2. Types</h3>
 
-<p>These are prototypes of occurrences. A lot of occurrences have a high level of similarity. DBBE proposes prototypes for every group of similar occurrences.</p>
+<p>These are prototypes of occurrence. A lot of occurrence have a high level of similarity. DBBE proposes prototypes for every group of similar occurrence.</p>
 
 <p>Related tables:</p>
 
 <ul>
 <li><code>Type_person_role</code>: Any possible role a person could play in the construction and publication of this Type.</li>
-<li><code>Type_genre</code>: genre attributed to this Type. More than 1 Genre can be attributed, and this is not necessarily an accumulation of the genre of the linked Occurrences.</li>
-<li><code>Type_metre</code>: metre attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the genre of the linked Occurrences.</li>
+<li><code>Type_genre</code>: genre attributed to this Type. More than 1 Genre can be attributed, and this is not necessarily an accumulation of the genre of the linked occurrence.</li>
+<li><code>Type_metre</code>: metre attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the genre of the linked occurrence.</li>
 <li><code>Type_management</code>: Internal information. For example: To do's in the processing of this Type</li>
 <li><code>Type_acknowledgement</code>: Plain text shout out to people who helped in the publication of this Type. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>type_person_role</code>.</li>
 <li><code>Type_text_statuses</code>: Type text can be either completely known or partially unknown</li>
 <li><code>Type_related_types</code>(linked via <code>type_relation_definition</code>) Groups of similar types. This works in one direction: if typeA --> related to --> typeB is set, then typeB --> related to --> typeA is not set.</li>
-  <li><code>Type_tags</code>:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...).</li>
-<li><code>Type_occurrences</code>: Occurrences linked to this type. Note that this is a many-to-many relationship: one occurrence can be linked to several types, one type can have several occurrences linked to it.</li>
+  <li><code>Type_tag</code>:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...).</li>
+<li><code>Type_occurrence</code>: occurrence linked to this type. Note that this is a many-to-many relationship: one occurrence can be linked to several types, one type can have several occurrence linked to it.</li>
 <li><code>Type_editorial_status</code>: editorial states for types. Currently only (not) a critical text. This might become just a boolean value but since it's not sure yet, we stored it like this</li>
 <li><code>Type_keyword</code>: Keywords explaining what the Type is about.</li>
 
@@ -129,7 +129,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
   <li>linking tables to the item the bibliography is about:
     <ul>
       <li>manuscripts (<code>manuscript_*</code>)</li>
-      <li>occurrences (<code>occurrence_*</code>)</li>
+      <li>occurrence (<code>occurrence_*</code>)</li>
       <li>persons (<code>person_*</code>)</li>
       <li>types (<code>type_*</code>)</li>
     </ul>
@@ -141,7 +141,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 
 <h3>6. Verses</h3>
 
-<p>Contains verse-level data for occurrences and manuscripts.</p>
+<p>Contains verse-level data for occurrence and manuscripts.</p>
 
 Columns include <code>id</code>, <code>occurrence_id</code>, <code>manuscript_id</code>, <code>text</code>, <code>order_in_occurrence</code>, <code>verse_group_id</code>.<br>
 
@@ -151,13 +151,13 @@ Verse_groups allows grouping of related verses.
 <h3>7. Lookup / Metadata Tables</h3>
 <ul>
 <li><code>roles</code>: defines role types for persons.</li>
-<li><code>text_statuses</code>: textual status of occurrences or types.</li>
-<li><code>keywords</code>: keywords for occurrences and types.</li>
-<li><code>tags</code>: tags for types: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.</li>
+<li><code>text_statuses</code>: textual status of occurrence or types.</li>
+<li><code>keywords</code>: keywords for occurrence and types.</li>
+<li><code>tag</code>: tag for types: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.</li>
 <li><code>metre</code>: metre classification.</li>
 <li><code>genre</code>: genre classification.</li>
 <li><code>management</code>: administrative metadata.</li>
-<li><code>acknowledgement</code>: acknowledgement linked to occurrences, manuscripts, types, or persons.</li>
+<li><code>acknowledgement</code>: acknowledgement linked to occurrence, manuscripts, types, or persons.</li>
 <li><code>editorial_status</code>: editorial states for types. Currently only (not) a critical text. This might become just a boolean value but since it's not sure yet, we stored it like this</li>
 <li><code>self_designation</code>: how a scribe describes himself</li>
 <li><code>office</code>: the official title of a person. To do: These are currently stored entirely separate from <code>self designation</code>, even tho a person could describe himself using his official title too...</li>

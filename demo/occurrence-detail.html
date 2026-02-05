@@ -337,7 +337,7 @@
     <nav class="main-nav">
         <ul>
             <li><a href="byzantine-db.html">HOME</a></li>
-            <li><a href="byzantine-db.html" class="active">OCCURRENCES</a></li>
+            <li><a href="byzantine-db.html" class="active">occurrence</a></li>
             <li><a href="types.html">TYPES</a></li>
             <li><a href="#">MANUSCRIPTS</a></li>
             <li><a href="#">PERSONS</a></li>
@@ -408,7 +408,7 @@
                         m.shelf,
                         l.name as library_name,
                         loc.name as location_name
-                    FROM occurrences o
+                    FROM occurrence o
                     LEFT JOIN manuscripts m ON o.manuscript_id = m.id
                     LEFT JOIN library l ON m.library_id = l.id
                     LEFT JOIN location loc ON l.location_id = loc.id
@@ -449,7 +449,7 @@
                 const typesQuery = `
                     SELECT t.id, t.incipit, t.title
                     FROM types t
-                    JOIN type_occurrences to2 ON t.id = to2.type_id
+                    JOIN type_occurrence to2 ON t.id = to2.type_id
                     WHERE to2.occurrence_id = ?
                 `;
                 
@@ -684,7 +684,7 @@
 
             try {
                 // Get previous ID
-                const prevQuery = `SELECT id FROM occurrences WHERE id < ? ORDER BY id DESC LIMIT 1`;
+                const prevQuery = `SELECT id FROM occurrence WHERE id < ? ORDER BY id DESC LIMIT 1`;
                 const prevStmt = db.prepare(prevQuery);
                 prevStmt.bind([currentId]);
                 let prevId = null;
@@ -694,7 +694,7 @@
                 prevStmt.free();
 
                 // Get next ID
-                const nextQuery = `SELECT id FROM occurrences WHERE id > ? ORDER BY id ASC LIMIT 1`;
+                const nextQuery = `SELECT id FROM occurrence WHERE id > ? ORDER BY id ASC LIMIT 1`;
                 const nextStmt = db.prepare(nextQuery);
                 nextStmt.bind([currentId]);
                 let nextId = null;

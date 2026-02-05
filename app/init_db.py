@@ -13,7 +13,7 @@ BIBLIO_TYPES = {
 BIBLIO_ENTITY_TYPES = {
     "manuscript": "manuscripts",
     "person": "persons",
-    "occurrence": "occurrences",
+    "occurrence": "occurrence",
     "type": "types",
 }
 
@@ -21,7 +21,7 @@ def create_base_tables():
     conn, cursor = get_db_connection()
 
     execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS persons (id INTEGER PRIMARY KEY)")
-    execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS occurrences (id INTEGER PRIMARY KEY)")
+    execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS occurrence (id INTEGER PRIMARY KEY)")
     execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS manuscripts (
         id INTEGER PRIMARY KEY,
@@ -44,7 +44,7 @@ def create_base_tables():
         id INTEGER PRIMARY KEY,
         occurrence_id INTEGER,
         verse_group_id INTEGER,
-        FOREIGN KEY (occurrence_id) REFERENCES occurrences(id)
+        FOREIGN KEY (occurrence_id) REFERENCES occurrence(id)
     )
     """)
     execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS types (id INTEGER PRIMARY KEY)")
@@ -110,7 +110,7 @@ def create_base_tables():
     """)
     
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS tags (
+    CREATE TABLE IF NOT EXISTS tag (
         id INTEGER PRIMARY KEY,
         name TEXT
     )

@@ -192,7 +192,7 @@
             font-size: 14px;
         }
 
-        .language-tags {
+        .language-tag {
             display: flex;
             gap: 8px;
             margin-top: 10px;
@@ -495,7 +495,7 @@
 
     <!-- Main Content -->
     <div class="container">
-        <h2 class="page-title">Search occurrences</h2>
+        <h2 class="page-title">Search occurrence</h2>
 
         <div class="content-wrapper">
             <!-- Sidebar -->
@@ -508,7 +508,7 @@
                 <div class="search-section">
                     <h3>Text</h3>
                     <input type="text" id="searchText" class="search-input" placeholder="Search text...">
-                    <div class="language-tags">
+                    <div class="language-tag">
                         <span class="tag">GREEK</span>
                         <span class="tag">BETACODE</span>
                         <span class="tag">LATIN</span>
@@ -654,7 +654,7 @@
                         m.shelf,
                         l.name as library_name,
                         loc.name as location_name
-                    FROM occurrences o
+                    FROM occurrence o
                     LEFT JOIN manuscripts m ON o.manuscript_id = m.id
                     LEFT JOIN library l ON m.library_id = l.id
                     LEFT JOIN location loc ON l.location_id = loc.id

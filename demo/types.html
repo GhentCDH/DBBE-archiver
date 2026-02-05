@@ -192,7 +192,7 @@
             font-size: 14px;
         }
 
-        .language-tags {
+        .language-tag {
             display: flex;
             gap: 8px;
             margin-top: 10px;
@@ -506,7 +506,7 @@
     <nav class="main-nav">
         <ul>
             <li><a href="byzantine-db.html">HOME</a></li>
-            <li><a href="byzantine-db.html">OCCURRENCES</a></li>
+            <li><a href="byzantine-db.html">occurrence</a></li>
             <li><a href="types.html" class="active">TYPES</a></li>
             <li><a href="manuscripts.html">MANUSCRIPTS</a></li>
             <li><a href="persons.html">PERSONS</a></li>
@@ -530,7 +530,7 @@
                 <div class="search-section">
                     <h3>Text</h3>
                     <input type="text" id="searchText" class="search-input" placeholder="Search text...">
-                    <div class="language-tags">
+                    <div class="language-tag">
                         <span class="tag">GREEK</span>
                         <span class="tag">BETACODE</span>
                         <span class="tag">LATIN</span>
@@ -558,7 +558,7 @@
                 <div class="search-section">
                     <h3>Lemma</h3>
                     <input type="text" id="searchLemma" class="search-input" placeholder="Search lemma...">
-                    <div class="language-tags">
+                    <div class="language-tag">
                         <span class="tag">GREEK</span>
                         <span class="tag">BETACODE</span>
                         <span class="tag" style="background: #6c757d;">LATIN</span>
@@ -616,7 +616,7 @@
                         <tr>
                             <th onclick="sortTable('id')">ID <i class="fas fa-sort"></i></th>
                             <th onclick="sortTable('incipit')">Incipit <i class="fas fa-sort-up"></i></th>
-                            <th onclick="sortTable('occurrences')">Number of Occurrences <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('occurrence')">Number of occurrence <i class="fas fa-sort"></i></th>
                             <th onclick="sortTable('created')">Created <i class="fas fa-sort"></i></th>
                         </tr>
                     </thead>
@@ -696,7 +696,7 @@
                         t.number_of_verses,
                         COUNT(DISTINCT to2.occurrence_id) as occurrence_count
                     FROM types t
-                    LEFT JOIN type_occurrences to2 ON t.id = to2.type_id
+                    LEFT JOIN type_occurrence to2 ON t.id = to2.type_id
                 `;
 
                 let params = [];
@@ -728,8 +728,8 @@
                     }
                     
                     if (personId) {
-                        query = query.replace('LEFT JOIN type_occurrences', 
-                            'LEFT JOIN type_person_role tpr ON t.id = tpr.type_id LEFT JOIN type_occurrences');
+                        query = query.replace('LEFT JOIN type_occurrence',
+                            'LEFT JOIN type_person_role tpr ON t.id = tpr.type_id LEFT JOIN type_occurrence');
                         conditions.push('tpr.person_id = ?');
                         params.push(personId);
                         
@@ -747,7 +747,7 @@
                 query += ' GROUP BY t.id';
 
                 // Add sorting
-                if (sortColumn === 'occurrences') {
+                if (sortColumn === 'occurrence') {
                     query += ` ORDER BY occurrence_count ${sortDirection}`;
                 } else {
                     query += ` ORDER BY t.${sortColumn} ${sortDirection}`;

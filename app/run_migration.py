@@ -20,7 +20,7 @@ def run_migration():
         ("Migrating verses", migrate_verses),
         ("Migrating persons", migrate_persons),
         ("Migrating manuscripts", migrate_manuscripts),
-        ("Migrating occurrences", migrate_occurrences),
+        ("Migrating occurrence", migrate_occurrences),
         ("Migrating types", migrate_types),
         ("Migrating bibliographies", migrate_bibliographies),
 
