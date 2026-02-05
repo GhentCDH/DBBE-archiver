@@ -143,7 +143,7 @@ Bibliographies are modelled as concrete entity types, rather than a single table
 - ```book```
 - ```book_chapter```
 - ```blog_post```
-- ```bib_varia```
+- ```bib_varia```: This table is usually avoided but contains entries for which no other bibliographical type exists.
 - ```online_source```
 - ```phd```
 
