@@ -100,7 +100,7 @@ def create_manuscript_tables(cursor):
         origin_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, origin_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscripts(id),
-        FOREIGN KEY (origin_id) REFERENCES locations(id)
+        FOREIGN KEY (origin_id) REFERENCES location(id)
     )
     """)
 
@@ -125,13 +125,13 @@ def insert_location_hierarchy(cursor, hierarchy):
     leaf_id = None
     for location_id, name, historical_name, parent_id in hierarchy:
         execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO locations (id, name, historical_name, parent_id)
+            INSERT OR IGNORE INTO location (id, name, historical_name, parent_id)
             VALUES (?, ?, ?, ?)
         """, (location_id, name, historical_name, parent_id))
         leaf_id = location_id
     return leaf_id
 
-def link_manuscript_to_locations(cursor, manuscript_id, pg_cursor):
+def link_manuscript_to_location(cursor, manuscript_id, pg_cursor):
     pg_cursor.execute("""
         SELECT f.idlocation
         FROM data.factoid f
@@ -297,7 +297,7 @@ def migrate_manuscripts():
                                                (manuscript_id, person_id, role_id)
                                                )
 
-        link_manuscript_to_locations(cursor, manuscript_id, pg_cursor)
+        link_manuscript_to_location(cursor, manuscript_id, pg_cursor)
 
         MANUSCRIPT_M2M = [
             {

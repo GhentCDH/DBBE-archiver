@@ -226,7 +226,7 @@
                         c.name as collection_name
                     FROM manuscripts m
                     LEFT JOIN library l ON m.library_id = l.id
-                    LEFT JOIN locations loc ON l.location_id = loc.id
+                    LEFT JOIN location loc ON l.location_id = loc.id
                     LEFT JOIN collection c ON m.collection_id = c.id
                     WHERE m.id = ?
                 `;

@@ -85,12 +85,12 @@ def create_base_tables():
     """)
 
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS locations (
+    CREATE TABLE IF NOT EXISTS location (
         id INTEGER PRIMARY KEY,
         name TEXT,
         historical_name TEXT,
         parent_id INTEGER,
-        FOREIGN KEY(parent_id) REFERENCES locations(id)
+        FOREIGN KEY(parent_id) REFERENCES location(id)
     )
     """)
 
@@ -158,7 +158,7 @@ def create_base_tables():
             id INTEGER PRIMARY KEY,
             name TEXT,
             location_id INTEGER,
-            FOREIGN KEY (location_id) REFERENCES locations(id)
+            FOREIGN KEY (location_id) REFERENCES location(id)
         );
     """)
     execute_with_normalization(cursor, """

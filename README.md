@@ -117,7 +117,7 @@ Related tables:
 - ```Manuscript_content```: Explains what the manuscript is about. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
 - ```Manuscript_identification```: Links a manuscript to one or more IDs that were used in canonical works to refer to this manuscript (ex: Diktyon)
 - ```Manuscript_management```: Internal information. For example: To do's in the processing of this manuscript
-- ```Manuscript_location```: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the locations table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "Locations"
+- ```Manuscript_location```: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the location table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "location"
 - ```Manuscript_person_role```: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...
 
 
@@ -183,7 +183,7 @@ Verse_groups allow grouping of related verses.
 - ```editorial_status``` — editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
 - ```self_designation``` — how a scribe describes himself
 - ```office``` — the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
-- ```locations``` - Locations that could be linked to manuscripts, library, persons,... . This is based upon the postgrs 'region' table. Note that a region used to have a flag is_city in the Postgres' Region table. I want to avoid keeping this approach so for now I did not add it. We might want to consider making this cleaner. 
+- ```location``` - location that could be linked to manuscripts, library, persons,... . This is based upon the postgrs 'region' table. Note that a region used to have a flag is_city in the Postgres' Region table. I want to avoid keeping this approach so for now I did not add it. We might want to consider making this cleaner. 
 - ```library``` — library name and location. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```collection``` — collection metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```biblio_category``` — categories for bibliographies.

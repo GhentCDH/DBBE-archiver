@@ -88,7 +88,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <li><code>Manuscript_content</code>: Explains what the manuscript is about. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. </li>
 <li><code>Manuscript_identification</code>: Links a manuscript to one or more IDs that were used in canonical works to refer to this manuscript (ex: Diktyon)</li>
 <li><code>Manuscript_management</code>: Internal information. For example: To do's in the processing of this manuscript</li>
-<li><code>Manuscript_location</code>: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the locations table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "Locations".</li>
+<li><code>Manuscript_location</code>: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the location table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "location".</li>
 <li><code>Manuscript_person_role</code>: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...</li>
 </ul>
 
@@ -161,7 +161,7 @@ Verse_groups allows grouping of related verses.
 <li><code>editorial_status</code>: editorial states for types. Currently only (not) a critical text. This might become just a boolean value but since it's not sure yet, we stored it like this</li>
 <li><code>self_designation</code>: how a scribe describes himself</li>
 <li><code>office</code>: the official title of a person. To do: These are currently stored entirely separate from <code>self designation</code>, even tho a person could describe himself using his official title too...</li>
-<li><code>locations</code>:
+<li><code>location</code>:
 <li><code>library</code>: library metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>
 <li><code>collection</code>: collection metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>
 <li><code>biblio_category</code>: categories for bibliographies.</li>

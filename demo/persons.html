@@ -543,7 +543,7 @@
         function loadProvenanceDropdown() {
             if (!db) return;
             try {
-                const query = `SELECT id, name FROM locations ORDER BY name LIMIT 100`;
+                const query = `SELECT id, name FROM location ORDER BY name LIMIT 100`;
                 const stmt = db.prepare(query);
                 const select = document.getElementById('provenanceSelect');
                 while (stmt.step()) {

@@ -37,7 +37,7 @@ def get_location_hierarchy_and_leaf(cursor, pg_cursor, location_id):
     leaf_id = None
     for loc_id, name, hist_name, parent_id in reversed(hierarchy):
         execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO locations (id, name, historical_name, parent_id)
+            INSERT OR IGNORE INTO location (id, name, historical_name, parent_id)
             VALUES (?, ?, ?, ?)
         """, (loc_id, name, hist_name, parent_id))
         leaf_id = loc_id
@@ -83,14 +83,14 @@ def run_person_migration():
 
     rows = pg_cursor.fetchall()
 
-    person_locations = {}
+    person_location = {}
     for row in rows:
         pid = str(row[0])
         loc_id = row[4]
         if loc_id:
-            if pid in person_locations:
-                raise ValueError(f"Person {pid} has multiple origination locations in Postgres!")
-            person_locations[pid] = loc_id
+            if pid in person_location:
+                raise ValueError(f"Person {pid} has multiple origination location in Postgres!")
+            person_location[pid] = loc_id
 
     execute_with_normalization(cursor, "BEGIN")
     for row in rows:

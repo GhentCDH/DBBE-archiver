@@ -214,7 +214,7 @@
                 const personQuery = `
                     SELECT p.*, loc.name as origin_location
                     FROM persons p
-                    LEFT JOIN locations loc ON p.location_id = loc.id
+                    LEFT JOIN location loc ON p.location_id = loc.id
                     WHERE p.id = ?
                 `;
                 const personStmt = db.prepare(personQuery);
@@ -250,7 +250,7 @@
                     JOIN manuscript_person_role mpr ON m.id = mpr.manuscript_id
                     JOIN roles r ON mpr.role_id = r.id
                     LEFT JOIN library l ON m.library_id = l.id
-                    LEFT JOIN locations loc ON l.location_id = loc.id
+                    LEFT JOIN location loc ON l.location_id = loc.id
                     WHERE mpr.person_id = ?
                 `;
                 const msStmt = db.prepare(msQuery);
