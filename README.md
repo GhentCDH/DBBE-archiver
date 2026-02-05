@@ -84,7 +84,7 @@ Related tables:
 - ```occurrence_management```: Internal information. For example: To do's in the processing of this occurrence
 - ```occurrence_acknowledgement```: Plain text shout out to people who helped in the publication of this occurrence. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to occurrence_person_role._
 - ```occurrence_text_statuses```: An occurrence text can be partially/completely (un)known
-- ```occurrence_related_occurrences``` and ```occurrence_relation_definitions```: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in occurrence_relation_definitions
+- ```occurrence_related_occurrences``` and ```occurrence_relation_definition```: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in occurrence_relation_definition
 - ```occurrence_keyword```: Keywords telling what the occurrence is about
 
 #### **2. Types**
@@ -183,8 +183,8 @@ Verse_groups allow grouping of related verses.
 - ```editorial_status``` — editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
 - ```self_designation``` — how a scribe describes himself
 - ```office``` — the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
-- ```locations``` - Locations that could be linked to manuscripts, libraries, persons,... . This is based upon the postgrs 'region' table. Note that a region used to have a flag is_city in the Postgres' Region table. I want to avoid keeping this approach so for now I did not add it. We might want to consider making this cleaner. 
-- ```libraries``` — library name and location. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
+- ```locations``` - Locations that could be linked to manuscripts, library, persons,... . This is based upon the postgrs 'region' table. Note that a region used to have a flag is_city in the Postgres' Region table. I want to avoid keeping this approach so for now I did not add it. We might want to consider making this cleaner. 
+- ```library``` — library name and location. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```collection``` — collection metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```biblio_category``` — categories for bibliographies.
 - ```content``` -  Used for storing manuscript content. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 

@@ -22,15 +22,15 @@ def get_library_for_manuscript(pg_cursor, manuscript_id):
 
 def insert_library(cursor, library_id, name, location_id):
     execute_with_normalization(cursor, """
-        INSERT OR IGNORE INTO libraries (id, name, location_id)
+        INSERT OR IGNORE INTO library (id, name, location_id)
         VALUES (?, ?, ?)
     """, (int(library_id), name, int(location_id) if location_id else None))
 
 def create_manuscript_tables(cursor):
     manuscript_columns = [
         ("name", "TEXT"),
-        ("date_floor_year", "INTEGER"),
-        ("date_ceiling_year", "INTEGER"),
+        ("date_floor", "INTEGER"),
+        ("date_ceiling", "INTEGER"),
         ("created", "TEXT"),
         ("modified", "TEXT"),
         ("number_of_occurrences", "INTEGER"),
@@ -255,7 +255,7 @@ def migrate_manuscripts():
 
         execute_with_normalization(cursor, """
         INSERT INTO manuscripts (
-            id, name, date_floor_year, date_ceiling_year,
+            id, name, date_floor, date_ceiling,
             created, modified, number_of_occurrences, shelf
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -270,8 +270,8 @@ def migrate_manuscripts():
         """, (
             manuscript_id,
             source.get('name'),
-            source.get('date_floor_year'),
-            source.get('date_ceiling_year'),
+            source.get('completion_floor'),
+            source.get('completion_ceiling'),
             source.get('created'),
             source.get('modified'),
             source.get('number_of_occurrences'),

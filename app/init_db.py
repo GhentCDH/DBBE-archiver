@@ -34,7 +34,7 @@ def create_base_tables():
         shelf TEXT,
         library_id INTEGER,
         collection_id INTEGER,
-        FOREIGN KEY (library_id) REFERENCES libraries(id),
+        FOREIGN KEY (library_id) REFERENCES library(id),
         FOREIGN KEY (collection_id) REFERENCES collection(id)
     )
     """)
@@ -154,7 +154,7 @@ def create_base_tables():
     """)
 
     execute_with_normalization(cursor, """
-        CREATE TABLE IF NOT EXISTS libraries (
+        CREATE TABLE IF NOT EXISTS library (
             id INTEGER PRIMARY KEY,
             name TEXT,
             location_id INTEGER,
@@ -169,7 +169,7 @@ def create_base_tables():
     """)
 
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS occurrence_relation_definitions (
+    CREATE TABLE IF NOT EXISTS occurrence_relation_definition (
         id INTEGER PRIMARY KEY,
         definition TEXT NOT NULL UNIQUE
     )

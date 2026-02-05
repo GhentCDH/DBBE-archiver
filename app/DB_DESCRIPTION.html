@@ -53,7 +53,7 @@ For a full visual of the database schema, please visit <a href="https://www.ywor
 <li><code>occurrence_acknowledgement</code>: Plain text shout out to people who helped in the publication of this occurrence. This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to <code>occurrence_person_role</code>.</li>
 <li><code>occurrence_text_statuses</code>: An occurrence text can be partially/completely (un)known</li>
 <li><code>occurrence_keyword</code>: Keywords telling what the occurrence is about</li>
-<li><code>occurrence_related_occurrences</code>and <code>occurrence_relation_definitions</code>: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in <code>occurrence_relation_definitions</code></li>
+<li><code>occurrence_related_occurrences</code>and <code>occurrence_relation_definition</code>: An occurrence can be related to other occurrences if they (a) some of their verses share verse groups or (b) they share types. The relationship type is defined in <code>occurrence_relation_definition</code></li>
 </ul>
 
 <h3>2. Types</h3>
@@ -162,7 +162,7 @@ Verse_groups allows grouping of related verses.
 <li><code>self_designation</code>: how a scribe describes himself</li>
 <li><code>office</code>: the official title of a person. To do: These are currently stored entirely separate from <code>self designation</code>, even tho a person could describe himself using his official title too...</li>
 <li><code>locations</code>:
-<li><code>libraries</code>: library metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>
+<li><code>library</code>: library metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>
 <li><code>collection</code>: collection metadata. Note that a manuscript name is always City - library - collection - shelf (to be verified with dbbe)</li>
 <li><code>biblio_category</code>: categories for bibliographies.</li>
 <li><code>content</code>- Explains what the manuscript is about. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content.</li>

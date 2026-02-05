@@ -95,7 +95,7 @@ def create_schema():
         PRIMARY KEY (occurrence_id, related_occurrence_id, relation_definition_id),
         FOREIGN KEY (occurrence_id) REFERENCES occurrences(id),
         FOREIGN KEY (related_occurrence_id) REFERENCES occurrences(id),
-        FOREIGN KEY (relation_definition_id) REFERENCES occurrence_relation_definitions(id),
+        FOREIGN KEY (relation_definition_id) REFERENCES occurrence_relation_definition(id),
         CHECK (occurrence_id <> related_occurrence_id)
     )
     """)
@@ -111,7 +111,7 @@ def create_schema():
     """)
 
     execute_with_normalization(cursor, """
-    INSERT OR IGNORE INTO occurrence_relation_definitions (id, definition) VALUES
+    INSERT OR IGNORE INTO occurrence_relation_definition (id, definition) VALUES
     ('0', 'verse_related'),
     ('1', 'type_related')
     """)

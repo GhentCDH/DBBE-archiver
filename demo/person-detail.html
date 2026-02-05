@@ -249,7 +249,7 @@
                     FROM manuscripts m
                     JOIN manuscript_person_role mpr ON m.id = mpr.manuscript_id
                     JOIN roles r ON mpr.role_id = r.id
-                    LEFT JOIN libraries l ON m.library_id = l.id
+                    LEFT JOIN library l ON m.library_id = l.id
                     LEFT JOIN locations loc ON l.location_id = loc.id
                     WHERE mpr.person_id = ?
                 `;

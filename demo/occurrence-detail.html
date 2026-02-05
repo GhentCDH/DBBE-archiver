@@ -410,7 +410,7 @@
                         loc.name as location_name
                     FROM occurrences o
                     LEFT JOIN manuscripts m ON o.manuscript_id = m.id
-                    LEFT JOIN libraries l ON m.library_id = l.id
+                    LEFT JOIN library l ON m.library_id = l.id
                     LEFT JOIN locations loc ON l.location_id = loc.id
                     WHERE o.id = ?
                 `;

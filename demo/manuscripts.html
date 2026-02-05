@@ -543,7 +543,7 @@
                         loc.name as location_name,
                         GROUP_CONCAT(DISTINCT c.name) as content
                     FROM manuscripts m
-                    LEFT JOIN libraries l ON m.library_id = l.id
+                    LEFT JOIN library l ON m.library_id = l.id
                     LEFT JOIN locations loc ON l.location_id = loc.id
                     LEFT JOIN manuscript_content mc ON m.id = mc.manuscript_id
                     LEFT JOIN content c ON mc.content_id = c.id
