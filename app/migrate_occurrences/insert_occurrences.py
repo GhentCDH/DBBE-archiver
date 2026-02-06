@@ -115,6 +115,10 @@ def run_occurrence_migration():
             execute_with_normalization(cursor, "BEGIN")
             continue
 
+        private_comment_val = None
+        if not is_public_release:
+            private_comment_val = source.get('private_comment')
+
         execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO occurrence (id)
             VALUES (?)
@@ -131,7 +135,7 @@ def run_occurrence_migration():
             source.get('created', ''),
             source.get('modified', ''),
             source.get('public_comment', ''),
-            source.get('private_comment', ''),
+            private_comment_val,
             bool(source.get('dbbe', False)),
             source.get('incipit', ''),
             source.get('text_stemmer', ''),

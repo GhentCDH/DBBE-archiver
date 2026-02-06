@@ -91,6 +91,10 @@ def run_type_migration():
 
         number_of_verses = get_number_of_verses(pg_cursor, type_id)
 
+        private_comment_val = None
+        if not is_public_release:
+            private_comment_val = source.get('private_comment')
+
         execute_with_normalization(cursor, """
         INSERT INTO type (
             id, text_stemmer, text_original, lemma, incipit,
@@ -117,7 +121,7 @@ def run_type_migration():
             source.get('created'),
             source.get('modified'),
             source.get('public_comment'),
-            source.get('private_comment'),
+            private_comment_val,
             source.get('title_original'),
             number_of_verses
         ))

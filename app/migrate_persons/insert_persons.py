@@ -75,27 +75,40 @@ def run_person_migration():
             person.is_modern,
             person.is_dbbe,
             factoid_born.born_date,
-            factoid_died.death_date
+            factoid_died.death_date,
+            entity.created,
+            entity.modified,
+            entity.public_comment,
+            entity.private_comment
         FROM data.person person
-        INNER JOIN data.name name ON name.idperson = person.identity
+        INNER JOIN data.name name
+            ON name.idperson = person.identity
+        LEFT JOIN data.entity entity
+            ON entity.identity = person.identity
         LEFT JOIN (
             SELECT subject_identity, date AS born_date
             FROM data.factoid f
-            JOIN data.factoid_type ft ON f.idfactoid_type = ft.idfactoid_type
+            JOIN data.factoid_type ft
+                ON f.idfactoid_type = ft.idfactoid_type
             WHERE ft.type = 'born'
-        ) AS factoid_born ON person.identity = factoid_born.subject_identity
+        ) AS factoid_born
+            ON person.identity = factoid_born.subject_identity
         LEFT JOIN (
             SELECT subject_identity, date AS death_date
             FROM data.factoid f
-            JOIN data.factoid_type ft ON f.idfactoid_type = ft.idfactoid_type
+            JOIN data.factoid_type ft
+                ON f.idfactoid_type = ft.idfactoid_type
             WHERE ft.type = 'died'
-        ) AS factoid_died ON person.identity = factoid_died.subject_identity
+        ) AS factoid_died
+            ON person.identity = factoid_died.subject_identity
         LEFT JOIN (
             SELECT subject_identity, idlocation
             FROM data.factoid f
-            JOIN data.factoid_type ft ON f.idfactoid_type = ft.idfactoid_type
+            JOIN data.factoid_type ft
+                ON f.idfactoid_type = ft.idfactoid_type
             WHERE ft.type = 'origination'
-        ) AS factoid_orig ON person.identity = factoid_orig.subject_identity
+        ) AS factoid_orig
+            ON person.identity = factoid_orig.subject_identity
     """)
 
     rows = pg_cursor.fetchall()
@@ -123,12 +136,20 @@ def run_person_migration():
             is_modern,
             is_dbbe,
             born_date,
-            death_date
+            death_date,
+            created,
+            modified,
+            public_comment,
+            private_comment,
         ) = row
 
         person_id = str(person_id)
         is_public_person = person_public_statuses.get(person_id, False)
         is_public_release= get_public_release()
+
+        private_comment_val = None
+        if not is_public_release:
+            private_comment_val = private_comment
 
         if not is_public_person and is_public_release:
             print(f"Skipping private person {person_id}")
@@ -142,8 +163,10 @@ def run_person_migration():
             id, first_name, last_name,
             born_date_floor, born_date_ceiling,
             death_date_floor, death_date_ceiling,
-            is_dbbe_person, is_modern_person, is_historical_person
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            is_dbbe_person, is_modern_person, is_historical_person,
+            created, modified,
+            public_comment, private_comment
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?)
         ON CONFLICT(id) DO UPDATE SET
             first_name = excluded.first_name,
             last_name = excluded.last_name,
@@ -153,7 +176,11 @@ def run_person_migration():
             death_date_ceiling = excluded.death_date_ceiling,
             is_dbbe_person = excluded.is_dbbe_person,
             is_modern_person = excluded.is_modern_person,
-            is_historical_person = excluded.is_historical_person
+            is_historical_person = excluded.is_historical_person,
+            created = excluded.created,
+            modified = excluded.modified,
+            public_comment = excluded.public_comment,
+            private_comment = excluded.private_comment
         """, (
             person_id,
             first_name,
@@ -164,7 +191,11 @@ def run_person_migration():
             death_ceiling,
             bool(is_dbbe),
             bool(is_modern),
-            bool(is_historical)
+            bool(is_historical),
+            created,
+            modified,
+            public_comment,
+            private_comment_val
         ))
 
         if orig_location_id:

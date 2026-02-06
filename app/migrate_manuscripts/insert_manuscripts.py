@@ -29,8 +29,6 @@ def insert_library(cursor, library_id, name, location_id):
 def create_manuscript_tables(cursor):
     manuscript_columns = [
         ("name", "TEXT"),
-        ("date_floor", "INTEGER"),
-        ("date_ceiling", "INTEGER"),
         ("created", "TEXT"),
         ("modified", "TEXT"),
         ("number_of_occurrences", "INTEGER"),
@@ -194,19 +192,24 @@ def run_manuscript_migration():
             print(f"Skipping type {manuscript_id} because public=False during public release")
             continue
 
+        private_comment_val = None
+        if not is_public_release:
+            private_comment_val = source.get('private_comment')
 
         execute_with_normalization(cursor, """
         INSERT INTO manuscript (
             id, name, completion_date_floor, completion_date_ceiling,
-            created, modified, number_of_occurrences, shelf
+            created, modified, public_comment, private_comment, number_of_occurrences, shelf
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
             name = excluded.name,
             completion_date_floor = excluded.completion_date_floor,
             completion_date_ceiling = excluded.completion_date_ceiling,
             created = excluded.created,
             modified = excluded.modified,
+            public_comment = excluded.public_comment,
+            private_comment=excluded.private_comment,
             number_of_occurrences = excluded.number_of_occurrences,
             shelf = excluded.shelf
         """, (
@@ -216,6 +219,8 @@ def run_manuscript_migration():
             source.get('completion_ceiling'),
             source.get('created'),
             source.get('modified'),
+            source.get('public_comment'),
+            private_comment_val,
             source.get('number_of_occurrences'),
             source.get('shelf')
         ))

@@ -1,7 +1,6 @@
 # app/migrate_bibliographies/__init__.py
 
 from .schema import create_schema
-# from .insert_main_bibliographies import migrate_main_bibliographies
 from .link_chapters_to_books import migrate_book_chapters
 from .link_managements_to_bibliographies import migrate_managements
 from .link_articles_to_journals import migrate_journals
@@ -34,5 +33,5 @@ def migrate_bibliographies():
     run_step("migrate_journals", migrate_journals)
     run_step("migrate_person_role", migrate_person_role)
     run_step("migrate_managements", migrate_managements)
-    # run_step("cleanup_bibliographies", cleanup_bibliographies)
+    run_step("cleanup_bibliographies", cleanup_bibliographies)
 

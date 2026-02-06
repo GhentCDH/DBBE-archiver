@@ -30,6 +30,8 @@ def create_base_tables():
         completion_date_ceiling TEXT,
         created TEXT,
         modified TEXT,
+        public_comment TEXT,
+        private_comment TEXT,
         number_of_occurrences INTEGER,
         shelf TEXT,
         library_id INTEGER,

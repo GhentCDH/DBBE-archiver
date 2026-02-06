@@ -31,7 +31,6 @@ def create_schema():
         )
     """)
 
-    # Add foreign key columns if missing
     add_column_if_missing(cursor, "book_chapter", "book_id", "INTEGER")
 
     conn.commit()
