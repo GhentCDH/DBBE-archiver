@@ -88,12 +88,11 @@ def run_type_migration():
         type_id = str(source.get('id', hit['_id']))
         is_public = bool(source.get('public', False))
 
-        # if not is_public and PUBLIC_RELEASE:
-        #     print(f"Skipping type {type_id} because public=False during public release")
-        #     continue
+        if not is_public and PUBLIC_RELEASE:
+            print(f"Skipping type {type_id} because public=False during public release")
+            continue
 
         number_of_verses = get_number_of_verses(pg_cursor, type_id)
-
 
         execute_with_normalization(cursor, """
         INSERT INTO type (
@@ -294,23 +293,30 @@ def run_type_migration():
         b = int(related_type_id)
         type_id_norm, related_type_id_norm = sorted((a, b))
 
+        cursor.execute("""
+            SELECT
+                EXISTS (SELECT 1 FROM type WHERE id = ?),
+                EXISTS (SELECT 1 FROM type WHERE id = ?)
+        """, (type_id_norm, related_type_id_norm))
+
+        print(cursor.fetchone())
+
         execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO type_related_type
             (type_id, related_type_id, relation_definition_id)
-            VALUES (?, ?, ?)
+            SELECT ?, ?, ?
+            WHERE EXISTS (SELECT 1 FROM "type" WHERE id = ?)
+              AND EXISTS (SELECT 1 FROM "type" WHERE id = ?)
         """, (
             type_id_norm,
             related_type_id_norm,
-            str(rel_def_id)
+            str(rel_def_id),
+            type_id_norm,
+            related_type_id_norm
         ))
 
     execute_with_normalization(cursor, "COMMIT")
     pg_conn.close()
     conn.close()
 
-
     print(f"Types migration completed: {batch_count} types inserted")
-
-
-if __name__ == "__main__":
-    migrate_type()
