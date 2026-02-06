@@ -4,40 +4,45 @@ This repository was developed to facilitate the periodic archival of data from t
 It integrates data originating from Elasticsearch with complementary information stored in PostgreSQL, producing a comprehensive and internally consistent SQLite database.
 
 The resulting dataset is designed to serve multiple objectives:
-- Long-term preservation: ensuring the durability and continued accessibility of DBBE data beyond the lifespan of the current production infrastructure.
-- Research accessibility: providing linguists, philologists, and computational researchers with a well-structured dataset that can be easily transformed, queried, and adapted to diverse analytical workflows.
-- Software sustainability: offering a stable foundation for the development of new tools and applications
+- **Long-term preservation**: Ensures durability and continued accessibility beyond the lifespan of the current production infrastructure.
+- **Research accessibility**: Provides linguists, philologists, and computational researchers with a well-structured dataset ready for analysis and adaptation.
+- **Software sustainability**: Offers a stable foundation for building new tools and applications.
 
 By consolidating and normalizing data across heterogeneous storage systems, this project aims to future-proof the DBBE corpus while lowering the technical barrier for reuse, analysis, and further digital scholarship.
 
-The repository contains the initial tests stored in a notebook, and the production-ready version of this code in the ```/app``` folder.
+--- 
 
 ## Prerequisites
 - Launch a virtual environment in Python3.11
-- Make sure the DBBE services are running (https://github.com/GhentCDH/dbbe)
+- Make sure the DBBE services are running ([https://github.com/GhentCDH/dbbe](https://github.com/GhentCDH/dbbe))
 
-## Config
-Use the .env file to configure the paths to the current Postgres and Elastic servers, and provide a key and URL for Zenodo uploads. The default configured in this repository uses the Zenodo sandbox URL, which should be replaced on production.
+--- 
+## Configuration
+Use the ```.env``` file to configure the paths to the current Postgres and Elastic servers, and provide a key and URL for Zenodo uploads. The default configured in this repository uses the Zenodo sandbox URL, which should be replaced on production.
+
+If you don't want to upload to Zenodo and / or you have no API key for Zenodo, you can set ```ENABLE_ZENODO_UPLOAD``` to ```false```. Other Zenodo related variables will be ignored in that case.
+
+---
 
 ## Running locally
-- Clone the repository and ```cd``` to the repository root folder
-- Generate a new virtual environment (>=3.11): ```python3.11 -m venv .venv``` and ```source .venv/bin/activate```
-- ```pip install .```
-- ```python -m app.run_migration```
+1. Clone the repository and ```cd``` to the repository root folder
+2. Generate a new virtual environment (>=3.11): 
+    ```
+    python3.11 -m venv .venv
+    source .venv/bin/activate
+    ```
+3. Install requiired packages: ```pip install .```
+4. Run application: ```python -m app.run_migration```
 
-Resulting SQLite files are written to app/data and published as draft to a new Zenodo deposit if Zenodo upload is enabled.
-Configure Zenodo uploads by setting these variables in your `.env` file for other behaviour:
+The resulting SQLite files are written to app/data and published to Zenodo if enabled in ``.env``.
 
-- **`ENABLE_ZENODO_UPLOAD`** : Master switch for Zenodo upload functionality  (`"false"`,  `"true"`) - Defalt false
-- **`PUBLISH_DRAFT`** : Controls whether to publish the (new version of the) deposition or leave as draft (`"false"`,  `"true"`)
-- **`DEPOSITION_ID`**: ID of existing Zenodo deposition (for creating new versions)
-    - `None`: Creates a brand new deposition
-    - `<existing_id>`: Creates a new version of that deposition, deletes old `export_data.sqlite`, updates metadata, and uploads new file
+---
 
 ## Running from Docker
 
-- ```cd``` to the root of the repository
-- ```docker build -t dbbe-archive -f app/Dockerfile .```
+1. ```cd``` to the root of the repository
+2. Build the container: ```docker build -t dbbe-archive -f app/Dockerfile .```
+3. Run the container
 ```
 docker run
 --network host
@@ -45,8 +50,8 @@ docker run
 -v "$(pwd)/data:/app/data"  
 dbbe-archive
 ```
-- Resulting SQLite files are written to app/data
-- Modify the .env file for running on machines other than localhost
+
+The resulting SQLite files are written to app/data and published to Zenodo if enabled in ``.env``.
 
 Note: if you ran this locally earlier, you might already have a sqlite file in your datafolder. This might conflict if you rerun with Docker, because the script retries inserts that are already there. In other words: make sure app/data is empty. 
 
@@ -192,6 +197,7 @@ Verse_groups allow grouping of related verses.
 - ```content``` -  Used for storing manuscript content. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
 - ```identification``` -canonical ways to refer to persons or manuscripts
 <!-- END DB_SCHEMA -->
+
 ----
 
 ## Zenodo
@@ -224,6 +230,6 @@ This uses Python’s built-in HTTP server module, so no additional packages are 
 
 ## Next steps
 
-- How to keep the docs and the db schema updated: Maybe we can generate an extra table with all the table names and a description per table in a second column (like all hardcoded in a python script). This could be the last script running during migration. If this does no longer match the db structure of what we've just generated: script fails. If it does: we generate the final docs.
+- How to keep the docs and the db schema updated: 
 - Implement GCDH feedback
 - Can we implement some sort of validation?
