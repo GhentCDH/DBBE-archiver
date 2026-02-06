@@ -293,14 +293,6 @@ def run_type_migration():
         b = int(related_type_id)
         type_id_norm, related_type_id_norm = sorted((a, b))
 
-        cursor.execute("""
-            SELECT
-                EXISTS (SELECT 1 FROM type WHERE id = ?),
-                EXISTS (SELECT 1 FROM type WHERE id = ?)
-        """, (type_id_norm, related_type_id_norm))
-
-        print(cursor.fetchone())
-
         execute_with_normalization(cursor, """
             INSERT OR IGNORE INTO type_related_type
             (type_id, related_type_id, relation_definition_id)
