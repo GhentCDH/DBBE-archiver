@@ -184,12 +184,15 @@ def create_base_tables():
     )
     """)
     for bib_type in BIBLIO_type:
-        # Type-specific bibliography table
         execute_with_normalization(cursor, f"""
                CREATE TABLE IF NOT EXISTS {bib_type} (
                    id INTEGER PRIMARY KEY,
                    title TEXT,
-                   title_sort_key TEXT
+                   title_sort_key TEXT,
+                   created TEXT,
+                   modified TEXT,
+                   public_comment TEXT,
+                   private_comment TEXT
                )
            """)
 
