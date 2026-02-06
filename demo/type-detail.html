@@ -219,15 +219,15 @@
 
             try {
                 // Get type details
-                const typeQuery = `SELECT * FROM types WHERE id = ?`;
-                const typeStmt = db.prepare(typeQuery);
-                typeStmt.bind([typeId]);
+                const typeQuery = `SELECT * FROM type WHERE id = ?`;
+                const typetmt = db.prepare(typeQuery);
+                typetmt.bind([typeId]);
                 
                 let type = null;
-                if (typeStmt.step()) {
-                    type = typeStmt.getAsObject();
+                if (typetmt.step()) {
+                    type = typetmt.getAsObject();
                 }
-                typeStmt.free();
+                typetmt.free();
 
                 if (!type) throw new Error('Type not found');
 

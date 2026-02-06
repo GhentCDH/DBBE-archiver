@@ -517,7 +517,7 @@
 
     <!-- Main Content -->
     <div class="container">
-        <h2 class="page-title">Search types</h2>
+        <h2 class="page-title">Search type</h2>
 
         <div class="content-wrapper">
             <!-- Sidebar -->
@@ -695,7 +695,7 @@
                         t.lemma,
                         t.number_of_verses,
                         COUNT(DISTINCT to2.occurrence_id) as occurrence_count
-                    FROM types t
+                    FROM type t
                     LEFT JOIN type_occurrence to2 ON t.id = to2.type_id
                 `;
 

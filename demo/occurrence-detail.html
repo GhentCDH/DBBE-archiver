@@ -445,22 +445,22 @@
                 }
                 versesStmt.free();
 
-                // Get related types
-                const typesQuery = `
+                // Get related type
+                const typeQuery = `
                     SELECT t.id, t.incipit, t.title
-                    FROM types t
+                    FROM type t
                     JOIN type_occurrence to2 ON t.id = to2.type_id
                     WHERE to2.occurrence_id = ?
                 `;
                 
-                const typesStmt = db.prepare(typesQuery);
-                typesStmt.bind([occurrenceId]);
+                const typeStmt = db.prepare(typeQuery);
+                typeStmt.bind([occurrenceId]);
                 
-                const types = [];
-                while (typesStmt.step()) {
-                    types.push(typesStmt.getAsObject());
+                const type = [];
+                while (typeStmt.step()) {
+                    type.push(typeStmt.getAsObject());
                 }
-                typesStmt.free();
+                typeStmt.free();
 
                 // Get genre
                 const genreQuery = `
@@ -496,7 +496,7 @@
                 }
                 metreStmt.free();
 
-                displayOccurrence(occurrence, verses, types, genre, metre);
+                displayOccurrence(occurrence, verses, type, genre, metre);
                 
             } catch (error) {
                 console.error('Error loading occurrence:', error);
@@ -508,7 +508,7 @@
             }
         }
 
-        function displayOccurrence(occ, verses, types, genre, metre) {
+        function displayOccurrence(occ, verses, type, genre, metre) {
             const manuscriptDisplay = buildManuscriptDisplay(occ);
             const dateDisplay = buildDateDisplay(occ.completion_date_floor, occ.completion_date_ceiling);
             
@@ -580,12 +580,12 @@
                     <table class="info-table">
             `;
 
-            if (types && types.length > 0) {
+            if (type && type.length > 0) {
                 html += `
                     <tr>
                         <td>Type(s)</td>
                         <td>
-                            ${types.map(t => `<a href="type-detail.html?id=${t.id}">${t.incipit || t.title || t.id}</a> (14 verses)`).join('<br>')}
+                            ${type.map(t => `<a href="type-detail.html?id=${t.id}">${t.incipit || t.title || t.id}</a> (14 verses)`).join('<br>')}
                         </td>
                     </tr>
                 `;

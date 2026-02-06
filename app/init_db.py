@@ -1,6 +1,6 @@
 from .common import MAIN_DB_PATH, get_db_connection, execute_with_normalization
 
-BIBLIO_TYPES = {
+BIBLIO_type = {
     "article",
     "blog_post",
     "book",
@@ -10,11 +10,11 @@ BIBLIO_TYPES = {
     "bib_varia",
 }
 
-BIBLIO_ENTITY_TYPES = {
+BIBLIO_ENTITY_type = {
     "manuscript": "manuscript",
     "person": "person",
     "occurrence": "occurrence",
-    "type": "types",
+    "type": "type",
 }
 
 def create_base_tables():
@@ -47,7 +47,7 @@ def create_base_tables():
         FOREIGN KEY (occurrence_id) REFERENCES occurrence(id)
     )
     """)
-    execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS types (id INTEGER PRIMARY KEY)")
+    execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS type (id INTEGER PRIMARY KEY)")
 
     execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS roles (
@@ -181,7 +181,7 @@ def create_base_tables():
         definition TEXT NOT NULL UNIQUE
     )
     """)
-    for bib_type in BIBLIO_TYPES:
+    for bib_type in BIBLIO_type:
         # Type-specific bibliography table
         execute_with_normalization(cursor, f"""
                CREATE TABLE IF NOT EXISTS {bib_type} (
@@ -242,7 +242,7 @@ def create_base_tables():
                )
            """)
 
-        for entity, sqlite_table in BIBLIO_ENTITY_TYPES.items():
+        for entity, sqlite_table in BIBLIO_ENTITY_type.items():
             execute_with_normalization(cursor, f"""
                    CREATE TABLE IF NOT EXISTS {entity}_{bib_type} (
                        {entity}_id INTEGER NOT NULL,

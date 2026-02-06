@@ -75,6 +75,14 @@ def link_bibliographies_to_bibsubjects():
         if not bib_type_enum:
             continue
 
+        execute_with_normalization(
+            cursor,
+            f"SELECT 1 FROM {entity_enum.name.lower()} WHERE id = ?",
+            (str(entity_id),)
+        )
+        if cursor.fetchone() is None:
+            continue
+
         join_table = f"{entity_enum.name.lower()}_{bib_type_enum.value}"
         entity_col = f"{entity_enum.name.lower()}_id"
         bib_col = f"{bib_type_enum.value}_id"
