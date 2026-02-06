@@ -72,7 +72,7 @@ def create_schema():
         identification_id INTEGER NOT NULL,
         PRIMARY KEY (person_id, identification_id),
         FOREIGN KEY (person_id) REFERENCES person(id),
-        FOREIGN KEY (identification_id) REFERENCES identifications(id)
+        FOREIGN KEY (identification_id) REFERENCES identification(id)
     )
     """)
 

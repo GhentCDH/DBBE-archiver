@@ -577,12 +577,12 @@
                         p.death_date_floor,
                         p.death_date_ceiling,
                         p.created,
-                        GROUP_CONCAT(i.identifier_value, '; ') as identifications,
+                        GROUP_CONCAT(i.identifier_value, '; ') as identification,
                         GROUP_CONCAT(sd.name, ', ') as designations,
                         GROUP_CONCAT(o.name, ', ') as office
                     FROM person p
                     LEFT JOIN person_identification pi ON p.id = pi.person_id
-                    LEFT JOIN identifications i ON pi.identification_id = i.id
+                    LEFT JOIN identification i ON pi.identification_id = i.id
                     LEFT JOIN person_self_designation psd ON p.id = psd.person_id
                     LEFT JOIN self_designation sd ON psd.self_designation_id = sd.id
                     LEFT JOIN person_office po ON p.id = po.person_id
@@ -656,7 +656,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><a href="person-detail.html?id=${row.id}">${fullName}</a></td>
-                    <td>${row.identifications || ''}</td>
+                    <td>${row.identification || ''}</td>
                     <td>${row.designations || ''}</td>
                     <td>${row.office || ''}</td>
                     <td>${dateDisplay}</td>

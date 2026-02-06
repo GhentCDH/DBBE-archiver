@@ -190,7 +190,7 @@ Verse_groups allow grouping of related verses.
 - ```collection``` — collection metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
 - ```biblio_category``` — categories for bibliographies.
 - ```content``` -  Used for storing manuscript content. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
-- ```identifications``` -canonical ways to refer to persons or manuscripts
+- ```identification``` -canonical ways to refer to persons or manuscripts
 <!-- END DB_SCHEMA -->
 ----
 
@@ -208,5 +208,4 @@ The database description part of this README is automatically synced to Zenodo s
 
 - How to keep the docs and the db schema updated: Maybe we can generate an extra table with all the table names and a description per table in a second column (like all hardcoded in a python script). This could be the last script running during migration. If this does no longer match the db structure of what we've just generated: script fails. If it does: we generate the final docs.
 - Implement GCDH feedback
-- implement healthceck.io to stay in sync with dbbe
 - Can we implement some sort of validation?

@@ -269,7 +269,7 @@
                     JOIN manuscript_person_role mpr ON p.id = mpr.person_id
                     JOIN roles r ON mpr.role_id = r.id
                     LEFT JOIN person_identification pi ON p.id = pi.person_id
-                    LEFT JOIN identifications i ON pi.identification_id = i.id
+                    LEFT JOIN identification i ON pi.identification_id = i.id
                     WHERE mpr.manuscript_id = ?
                     GROUP BY p.id, r.id
                 `;
@@ -301,18 +301,18 @@
                 }
                 biblioStmt.free();
 
-                // Get identifications
+                // Get identification
                 const identQuery = `
                     SELECT i.type, i.identifier_value
-                    FROM identifications i
+                    FROM identification i
                     JOIN manuscript_identification mi ON i.id = mi.identification_id
                     WHERE mi.manuscript_id = ?
                 `;
                 const identStmt = db.prepare(identQuery);
                 identStmt.bind([manuscriptId]);
-                const identifications = [];
+                const identification = [];
                 while (identStmt.step()) {
-                    identifications.push(identStmt.getAsObject());
+                    identification.push(identStmt.getAsObject());
                 }
                 identStmt.free();
 
@@ -345,7 +345,7 @@
                 }
                 ackStmt.free();
 
-                displayManuscript(manuscript, content, person, bibliography, identifications, occCount, acknowledgement);
+                displayManuscript(manuscript, content, person, bibliography, identification, occCount, acknowledgement);
                 
             } catch (error) {
                 console.error('Error loading manuscript:', error);
@@ -357,7 +357,7 @@
             }
         }
 
-        function displayManuscript(ms, content, person, bibliography, identifications, occCount, acknowledgement) {
+        function displayManuscript(ms, content, person, bibliography, identification, occCount, acknowledgement) {
             const manuscriptName = buildManuscriptName(ms);
             
             let html = `
@@ -416,11 +416,11 @@
                 `;
             }
 
-            if (identifications.length > 0) {
+            if (identification.length > 0) {
                 html += `
                     <tr>
                         <td>Identification</td>
-                        <td>${identifications.map(i => `${i.type}: ${i.identifier_value}`).join('<br>')}</td>
+                        <td>${identification.map(i => `${i.type}: ${i.identifier_value}`).join('<br>')}</td>
                     </tr>
                 `;
             }

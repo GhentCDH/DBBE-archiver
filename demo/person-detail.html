@@ -228,18 +228,18 @@
 
                 if (!person) throw new Error('Person not found');
 
-                // Get identifications
+                // Get identification
                 const identQuery = `
                     SELECT i.type, i.identifier_value
-                    FROM identifications i
+                    FROM identification i
                     JOIN person_identification pi ON i.id = pi.identification_id
                     WHERE pi.person_id = ?
                 `;
                 const identStmt = db.prepare(identQuery);
                 identStmt.bind([personId]);
-                const identifications = [];
+                const identification = [];
                 while (identStmt.step()) {
-                    identifications.push(identStmt.getAsObject());
+                    identification.push(identStmt.getAsObject());
                 }
                 identStmt.free();
 
@@ -299,7 +299,7 @@
                 }
                 biblioStmt.free();
 
-                displayPerson(person, identifications, manuscript, occurrence, bibliography);
+                displayPerson(person, identification, manuscript, occurrence, bibliography);
                 
             } catch (error) {
                 console.error('Error loading person:', error);
@@ -311,7 +311,7 @@
             }
         }
 
-        function displayPerson(person, identifications, manuscript, occurrence, bibliography) {
+        function displayPerson(person, identification, manuscript, occurrence, bibliography) {
             const fullName = `${person.first_name || ''} ${person.last_name || ''}`.trim();
             const dateDisplay = buildDateDisplay(person.born_date_floor, person.born_date_ceiling, person.death_date_floor, person.death_date_ceiling);
             
@@ -347,13 +347,13 @@
                 `;
             }
 
-            if (identifications.length > 0) {
+            if (identification.length > 0) {
                 html += `
                     <tr>
                         <td>Identification</td>
                         <td>
                             <ul style="list-style: none; padding: 0;">
-                                ${identifications.map(i => `<li>→ ${i.type}: <a href="#">${i.identifier_value}</a></li>`).join('')}
+                                ${identification.map(i => `<li>→ ${i.type}: <a href="#">${i.identifier_value}</a></li>`).join('')}
                             </ul>
                         </td>
                     </tr>

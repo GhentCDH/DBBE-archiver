@@ -134,7 +134,7 @@ def create_base_tables():
     """)
     
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS identifications (
+    CREATE TABLE IF NOT EXISTS identification (
         id INTEGER PRIMARY KEY,
         type TEXT NOT NULL,
         identifier_value TEXT NOT NULL

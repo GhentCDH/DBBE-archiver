@@ -320,13 +320,13 @@ def run_manuscript_migration():
                 if not identifier:
                     continue
                 execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO identifications (type, identifier_value) VALUES (?, ?)",
+                    "INSERT OR IGNORE INTO identification (type, identifier_value) VALUES (?, ?)",
                                            (ident_type, identifier)
                                            )
                 ident_id = cursor.lastrowid
                 if ident_id == 0:
                     execute_with_normalization(cursor,
-                        "SELECT id FROM identifications WHERE type = ? AND identifier_value = ?",
+                        "SELECT id FROM identification WHERE type = ? AND identifier_value = ?",
                                                (ident_type, identifier)
                                                )
                     ident_id = cursor.fetchone()[0]

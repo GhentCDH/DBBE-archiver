@@ -51,7 +51,7 @@ def create_schema():
         identification_id INTEGER NOT NULL,
         PRIMARY KEY (manuscript_id, identification_id),
         FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
-        FOREIGN KEY (identification_id) REFERENCES identifications(id)
+        FOREIGN KEY (identification_id) REFERENCES identification(id)
     )
     """)
 
