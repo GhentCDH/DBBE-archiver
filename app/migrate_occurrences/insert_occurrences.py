@@ -1,15 +1,8 @@
 from ..common import (execute_with_normalization,
                       get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-                      get_role_id, ROLE_FIELD_TO_ROLE_NAME,
+                      get_role_id, ROLE_FIELD_TO_ROLE_NAME, get_public_release,
                       insert_many_to_many, get_postgres_connection
                       )
-
-import os
-
-def str_to_bool(value: str) -> bool:
-    return value.lower() in {"1", "true", "yes", "on"}
-
-PUBLIC_RELEASE = str_to_bool(os.getenv("PUBLIC_RELEASE", "true"))
 
 def preload_related_occurrence(pg_cursor):
     pg_cursor.execute("""
@@ -92,9 +85,10 @@ def run_occurrence_migration():
 
         source = hit['_source']
         occ_id = str(source.get('id', hit['_id']))
-        is_public = bool(source.get('public', False))
+        is_public_occurrence = bool(source.get('public', False))
+        is_public_release = get_public_release()
 
-        if not is_public and PUBLIC_RELEASE:
+        if not is_public_occurrence and is_public_release:
             print(f"Skipping occurrence {occ_id} because public=False during public release")
 
             tables_to_clean = [

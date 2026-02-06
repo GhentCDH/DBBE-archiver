@@ -3,7 +3,7 @@ import uuid
 from ..common import (execute_with_normalization,
                       get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
                       add_column_if_missing, get_or_create_role, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, insert_many_to_one,
-                      get_postgres_connection
+                      get_postgres_connection, get_public_release
                       )
 
 def get_library_for_manuscript(pg_cursor, manuscript_id):
@@ -41,68 +41,6 @@ def create_manuscript_tables(cursor):
     
     for col, col_type in manuscript_columns:
         add_column_if_missing(cursor, "manuscript", col, col_type)
-
-    execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS manuscript_person_role (
-        manuscript_id INTEGER NOT NULL,
-        person_id INTEGER NOT NULL,
-        role_id INTEGER NOT NULL,
-        PRIMARY KEY (manuscript_id, person_id, role_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
-        FOREIGN KEY (person_id) REFERENCES person(id),
-        FOREIGN KEY (role_id) REFERENCES roles(id)
-    )
-    """)
-    
-    execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS manuscript_management (
-        manuscript_id INTEGER NOT NULL,
-        management_id INTEGER NOT NULL,
-        PRIMARY KEY (manuscript_id, management_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
-        FOREIGN KEY (management_id) REFERENCES management(id)
-    )
-    """)
-    
-    execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS manuscript_acknowledgement (
-        manuscript_id INTEGER NOT NULL,
-        acknowledgement_id INTEGER NOT NULL,
-        PRIMARY KEY (manuscript_id, acknowledgement_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
-        FOREIGN KEY (acknowledgement_id) REFERENCES acknowledgement(id)
-    )
-    """)
-    
-    execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS manuscript_content (
-        manuscript_id INTEGER NOT NULL,
-        content_id INTEGER NOT NULL,
-        PRIMARY KEY (manuscript_id, content_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
-        FOREIGN KEY (content_id) REFERENCES content(id)
-    )
-    """)
-    
-    execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS manuscript_identification (
-        manuscript_id INTEGER NOT NULL,
-        identification_id INTEGER NOT NULL,
-        PRIMARY KEY (manuscript_id, identification_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
-        FOREIGN KEY (identification_id) REFERENCES identifications(id)
-    )
-    """)
-
-    execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS manuscript_location (
-        manuscript_id INTEGER NOT NULL,
-        origin_id INTEGER NOT NULL,
-        PRIMARY KEY (manuscript_id, origin_id),
-        FOREIGN KEY (manuscript_id) REFERENCES manuscript(id),
-        FOREIGN KEY (origin_id) REFERENCES location(id)
-    )
-    """)
 
 def get_region_hierarchy(pg_cursor, location_id):
     hierarchy = []
@@ -163,7 +101,6 @@ def link_manuscript_to_location(cursor, manuscript_id, pg_cursor):
                 VALUES (?, ?)
             """, (manuscript_id, leaf_id))
 
-
 def migrate_manuscript_content():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
@@ -204,8 +141,6 @@ def migrate_manuscript_content():
     pg_conn.close()
     print("Content migration completed")
 
-
-
 def get_deepest_leaf_from_postgres(pg_cursor, content_ids):
     if not content_ids:
         return []
@@ -226,12 +161,11 @@ def get_deepest_leaf_from_postgres(pg_cursor, content_ids):
 
     return leaf_ids
 
-def migrate_manuscripts():
+def run_manuscript_migration():
     migrate_manuscript_content()
     es = get_es_client()
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
-
 
     create_manuscript_tables(cursor)
 
@@ -252,6 +186,14 @@ def migrate_manuscripts():
     for hit in hits:
         source = hit['_source']
         manuscript_id = int(source.get('id', hit['_id']))
+
+        is_public_manuscript = bool(source.get('public', False))
+        is_public_release = get_public_release()
+
+        if not is_public_manuscript and is_public_release:
+            print(f"Skipping type {manuscript_id} because public=False during public release")
+            continue
+
 
         execute_with_normalization(cursor, """
         INSERT INTO manuscript (
@@ -282,20 +224,29 @@ def migrate_manuscripts():
             role_id = get_or_create_role(cursor, role_name_in_table)
             if not role_id:
                 continue
-            
-            person = source.get(role_field, [])
-            if isinstance(person, dict):
-                person = [person]
-            elif not isinstance(person, list):
-                person = []
 
-            for p in person:
-                person_id = int(p.get('id', ''))
-                if person_id:
-                    execute_with_normalization(cursor,
-                        "INSERT INTO manuscript_person_role (manuscript_id, person_id, role_id) VALUES (?, ?, ?)",
-                                               (manuscript_id, person_id, role_id)
-                                               )
+            persons = source.get(role_field, [])
+            if isinstance(persons, dict):
+                persons = [persons]
+            elif not isinstance(persons, list):
+                persons = []
+
+            for p in persons:
+                person_id = str(p.get('id', ''))
+                if not person_id:
+                    continue
+
+                exists = cursor.execute(
+                    "SELECT 1 FROM person WHERE id = ?", (person_id,)
+                ).fetchone()
+                if not exists:
+                    continue  # skip if person doesn't exist
+
+                execute_with_normalization(
+                    cursor,
+                    "INSERT INTO manuscript_person_role (manuscript_id, person_id, role_id) VALUES (?, ?, ?)",
+                    (manuscript_id, person_id, role_id)
+                )
 
         link_manuscript_to_location(cursor, manuscript_id, pg_cursor)
 

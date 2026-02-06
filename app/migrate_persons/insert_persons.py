@@ -1,7 +1,6 @@
 
 import uuid
-from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
-
+from ..common import execute_with_normalization, get_db_connection, get_postgres_connection, get_es_client, get_dbbe_indices,scroll_all, get_public_release
 
 def parse_fuzzy_date(fd):
     if not fd:
@@ -42,6 +41,24 @@ def get_location_hierarchy_and_leaf(cursor, pg_cursor, location_id):
         """, (loc_id, name, hist_name, parent_id))
         leaf_id = loc_id
     return leaf_id
+
+def get_person_public_statuses():
+    es = get_es_client()
+    indices = get_dbbe_indices(es)
+    person_index = next((idx for idx in indices if idx.endswith("persons")), None)
+    if not person_index:
+        print("No person index found")
+        return
+
+    es_hits = scroll_all(es, person_index, size=500)
+
+    es_person_visibility = {
+        str(hit['_id']): bool(hit['_source'].get('public', False))
+        for hit in es_hits
+    }
+
+    return es_person_visibility
+
 
 def run_person_migration():
     conn, cursor = get_db_connection()
@@ -92,7 +109,9 @@ def run_person_migration():
                 raise ValueError(f"Person {pid} has multiple origination location in Postgres!")
             person_location[pid] = loc_id
 
+    person_public_statuses = get_person_public_statuses()
     execute_with_normalization(cursor, "BEGIN")
+
     for row in rows:
         (
             person_id,
@@ -108,6 +127,12 @@ def run_person_migration():
         ) = row
 
         person_id = str(person_id)
+        is_public_person = person_public_statuses.get(person_id, False)
+        is_public_release= get_public_release()
+
+        if not is_public_person and is_public_release:
+            print(f"Skipping private person {person_id}")
+            continue
 
         born_floor, born_ceiling = parse_fuzzy_date(born_date)
         death_floor, death_ceiling = parse_fuzzy_date(death_date)
@@ -158,33 +183,27 @@ def run_person_migration():
                     WHERE id = ?
                 """, (leaf_id, person_id))
 
-    pg_cursor.execute("SELECT id, name FROM data.self_designation")
-    for sd_id, sd_name in pg_cursor.fetchall():
-        execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO self_designation (id, name)
-            VALUES (?, ?)
-        """, (str(sd_id), sd_name))
+        pg_cursor.execute("""
+            SELECT idself_designation
+            FROM data.person_self_designation
+            WHERE idperson = %s
+        """, (person_id,))
+        for (sd_id,) in pg_cursor.fetchall():
+            execute_with_normalization(cursor, """
+                INSERT OR IGNORE INTO person_self_designation (person_id, self_designation_id)
+                VALUES (?, ?)
+            """, (person_id, str(sd_id)))
 
-    pg_cursor.execute("SELECT idperson, idself_designation FROM data.person_self_designation")
-    for person_id, sd_id in pg_cursor.fetchall():
-        execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO person_self_designation (person_id, self_designation_id)
-            VALUES (?, ?)
-        """, (str(person_id), str(sd_id)))
-
-    pg_cursor.execute("SELECT idoccupation, occupation FROM data.occupation")
-    for office_id, office_name in pg_cursor.fetchall():
-        execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO office (id, name)
-            VALUES (?, ?)
-        """, (str(office_id), office_name))
-
-    pg_cursor.execute("SELECT idperson, idoccupation FROM data.person_occupation")
-    for person_id, office_id in pg_cursor.fetchall():
-        execute_with_normalization(cursor, """
-            INSERT OR IGNORE INTO person_office (person_id, office_id)
-            VALUES (?, ?)
-        """, (str(person_id), str(office_id)))
+        pg_cursor.execute("""
+            SELECT idoccupation
+            FROM data.person_occupation
+            WHERE idperson = %s
+        """, (person_id,))
+        for (office_id,) in pg_cursor.fetchall():
+            execute_with_normalization(cursor, """
+                INSERT OR IGNORE INTO person_office (person_id, office_id)
+                VALUES (?, ?)
+            """, (person_id, str(office_id)))
 
     execute_with_normalization(cursor, "COMMIT")
     conn.close()

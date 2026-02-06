@@ -2,12 +2,12 @@ import os
 import psycopg2
 import sqlite3
 from elasticsearch import Elasticsearch
-import uuid
+import os
 from pathlib import Path
 BASE_DIR = Path(__file__).parent
 MAIN_DB_PATH = BASE_DIR / "data" / "export_data.sqlite"
 MAIN_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-print(MAIN_DB_PATH)
+
 ROLE_FIELD_TO_ROLE_NAME = {
     "person_subject": "Subject",
     "owner": "Owner",
@@ -246,4 +246,8 @@ def insert_many_to_one(cursor, entity_name, table_name, manuscript_id, entity_da
             f"UPDATE manuscript SET {entity_name}_id = ? WHERE id = ?",
                                    (entity_id, manuscript_id)
                                    )
+
+def get_public_release() -> bool:
+    public_release = os.getenv("PUBLIC_RELEASE", "true")
+    return public_release.lower() in {"1", "true", "yes", "on"}
 

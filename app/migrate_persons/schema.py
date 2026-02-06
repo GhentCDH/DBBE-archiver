@@ -1,8 +1,10 @@
 # app/migrate_bibliographies/schema.py
-from ..common import execute_with_normalization, get_db_connection, add_column_if_missing
+from ..common import execute_with_normalization, get_db_connection, add_column_if_missing, get_postgres_connection
 
 def create_schema():
     conn, cursor = get_db_connection()
+    pg_conn, pg_cursor = get_postgres_connection()
+
 
     person_columns = {
         "first_name": "TEXT",
@@ -73,5 +75,20 @@ def create_schema():
         FOREIGN KEY (identification_id) REFERENCES identifications(id)
     )
     """)
+
+    pg_cursor.execute("SELECT id, name FROM data.self_designation")
+    for sd_id, sd_name in pg_cursor.fetchall():
+        execute_with_normalization(cursor, """
+            INSERT OR IGNORE INTO self_designation (id, name)
+            VALUES (?, ?)
+        """, (str(sd_id), sd_name))
+
+    pg_cursor.execute("SELECT idoccupation, occupation FROM data.occupation")
+    for office_id, office_name in pg_cursor.fetchall():
+        execute_with_normalization(cursor, """
+            INSERT OR IGNORE INTO office (id, name)
+            VALUES (?, ?)
+        """, (str(office_id), office_name))
+
     conn.commit()
     conn.close()

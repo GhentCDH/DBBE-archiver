@@ -62,6 +62,12 @@ def migrate_person_role():
         person_id = str(person_id)
         role_id = str(role_id)
 
+        exists = cursor.execute(
+            "SELECT 1 FROM person WHERE id = ?", (person_id,)
+        ).fetchone()
+        if not exists:
+            continue
+
         try:
             execute_with_normalization(cursor,
                 f"""
@@ -87,8 +93,7 @@ def migrate_person_role():
                 (bibliography_id, person_id, role_id)
             VALUES (?, ?, ?)
             """,
-                                   (str(doc_id), str(person_id), str(role_id))
-                                   )
+                                   (str(doc_id), str(person_id), str(role_id)))
 
     conn.commit()
     conn.close()

@@ -1,11 +1,7 @@
 from ..common import (execute_with_normalization, get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-                      add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, get_postgres_connection
+                      add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, get_postgres_connection, get_public_release
                       )
-import os
-def str_to_bool(value: str) -> bool:
-    return value.lower() in {"1", "true", "yes", "on"}
 
-PUBLIC_RELEASE = str_to_bool(os.getenv("PUBLIC_RELEASE", "true"))
 
 def fetch_type_relations(pg_conn):
     pg_cursor = pg_conn.cursor()
@@ -86,9 +82,10 @@ def run_type_migration():
     for hit in hits:
         source = hit['_source']
         type_id = str(source.get('id', hit['_id']))
-        is_public = bool(source.get('public', False))
+        is_public_type = bool(source.get('public', False))
+        is_public_release = get_public_release()
 
-        if not is_public and PUBLIC_RELEASE:
+        if not is_public_type and is_public_release:
             print(f"Skipping type {type_id} because public=False during public release")
             continue
 
