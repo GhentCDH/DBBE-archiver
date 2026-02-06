@@ -74,7 +74,9 @@ For a full visual of the database schema, please visit
 Stores individual occurrence (= short epigrams or poems, literally how they've been found in a manuscript, so including marks for gaps and missing text.)
 
 Columns include:
-```id, created, modified, public_comment, private_comment, incipit, text_stemmer, text_original, location_in_ms, date_floor_year, date_ceiling_year, palaeographical_info, contextual_info, manuscript_id, title, is_dbbe.```
+```id, created, modified, public_comment, private_comment, incipit, text_stemmer, text_original, location_in_ms*, date_floor_year, date_ceiling_year, palaeographical_info, contextual_info, manuscript_id, title, is_dbbe.```
+
+*Note that, in the current version, the location of occurrences within the manuscript is given as plain text (ex. p. 394-395 for pages or f. 18r-18v for folia (r for recto, v for verso). This was copied from the Elasticsearch, but could later be split into individual columns ('from' and 'to') based on additional information from postgres. For manuscripts that have more than 1 way of numbering pages, the alternative location is marked as f. 14r -- (alt.) p. 27. 
 
 Related tables:
 
@@ -207,5 +209,4 @@ The database description part of this README is automatically synced to Zenodo s
 - How to keep the docs and the db schema updated: Maybe we can generate an extra table with all the table names and a description per table in a second column (like all hardcoded in a python script). This could be the last script running during migration. If this does no longer match the db structure of what we've just generated: script fails. If it does: we generate the final docs.
 - Implement GCDH feedback
 - implement healthceck.io to stay in sync with dbbe
-- Add privacy flag => Have a public and a private data publication?
 - Can we implement some sort of validation?
