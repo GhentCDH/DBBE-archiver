@@ -202,6 +202,24 @@ In order to use the API, you need an access token, which you can generate by cre
 
 The database description part of this README is automatically synced to Zenodo so that database description only has to be maintained in one single place. 
 
+
+----
+
+## Demo
+
+The demo folder contains a small example illustrating the type of application you could build using this dataset. The code was generated automatically by presenting the database DDL to ChatGPT and has not been checked for correctness. Its purpose is purely to demonstrate the ease of use and speed with which one can start building applications based on this dataset.
+
+To run the demo locally, you can start a simple HTTP server with Python:
+
+```
+cd demo
+python -m http.server 8000
+```
+
+This uses Python’s built-in HTTP server module, so no additional packages are required. It serves files from the current directory at http://localhost:8000/
+, allowing you to explore the demo in your browser. The demo HTML/JavaScript loads the SQLite file directly in the browser using sql.js
+, which enables full client-side querying without a database server and is a capability essentially unique to SQLite’s single-file design. This setup is intended for testing and exploration only, not for production deployment.
+
 ---
 
 ## Next steps
