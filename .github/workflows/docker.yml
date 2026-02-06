@@ -25,7 +25,7 @@ jobs:
         include:
           - target: dbbe-archiver
             image: ghentcdh/dbbe-archiver
-            dockerfile: app/Dockerfile
+            dockerfile: ./app/Dockerfile
 
     steps:
       - name: Checkout repository
@@ -58,7 +58,7 @@ jobs:
       - name: Build and push Docker image - ${{ matrix.target }}
         uses: docker/build-push-action@v5
         with:
-          context: ./app
+          context: .
           file: ${{ matrix.dockerfile }}
           #          target: ${{ matrix.target }}
           push: ${{ github.event_name != 'pull_request' }}
