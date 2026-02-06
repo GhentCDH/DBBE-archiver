@@ -1,5 +1,5 @@
 # app/migrate_bibliographies/schema.py
-from ..common import execute_with_normalization, get_db_connection, add_column_if_missing, get_postgres_connection
+from app.common import execute_with_normalization, get_db_connection, add_column_if_missing, get_postgres_connection
 
 def create_schema():
     conn, cursor = get_db_connection()

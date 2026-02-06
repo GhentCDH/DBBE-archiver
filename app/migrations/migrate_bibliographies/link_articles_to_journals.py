@@ -1,4 +1,4 @@
-from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
+from app.common import execute_with_normalization, get_db_connection, get_postgres_connection
 
 def migrate_journals():
     conn, cursor = get_db_connection()

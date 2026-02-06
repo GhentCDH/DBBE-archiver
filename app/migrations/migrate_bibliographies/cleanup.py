@@ -1,5 +1,5 @@
 # app/migrate_bibliographies/cleanup.py
-from ..common import execute_with_normalization, get_db_connection
+from app.common import execute_with_normalization, get_db_connection
 from .biblio_type_enum import BiblioType  # assuming enums are in the same folder
 from .biblio_entity_enum import BiblioEntity
 

@@ -1,11 +1,11 @@
 import sys
 from .init_db import create_base_tables
-from .migrate_verses.migrate_verses import migrate_verses
-from .migrate_persons import migrate_persons
-from .migrate_types import migrate_types
-from .migrate_occurrences import migrate_occurrences
-from .migrate_manuscripts import migrate_manuscripts
-from .migrate_bibliographies import migrate_bibliographies
+from app.migrations.migrate_verses.migrate_verses import migrate_verses
+from app.migrations.migrate_persons import migrate_persons
+from app.migrations.migrate_types import migrate_types
+from app.migrations.migrate_occurrences import migrate_occurrences
+from app.migrations.migrate_manuscripts import migrate_manuscripts
+from app.migrations.migrate_bibliographies import migrate_bibliographies
 from .zenodo_upload import upload_sqlite_files_to_zenodo
 from .common import NORMALIZATION_STATS
 import os

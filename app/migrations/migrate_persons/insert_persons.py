@@ -1,6 +1,6 @@
 
 import uuid
-from ..common import execute_with_normalization, get_db_connection, get_postgres_connection, get_es_client, get_dbbe_indices,scroll_all, get_public_release
+from app.common import execute_with_normalization, get_db_connection, get_postgres_connection, get_es_client, get_dbbe_indices,scroll_all, get_public_release
 
 def parse_fuzzy_date(fd):
     if not fd:

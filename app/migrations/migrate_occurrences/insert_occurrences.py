@@ -1,8 +1,8 @@
-from ..common import (execute_with_normalization,
-                      get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-                      get_role_id, ROLE_FIELD_TO_ROLE_NAME, get_public_release,
-                      insert_many_to_many, get_postgres_connection
-                      )
+from app.common import (execute_with_normalization,
+                        get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
+                        get_role_id, ROLE_FIELD_TO_ROLE_NAME, get_public_release,
+                        insert_many_to_many, get_postgres_connection
+                        )
 
 def preload_related_occurrence(pg_cursor):
     pg_cursor.execute("""

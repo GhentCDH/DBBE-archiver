@@ -1,4 +1,4 @@
-from ..common import execute_with_normalization, get_db_connection, get_postgres_connection, get_es_client, get_public_release
+from app.common import execute_with_normalization, get_db_connection, get_postgres_connection, get_es_client, get_public_release
 from .biblio_type_enum import BiblioType
 from collections import defaultdict
 

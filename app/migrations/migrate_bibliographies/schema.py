@@ -1,5 +1,5 @@
 # app/migrate_bibliographies/schema.py
-from ..common import execute_with_normalization, get_db_connection, add_column_if_missing
+from app.common import execute_with_normalization, get_db_connection, add_column_if_missing
 from .biblio_type_enum import BiblioType
 
 def create_schema():

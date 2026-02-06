@@ -1,10 +1,10 @@
 import uuid
 
-from ..common import (execute_with_normalization,
-                      get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
-                      add_column_if_missing, get_or_create_role, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, insert_many_to_one,
-                      get_postgres_connection, get_public_release
-                      )
+from app.common import (execute_with_normalization,
+                        get_db_connection, get_es_client, scroll_all, get_dbbe_indices,
+                        add_column_if_missing, get_or_create_role, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, insert_many_to_one,
+                        get_postgres_connection, get_public_release
+                        )
 
 def get_library_for_manuscript(pg_cursor, manuscript_id):
     pg_cursor.execute("""

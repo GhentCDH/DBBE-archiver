@@ -1,4 +1,4 @@
-from ..common import execute_with_normalization, get_db_connection, add_column_if_missing
+from app.common import execute_with_normalization, get_db_connection, add_column_if_missing
 
 def create_schema():
     conn, cursor = get_db_connection()

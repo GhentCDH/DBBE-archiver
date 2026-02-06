@@ -1,6 +1,6 @@
-from ..common import (execute_with_normalization,
-                      get_db_connection, get_es_client, scroll_all, get_dbbe_indices, add_column_if_missing, execute_with_normalization
-                      )
+from app.common import (execute_with_normalization,
+                        get_db_connection, get_es_client, scroll_all, get_dbbe_indices, add_column_if_missing, execute_with_normalization
+                        )
 
 def create_verse_tables(cursor):
 

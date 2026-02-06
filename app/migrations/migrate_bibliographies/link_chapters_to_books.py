@@ -1,5 +1,5 @@
 # app/migrate_bibliographies/link_chapters_to_books.py
-from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
+from app.common import execute_with_normalization, get_db_connection, get_postgres_connection
 
 def migrate_book_chapters():
     conn, cursor = get_db_connection()

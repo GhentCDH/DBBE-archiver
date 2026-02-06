@@ -37,15 +37,16 @@ def extract_db_schema_from_readme(readme_path):
 
     return match.group(1).strip()
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-readme_path = os.path.join(BASE_DIR, "../README.md")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # /app/app
+PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))  # /app
+README_PATH = os.path.join(PROJECT_ROOT, "README.md")
 html_template_path = os.path.join(BASE_DIR, "DB_DESCRIPTION.html")
 
 with open(html_template_path, "r", encoding="utf-8") as f:
     html_template = f.read()
 
-schema_md = extract_db_schema_from_readme(readme_path)
+with open(README_PATH, "r", encoding="utf-8") as f:
+    schema_md = f.read()
 schema_html = markdown_to_html(schema_md)
 
 description_text = html_template.replace(

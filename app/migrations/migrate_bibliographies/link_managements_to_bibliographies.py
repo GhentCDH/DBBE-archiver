@@ -1,4 +1,4 @@
-from ..common import execute_with_normalization, get_db_connection, get_postgres_connection
+from app.common import execute_with_normalization, get_db_connection, get_postgres_connection
 from .biblio_type_enum import BiblioType
 
 def migrate_managements():
