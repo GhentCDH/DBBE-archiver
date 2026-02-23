@@ -45,9 +45,9 @@ html_template_path = os.path.join(BASE_DIR, "DB_DESCRIPTION.html")
 with open(html_template_path, "r", encoding="utf-8") as f:
     html_template = f.read()
 
-with open(README_PATH, "r", encoding="utf-8") as f:
-    schema_md = f.read()
+schema_md = extract_db_schema_from_readme(README_PATH)
 schema_html = markdown_to_html(schema_md)
+
 
 description_text = html_template.replace(
     "<!-- DB_SCHEMA_PLACEHOLDER -->",
