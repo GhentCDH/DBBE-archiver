@@ -78,12 +78,12 @@ def create_schema():
     """)
 
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS occurrence_text_statuses (
+    CREATE TABLE IF NOT EXISTS occurrence_text_status (
         occurrence_id INTEGER NOT NULL,
         text_status_id INTEGER NOT NULL,
         PRIMARY KEY (occurrence_id, text_status_id),
         FOREIGN KEY (occurrence_id) REFERENCES occurrence(id),
-        FOREIGN KEY (text_status_id) REFERENCES text_statuses(id)
+        FOREIGN KEY (text_status_id) REFERENCES text_status(id)
     )
     """)
 
