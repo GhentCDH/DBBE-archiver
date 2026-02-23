@@ -90,7 +90,7 @@ Related tables:
 - ```occurrence_metre```: metre attributed to this occurrence (Can be more than 1)
 - ```occurrence_management```: Internal information. For example: To do's in the processing of this occurrence
 - ```occurrence_acknowledgement```: Plain text shout out to people who helped in the publication of this occurrence. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to occurrence_person_role._
-- ```occurrence_text_statuses```: An occurrence text can be partially/completely (un)known
+- ```occurrence_text_status```: An occurrence text can be partially/completely (un)known
 - ```occurrence_related_occurrence``` and ```occurrence_relation_definition```: An occurrence can be related to other occurrence if they (a) some of their verses share verse groups or (b) they share type. The relationship type is defined in occurrence_relation_definition. This works in one direction: if occurrenceA --> related to --> occurrenceB is set, then occurrenceB --> related to --> occurrenceA is not set.
 - ```occurrence_keyword```: Keywords telling what the occurrence is about
 
@@ -105,7 +105,7 @@ Related tables:
 - ```Type_metre```: metre attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the genre of the linked occurrence.
 - ```Type_management```: Internal information. For example: To do's in the processing of this Type
 - ```Type_acknowledgement```: Plain text shout out to people who helped in the publication of this Type. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to type_person_role._
-- ```Type_text_statuses```: Type text can be either completely known or partially unknown
+- ```Type_text_status```: Type text can be either completely known or partially unknown
 - ```Type_related_type (linked via type_relation_definition)```: Groups of similar types. This works in one direction: if typeA --> related to --> typeB is set, then typeB --> related to --> typeA is not set.
 - ```Type_tag```:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). 
 - ```Type_occurrence```: occurrence linked to this type. Note that this is a many-to-many relationship: one occurrence can be linked to several types, one type can have several occurrence linked to it. 
@@ -180,7 +180,7 @@ Verse_groups allow grouping of related verses.
 ### **Lookup / Metadata Tables**
 
 - ```roles``` — defines role type for persons.
-- ```text_statuses``` — textual status of occurrence or type.
+- ```text_status``` — textual status of occurrence or type.
 - ```keywords``` — keywords for occurrence and type.
 - ```tag``` — tag for type: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.
 - ```metre``` — metre classification.
@@ -200,6 +200,12 @@ Verse_groups allow grouping of related verses.
 
 ----
 
+## Tests
+
+The tests in the testfolder start from the Postgres perspective: they go over every postgres table and check if all data in that table can be found in the SQLite db as well.,
+
+----
+
 ## Zenodo
 
 This repository uses the Zenodo API for the automatic publication of datasets. Full API docs can be found on <a href="https://developers.zenodo.org/#rest-api">https://developers.zenodo.org/#rest-api</a>. You can do all of these calls to <a href="https://sandbox.zenodo.org/">https://sandbox.zenodo.org/</a> as well. This environment functions in the exact same way as production so it's perfect for testing.  
@@ -215,14 +221,13 @@ The database description part of this README is automatically synced to Zenodo s
 
 The demo folder contains a small example illustrating the type of application you could build using this dataset. The code was generated automatically by presenting the database DDL to ChatGPT and has not been checked for correctness. Its purpose is purely to demonstrate the ease of use and speed with which one can start building applications based on this dataset.
 
-To run the demo locally, you can start a simple HTTP server with Python:
+To run the demo locally, you can start a simple HTTP server with Python. Run the following command from the root of the repository. 
 
 ```
-cd demo
 python -m http.server 8000
 ```
 
-This uses Python’s built-in HTTP server module, so no additional packages are required. It serves files from the current directory at http://localhost:8000/
+This uses Python’s built-in HTTP server module, so no additional packages are required. It serves files at http://localhost:8000/demo/byzantine-db.html
 , allowing you to explore the demo in your browser. The demo HTML/JavaScript loads the SQLite file directly in the browser using sql.js
 , which enables full client-side querying without a database server and is a capability essentially unique to SQLite’s single-file design. This setup is intended for testing and exploration only, not for production deployment.
 
