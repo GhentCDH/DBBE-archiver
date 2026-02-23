@@ -5,8 +5,6 @@ from app.common import (
     get_es_client,
     get_public_release
 )
-from .biblio_type_enum import BiblioType
-from collections import defaultdict
 
 
 def get_biblio_titles_from_es(biblio_ids, es):
@@ -31,45 +29,56 @@ def get_biblio_titles_from_es(biblio_ids, es):
     return titles
 
 
-def insert_bibliographies():
+def preload_locations(cursor):
+    cursor.execute("SELECT id, name FROM location")
+    return {name: loc_id for loc_id, name in cursor.fetchall()}
+
+
+def resolve_location(cursor, location_map, city):
+    if not city:
+        return None
+
+    if city in location_map:
+        return location_map[city]
+
+    cursor.execute("INSERT INTO location (name) VALUES (?)", (city,))
+    location_id = cursor.lastrowid
+    location_map[city] = location_id
+    return location_id
+
+
+def insert_bib_varia():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
     es = get_es_client()
 
-    # Fetch ALL bibliography types EXCEPT bib_varia
+    location_map = preload_locations(cursor)
+
     pg_cursor.execute("""
-        SELECT biblio.identity,
-               biblio.bib_type,
+        SELECT bv.identity,
                entity.created,
                entity.modified,
                entity.public_comment,
-               entity.private_comment
-        FROM (
-            SELECT identity, 'article' AS bib_type FROM data.article
-            UNION ALL
-            SELECT identity, 'blog_post' FROM data.blog_post
-            UNION ALL
-            SELECT identity, 'book' FROM data.book
-            UNION ALL
-            SELECT identity, 'book_chapter' FROM data.bookchapter
-            UNION ALL
-            SELECT identity, 'online_source' FROM data.online_source
-            UNION ALL
-            SELECT identity, 'phd' FROM data.phd
-        ) AS biblio
+               entity.private_comment,
+               bv.year,
+               bv.city,
+               bv.institution
+        FROM data.bib_varia bv
         LEFT JOIN data.entity entity
-            ON entity.identity = biblio.identity
+            ON entity.identity = bv.identity
     """)
 
     rows = pg_cursor.fetchall()
-
     biblio_ids = [str(r[0]) for r in rows]
+
+    # Fetch titles from ES
     titles_cache = get_biblio_titles_from_es(biblio_ids, es)
 
     is_public_release = get_public_release()
-    biblio_rows_by_type = defaultdict(list)
 
-    for identity, bib_type, created, modified, public_comment, private_comment in rows:
+    insert_rows = []
+
+    for identity, created, modified, public_comment, private_comment, year, city, bib_varia_institution in rows:
         identity_str = str(identity)
         title_data = titles_cache.get(identity_str, {})
 
@@ -77,7 +86,9 @@ def insert_bibliographies():
         if not is_public_release:
             private_comment_val = private_comment
 
-        biblio_rows_by_type[bib_type].append(
+        location_id = resolve_location(cursor, location_map, city)
+
+        insert_rows.append(
             (
                 identity_str,
                 title_data.get("title", ""),
@@ -85,27 +96,25 @@ def insert_bibliographies():
                 created,
                 modified,
                 public_comment,
-                private_comment_val
+                private_comment_val,
+                year,
+                location_id,
+                bib_varia_institution
             )
         )
 
+    # Insert into SQLite
     execute_with_normalization(cursor, "BEGIN")
 
-    for bib_type, insert_rows in biblio_rows_by_type.items():
-        bib_type_enum = next(
-            (bt for bt in BiblioType if bt.value == bib_type),
-            None
-        )
-
-        if bib_type_enum:
-            cursor.executemany(
-                f"""INSERT OR IGNORE INTO {bib_type_enum.value}
-                    (id, title, title_sort_key,
-                     created, modified,
-                     public_comment, private_comment)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                insert_rows
-            )
+    cursor.executemany(
+        """
+        INSERT OR IGNORE INTO bib_varia
+        (id, title, title_sort_key, created, modified,
+         public_comment, private_comment, year, city, bib_varia_institution)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        insert_rows
+    )
 
     execute_with_normalization(cursor, "COMMIT")
 

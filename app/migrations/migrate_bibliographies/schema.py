@@ -32,6 +32,9 @@ def create_schema():
     """)
 
     add_column_if_missing(cursor, "book_chapter", "book_id", "INTEGER")
+    add_column_if_missing(cursor, "bib_varia", "year", "INTEGER")
+    add_column_if_missing(cursor, "bib_varia", "city", "INTEGER")
+    add_column_if_missing(cursor, "bib_varia", "bib_varia_institution", "TEXT")
 
     conn.commit()
     conn.close()
