@@ -7,6 +7,7 @@ from .link_articles_to_journals import migrate_journals
 from .cleanup import cleanup_bibliographies
 from .link_persons_to_bibliographies import migrate_person_role
 from .insert_bibliographies import insert_bibliographies
+from .insert_bib_varia import insert_bib_varia
 from .link_bibliographies_to_bibsubjects import link_bibliographies_to_bibsubjects
 
 import logging
@@ -28,6 +29,7 @@ def run_step(name, fn):
 def migrate_bibliographies():
     run_step("create_schema", create_schema)
     run_step("insert_bibliographies", insert_bibliographies)
+    run_step("insert_bib_varia", insert_bib_varia)
     run_step("link_bibliographies_to_bibsubjects", link_bibliographies_to_bibsubjects)
     run_step("migrate_book_chapters", migrate_book_chapters)
     run_step("migrate_journals", migrate_journals)
