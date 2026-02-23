@@ -99,7 +99,7 @@ def run_occurrence_migration():
                 "occurrence_acknowledgement",
                 "occurrence_management",
                 "occurrence_person_role",
-                "occurrence_text_statuses",
+                "occurrence_text_status",
                 "occurrence_related_occurrence",
             ]
 
@@ -222,11 +222,11 @@ def run_occurrence_migration():
             ts_name = ts.get('name', '')
             if ts_id:
                 execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO text_statuses (id, name) VALUES (?, ?)",
+                    "INSERT OR IGNORE INTO text_status (id, name) VALUES (?, ?)",
                                            (ts_id, ts_name)
                                            )
                 execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO occurrence_text_statuses (occurrence_id, text_status_id) VALUES (?, ?)",
+                    "INSERT OR IGNORE INTO occurrence_text_status (occurrence_id, text_status_id) VALUES (?, ?)",
                                            (occ_id, ts_id))
 
         for role_field, role_name_in_table in ROLE_FIELD_TO_ROLE_NAME.items():

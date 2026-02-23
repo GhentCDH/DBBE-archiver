@@ -98,7 +98,7 @@ def create_base_tables():
 
 
     execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS text_statuses (
+    CREATE TABLE IF NOT EXISTS text_status (
         id INTEGER PRIMARY KEY,
         name TEXT
     )

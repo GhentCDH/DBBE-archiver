@@ -160,11 +160,11 @@ def run_type_migration():
             ts_name = ts.get('name', '')
             if ts_id:
                 execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO text_statuses (id, name) VALUES (?, ?)",
+                    "INSERT OR IGNORE INTO text_status (id, name) VALUES (?, ?)",
                                            (ts_id, ts_name)
                                            )
                 execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO type_text_statuses (type_id, text_status_id) VALUES (?, ?)",
+                    "INSERT OR IGNORE INTO type_text_status (type_id, text_status_id) VALUES (?, ?)",
                                            (type_id, ts_id)
                                            )
 
