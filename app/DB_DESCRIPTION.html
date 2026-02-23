@@ -1,33 +1,33 @@
 <p>This dataset provides structured access to the data behind <a href="https://dbbe.ugent.be">dbbe.ugent.be</a>, enabling intuitive exploration and reuse. It is based on production PostgreSQL and Elasticsearch instances and is organized around six core concepts. The data is updated weekly to reflect the latest research and additions.</p>
 
 <ul>
-  <li><strong>Occurrences:</strong> Individual epigrams reproduced as faithfully as possible from manuscripts, preserving orthography, punctuation, and textual idiosyncrasies, with sources clearly indicated.</li>
+  <li><strong>Occurrences:</strong> Individual epigrams reproduced as faithfully as possible from manuscripts, preserving orthography and punctuation, with sources clearly indicated.</li>
 
-  <li><strong>Types:</strong> Normalized or critically established texts linked to one or more occurrence, enabling comparison across similar epigrams and providing interpretive metadata such as translations, author, and subject.</li>
+  <li><strong>Types:</strong> Normalized or critically established texts linked to one or more occurrences, enabling comparison across similar epigrams and providing interpretive metadata such as translations, author, and subject.</li>
 
-  <li><strong>Verses:</strong> Lines of epigrams, grouped in Verse Variant records to visualize textual parallels and deviations across occurrence.</li>
+  <li><strong>Verses:</strong> Lines of epigrams, grouped in Verse Variant records to visualize textual parallels and deviations across occurrences.</li>
 
-  <li><strong>Manuscripts:</strong> Metadata on the physical and historical context of manuscripts, including provenance and related documentation.</li>
+  <li><strong>Manuscripts:</strong> Metadata on the context of manuscripts, including provenance and related documentation.</li>
 
-  <li><strong>Persons:</strong> Information on authors, scribes, editors, and other historical or modern contributors linked to occurrence, type, or manuscript.</li>
+  <li><strong>Persons:</strong> Information on authors, scribes, editors, and other historical or modern contributors linked to occurrences, types, or manuscripts.</li>
 
-  <li><strong>Bibliographies:</strong> Structured references connecting literature and publications to the relevant entities in the corpus, supporting traceable scholarship.</li>
+  <li><strong>Bibliographies:</strong> Structured references connecting literature and publications to the relevant entities in the corpus.</li>
 </ul>
 
-<p>This release facilitates computational analysis, corpus browsing, and transparent reuse of the DBBE epigram collection.</p>
+<p>This release facilitates computational analysis, corpus browsing, and transparent reuse of the DBBE collection.</p>
 
 <h2>Exploring the Dataset</h2>
 
-<p>The dataset can be explored and analyzed in multiple ways, accommodating both non-technical and advanced users:</p>
+<p>The dataset can be explored and analyzed in multiple ways:</p>
 
 <ul>
   <li><strong>Web-based viewing:</strong> Tools such as <a href="https://sqliteviewer.app/#/" target="_blank">SQLite Viewer</a> allow users to simply upload the SQLite file and inspect its contents directly in the browser, requiring no technical setup.</li>
 
-  <li><strong>Graphical interface and export:</strong> <a href="https://sqlitebrowser.org/" target="_blank">DB Browser for SQLite</a> offers an intuitive interface for browsing the data and exporting tables to CSV for further analysis, making it accessible to users without programming experience.</li>
+  <li><strong>Graphical interface and export:</strong> <a href="https://sqlitebrowser.org/" target="_blank">DB Browser for SQLite</a> offers an intuitive interface for browsing the data and exporting tables to CSV for further analysis without need for scripting based interaction.</li>
 
   <li><strong>AI-assisted semantic querying:</strong> The database file—or selected columns from it—can be uploaded to a large language model for natural language queries. For example, one could ask: <em>"Give me five occurrence from the eleventh century discussing harbours."</em> To protect sensitive data, consider using self-hosted models or paid, secure AI services rather than free online tools.</li>
 
-  <li><strong>Custom development:</strong> The well-structured SQLite format provides a robust foundation for programmatic analysis, integration with other tools like <a href="https://datasette.io/">datasette</a>, or the development of custom applications tailored to specific research questions.</li>
+  <li><strong>Custom development:</strong> The sstructured SQLite format provides a robust foundation for programmatic analysis, integration with other tools like <a href="https://datasette.io/">datasette</a>, or the development of custom applications tailored to specific research questions.</li>
 </ul>
 
 
