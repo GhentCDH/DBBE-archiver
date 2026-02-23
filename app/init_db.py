@@ -8,6 +8,7 @@ BIBLIO_type = {
     "online_source",
     "phd",
     "bib_varia",
+    "blog"
 }
 
 BIBLIO_ENTITY_type = {
@@ -199,11 +200,11 @@ def create_base_tables():
         # Type-specific roles table
         execute_with_normalization(cursor, f"""
                CREATE TABLE IF NOT EXISTS {bib_type}_person_role (
-                   bibliography_id INTEGER NOT NULL,
+                   {bib_type}_id INTEGER NOT NULL,
                    person_id INTEGER NOT NULL,
                    role_id INTEGER NOT NULL,
-                   PRIMARY KEY (bibliography_id, person_id, role_id),
-                   FOREIGN KEY (bibliography_id) REFERENCES {bib_type}(id),
+                   PRIMARY KEY ({bib_type}_id, person_id, role_id),
+                   FOREIGN KEY ({bib_type}_id) REFERENCES {bib_type}(id),
                    FOREIGN KEY (person_id) REFERENCES person(id),
                    FOREIGN KEY (role_id) REFERENCES roles(id)
                )

@@ -36,40 +36,38 @@ def insert_bibliographies():
     pg_conn, pg_cursor = get_postgres_connection()
     es = get_es_client()
 
-    # Fetch ALL bibliography types EXCEPT bib_varia
     pg_cursor.execute("""
         SELECT biblio.identity,
                biblio.bib_type,
                entity.created,
                entity.modified,
                entity.public_comment,
-               entity.private_comment
+               entity.private_comment,
+               blog.url
         FROM (
             SELECT identity, 'article' AS bib_type FROM data.article
-            UNION ALL
-            SELECT identity, 'blog_post' FROM data.blog_post
-            UNION ALL
-            SELECT identity, 'book' FROM data.book
             UNION ALL
             SELECT identity, 'book_chapter' FROM data.bookchapter
             UNION ALL
             SELECT identity, 'online_source' FROM data.online_source
             UNION ALL
             SELECT identity, 'phd' FROM data.phd
+            UNION ALL
+            SELECT identity, 'blog' FROM data.blog
         ) AS biblio
         LEFT JOIN data.entity entity
             ON entity.identity = biblio.identity
+        LEFT JOIN data.blog blog
+            ON blog.identity = biblio.identity
     """)
 
     rows = pg_cursor.fetchall()
-
     biblio_ids = [str(r[0]) for r in rows]
     titles_cache = get_biblio_titles_from_es(biblio_ids, es)
-
     is_public_release = get_public_release()
-    biblio_rows_by_type = defaultdict(list)
 
-    for identity, bib_type, created, modified, public_comment, private_comment in rows:
+    biblio_rows_by_type = defaultdict(list)
+    for identity, bib_type, created, modified, public_comment, private_comment, url in rows:
         identity_str = str(identity)
         title_data = titles_cache.get(identity_str, {})
 
@@ -77,17 +75,31 @@ def insert_bibliographies():
         if not is_public_release:
             private_comment_val = private_comment
 
-        biblio_rows_by_type[bib_type].append(
-            (
-                identity_str,
-                title_data.get("title", ""),
-                title_data.get("title_sort_key", ""),
-                created,
-                modified,
-                public_comment,
-                private_comment_val
+        if bib_type == "blog":
+            biblio_rows_by_type[bib_type].append(
+                (
+                    identity_str,
+                    title_data.get("title", ""),
+                    title_data.get("title_sort_key", ""),
+                    created,
+                    modified,
+                    public_comment,
+                    private_comment_val,
+                    url
+                )
             )
-        )
+        else:
+            biblio_rows_by_type[bib_type].append(
+                (
+                    identity_str,
+                    title_data.get("title", ""),
+                    title_data.get("title_sort_key", ""),
+                    created,
+                    modified,
+                    public_comment,
+                    private_comment_val
+                )
+            )
 
     execute_with_normalization(cursor, "BEGIN")
 
@@ -98,16 +110,26 @@ def insert_bibliographies():
         )
 
         if bib_type_enum:
-            cursor.executemany(
-                f"""INSERT OR IGNORE INTO {bib_type_enum.value}
-                    (id, title, title_sort_key,
-                     created, modified,
-                     public_comment, private_comment)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                insert_rows
-            )
+            if bib_type == "blog":
+                cursor.executemany(
+                    f"""INSERT OR IGNORE INTO {bib_type_enum.value}
+                        (id, title, title_sort_key,
+                         created, modified,
+                         public_comment, private_comment,
+                         url)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    insert_rows
+                )
+            else:
+                cursor.executemany(
+                    f"""INSERT OR IGNORE INTO {bib_type_enum.value}
+                        (id, title, title_sort_key,
+                         created, modified,
+                         public_comment, private_comment)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    insert_rows
+                )
 
     execute_with_normalization(cursor, "COMMIT")
-
     conn.close()
     pg_conn.close()
