@@ -61,7 +61,7 @@ def migrate_managements():
         execute_with_normalization(cursor,
             f"""
             INSERT OR IGNORE INTO {bib_type_enum.value}_management
-                (bibliography_id, management_id)
+                ({bib_type_enum.value}_id, management_id)
             VALUES (?, ?)
             """,
                                    (doc_id, mgmt_id)

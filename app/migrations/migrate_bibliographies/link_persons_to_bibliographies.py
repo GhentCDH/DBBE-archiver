@@ -72,7 +72,7 @@ def migrate_person_role():
             execute_with_normalization(cursor,
                 f"""
                 INSERT INTO {bib_type_enum.value}_person_role
-                    (bibliography_id, person_id, role_id)
+                    ({bib_type_enum.value}_id, person_id, role_id)
                 VALUES (?, ?, ?)
                 """,
                                        (bib_id, person_id, role_id)
@@ -90,10 +90,9 @@ def migrate_person_role():
         execute_with_normalization(cursor,
             f"""
             INSERT OR IGNORE INTO {bib_type_enum.value}_person_role
-                (bibliography_id, person_id, role_id)
+                ({bib_type_enum.value}_id, person_id, role_id)
             VALUES (?, ?, ?)
-            """,
-                                   (str(doc_id), str(person_id), str(role_id)))
+            """, (str(doc_id), str(person_id), str(role_id)))
 
     conn.commit()
     conn.close()
