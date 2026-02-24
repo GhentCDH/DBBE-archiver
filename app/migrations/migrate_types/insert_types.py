@@ -2,6 +2,14 @@ from app.common import (execute_with_normalization, get_db_connection, get_es_cl
                         add_column_if_missing, get_role_id, ROLE_FIELD_TO_ROLE_NAME, insert_many_to_many, get_postgres_connection, get_public_release
                         )
 
+def get_critical_apparatus(pg_cursor, type_id: str):
+    pg_cursor.execute("""
+        SELECT critical_apparatus
+        FROM data.reconstructed_poem
+        WHERE identity = %s
+    """, (type_id,))
+    row = pg_cursor.fetchone()
+    return row[0] if row else None
 
 def fetch_type_relations(pg_conn):
     pg_cursor = pg_conn.cursor()
@@ -90,6 +98,7 @@ def run_type_migration():
             continue
 
         number_of_verses = get_number_of_verses(pg_cursor, type_id)
+        critical_apparatus = get_critical_apparatus(pg_cursor, type_id)
 
         private_comment_val = None
         if not is_public_release:
@@ -99,8 +108,8 @@ def run_type_migration():
         INSERT INTO type (
             id, text_stemmer, text_original, lemma, incipit,
             created, modified, public_comment, private_comment,
-            title, number_of_verses
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            title, number_of_verses, critical_apparatus
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
             text_stemmer = excluded.text_stemmer,
             text_original = excluded.text_original,
@@ -111,7 +120,8 @@ def run_type_migration():
             public_comment = excluded.public_comment,
             private_comment = excluded.private_comment,
             title = excluded.title,
-            number_of_verses = excluded.number_of_verses
+            number_of_verses = excluded.number_of_verses,
+            critical_apparatus = excluded.critical_apparatus
         """, (
             type_id,
             source.get('text_stemmer'),
@@ -123,7 +133,8 @@ def run_type_migration():
             source.get('public_comment'),
             private_comment_val,
             source.get('title_original'),
-            number_of_verses
+            number_of_verses,
+            critical_apparatus
         ))
 
         for tag in source.get('tag', []):
