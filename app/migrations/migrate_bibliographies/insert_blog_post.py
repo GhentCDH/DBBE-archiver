@@ -96,5 +96,24 @@ def insert_blog_posts():
         insert_rows
     )
     execute_with_normalization(cursor, "COMMIT")
+
+    execute_with_normalization(cursor, "BEGIN")
+    for identity, *_ in rows:
+        identity_str = str(identity)
+        pg_cursor.execute("""
+            SELECT em.idmanagement, m.name
+            FROM data.entity_management em
+            JOIN data.management m ON m.id = em.idmanagement
+            WHERE em.identity = %s
+        """, (identity_str,))
+        for management_id, management_name in pg_cursor.fetchall():
+            execute_with_normalization(cursor,
+                "INSERT OR IGNORE INTO management (id, name) VALUES (?, ?)",
+                (str(management_id), management_name))
+            execute_with_normalization(cursor,
+                "INSERT OR IGNORE INTO blog_post_management (blog_post_id, management_id) VALUES (?, ?)",
+                (identity_str, str(management_id)))
+    execute_with_normalization(cursor, "COMMIT")
+
     conn.close()
     pg_conn.close()

@@ -72,6 +72,54 @@ def migrate_journals():
             WHERE id = ?
         """, (str(issue_id), str(article_id)))
 
+    # Journal managements
+    pg_cursor.execute("""
+        SELECT j.identity
+        FROM data.journal j
+    """)
+    journal_ids = [str(row[0]) for row in pg_cursor.fetchall()]
+
+    execute_with_normalization(cursor, "BEGIN")
+    for journal_id in journal_ids:
+        pg_cursor.execute("""
+            SELECT em.idmanagement, m.name
+            FROM data.entity_management em
+            JOIN data.management m ON m.id = em.idmanagement
+            WHERE em.identity = %s
+        """, (journal_id,))
+        for management_id, management_name in pg_cursor.fetchall():
+            execute_with_normalization(cursor,
+                                       "INSERT OR IGNORE INTO management (id, name) VALUES (?, ?)",
+                                       (str(management_id), management_name))
+            execute_with_normalization(cursor,
+                                       "INSERT OR IGNORE INTO journal_management (journal_id, management_id) VALUES (?, ?)",
+                                       (journal_id, str(management_id)))
+    execute_with_normalization(cursor, "COMMIT")
+
+    # Journal issue managements
+    pg_cursor.execute("""
+        SELECT ji.identity
+        FROM data.journal_issue ji
+    """)
+    issue_ids = [str(row[0]) for row in pg_cursor.fetchall()]
+
+    execute_with_normalization(cursor, "BEGIN")
+    for issue_id in issue_ids:
+        pg_cursor.execute("""
+            SELECT em.idmanagement, m.name
+            FROM data.entity_management em
+            JOIN data.management m ON m.id = em.idmanagement
+            WHERE em.identity = %s
+        """, (issue_id,))
+        for management_id, management_name in pg_cursor.fetchall():
+            execute_with_normalization(cursor,
+                                       "INSERT OR IGNORE INTO management (id, name) VALUES (?, ?)",
+                                       (str(management_id), management_name))
+            execute_with_normalization(cursor,
+                                       "INSERT OR IGNORE INTO journal_issue_management (journal_issue_id, management_id) VALUES (?, ?)",
+                                       (issue_id, str(management_id)))
+    execute_with_normalization(cursor, "COMMIT")
+
     conn.commit()
     conn.close()
     pg_conn.close()

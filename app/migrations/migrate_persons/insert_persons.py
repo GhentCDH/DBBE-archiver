@@ -236,6 +236,21 @@ def run_person_migration():
                 VALUES (?, ?)
             """, (person_id, str(office_id)))
 
+        pg_cursor.execute("""
+                    SELECT em.idmanagement, m.name
+                    FROM data.entity_management em
+                    JOIN data.management m ON m.id = em.idmanagement
+                    WHERE em.identity = %s
+                """, (person_id,))
+        for (management_id, management_name) in pg_cursor.fetchall():
+            execute_with_normalization(cursor, """
+                        INSERT OR IGNORE INTO management (id, name)
+                        VALUES (?, ?)
+                    """, (str(management_id), management_name))
+            execute_with_normalization(cursor, """
+                        INSERT OR IGNORE INTO person_management (person_id, management_id)
+                        VALUES (?, ?)
+                    """, (person_id, str(management_id)))
     execute_with_normalization(cursor, "COMMIT")
     conn.close()
     pg_conn.close()

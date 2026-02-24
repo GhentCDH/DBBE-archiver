@@ -251,3 +251,18 @@ def get_public_release() -> bool:
     public_release = os.getenv("PUBLIC_RELEASE", "true")
     return public_release.lower() in {"1", "true", "yes", "on"}
 
+
+def insert_entity_managements(cursor, pg_cursor, entity_id: str, join_table: str, entity_col: str):
+    pg_cursor.execute("""
+        SELECT em.idmanagement, m.name
+        FROM data.entity_management em
+        JOIN data.management m ON m.id = em.idmanagement
+        WHERE em.identity = %s
+    """, (entity_id,))
+    for management_id, management_name in pg_cursor.fetchall():
+        execute_with_normalization(cursor,
+            "INSERT OR IGNORE INTO management (id, name) VALUES (?, ?)",
+            (str(management_id), management_name))
+        execute_with_normalization(cursor,
+            f"INSERT OR IGNORE INTO {join_table} ({entity_col}, management_id) VALUES (?, ?)",
+            (entity_id, str(management_id)))
