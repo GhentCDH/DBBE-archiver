@@ -7,4 +7,6 @@ class BiblioType(StrEnum):
     BOOK_CHAPTER = "book_chapter"
     ONLINE_SOURCE = "online_source"
     PHD = "phd"
-    BIB_VARIA = "bib_varia"
+    BIB_VARIA = "bib_varia",
+    BLOG = "blog"
+
