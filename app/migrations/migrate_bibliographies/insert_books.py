@@ -163,48 +163,6 @@ def insert_books():
         insert_rows
     )
 
-    ####################################
-    # Fetch global_id rows for this person
-    pg_cursor.execute("""
-        SELECT idauthority, idsubject, identifier
-        FROM data.global_id
-        WHERE idsubject = %s
-    """, (person_id,))
-
-    for idauthority, idsubject, identifier_id in pg_cursor.fetchall():
-        pg_cursor.execute("""
-            SELECT ids, system_name
-            FROM data.identifier
-            WHERE %s = ANY(ids)
-        """, (idauthority,))
-
-        identifier_row = pg_cursor.fetchone()
-        if not identifier_row:
-            continue
-
-        ids_array, system_name = identifier_row
-
-        for identifier_value in ids_array:
-            execute_with_normalization(cursor, """
-                INSERT OR IGNORE INTO identification (type, identifier_value)
-                VALUES (?, ?)
-            """, (system_name, identifier_id))
-
-            cursor.execute("""
-                SELECT id
-                FROM identification
-                WHERE type = ? AND identifier_value = ?
-            """, (system_name, identifier_id))
-            row = cursor.fetchone()
-            if row:
-                sqlite_identification_id = row[0]
-
-                # Now link person -> identification
-                execute_with_normalization(cursor, """
-                    INSERT OR IGNORE INTO person_identification (person_id, identification_id)
-                    VALUES (?, ?)
-                """, (person_id, sqlite_identification_id))
-        ##################
 
     execute_with_normalization(cursor, "COMMIT")
     execute_with_normalization(cursor, "BEGIN")
