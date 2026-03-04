@@ -22,19 +22,28 @@ def create_schema():
         )
     """)
 
-    execute_with_normalization(cursor, """
-        CREATE TABLE IF NOT EXISTS journal_issue (
-            id INTEGER PRIMARY KEY,
-            journal_id INTEGER,
-            title TEXT,
-            title_sort_key TEXT
-        )
-    """)
-
     add_column_if_missing(cursor, "book_chapter", "book_id", "INTEGER")
     add_column_if_missing(cursor, "bib_varia", "year", "INTEGER")
     add_column_if_missing(cursor, "bib_varia", "city", "INTEGER")
     add_column_if_missing(cursor, "bib_varia", "bib_varia_institution", "TEXT")
+    add_column_if_missing(cursor, "blog_post", "post_date", "TEXT")
+    add_column_if_missing(cursor, "blog_post", "url", "TEXT")
+    add_column_if_missing(cursor, "blog_post", "blog", "INTEGER")
+    add_column_if_missing(cursor, "blog", "url", "INTEGER")
+    add_column_if_missing(cursor, "book", "year", "INTEGER")
+    add_column_if_missing(cursor, "book", "publisher", "TEXT")
+    add_column_if_missing(cursor, "book", "editor", "TEXT")
+    add_column_if_missing(cursor, "book", "forthcoming", "BOOLEAN")
+    add_column_if_missing(cursor, "book", "idcluster", "INTEGER")
+    add_column_if_missing(cursor, "book", "idseries", "INTEGER")
+    add_column_if_missing(cursor, "phd", "year", "INTEGER")
+    add_column_if_missing(cursor, "phd", "city", "INTEGER")
+    add_column_if_missing(cursor, "phd", "phd_institution", "TEXT")
+    add_column_if_missing(cursor, "phd", "volume", "TEXT")
+    add_column_if_missing(cursor, "phd", "forthcoming", "BOOLEAN")
+    add_column_if_missing(cursor, "online_source", "url", "TEXT")
+    add_column_if_missing(cursor, "online_source", "last_accessed", "TEXT")
+
 
     conn.commit()
     conn.close()

@@ -5,6 +5,8 @@ BIBLIO_type = {
     "blog_post",
     "book",
     "book_chapter",
+    "journal",
+    "journal_issue",
     "online_source",
     "phd",
     "bib_varia",
@@ -50,12 +52,14 @@ def create_base_tables():
         FOREIGN KEY (occurrence_id) REFERENCES occurrence(id)
     )
     """)
-    execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS type (id INTEGER PRIMARY KEY)")
+    execute_with_normalization(cursor, "CREATE TABLE IF NOT EXISTS type (id INTEGER PRIMARY KEY, critical_apparatus TEXT)")
 
     execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS roles (
         id INTEGER PRIMARY KEY,
-        name TEXT
+        name TEXT,
+        created TEXT,
+        modified TEXT
     )
     """)
     
@@ -76,7 +80,8 @@ def create_base_tables():
     execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS genre (
         id INTEGER PRIMARY KEY,
-        name TEXT
+        name TEXT,
+        description TEXT
     )
     """)
     
@@ -212,10 +217,10 @@ def create_base_tables():
 
         execute_with_normalization(cursor, f"""
                CREATE TABLE IF NOT EXISTS {bib_type}_management (
-                   bibliography_id INTEGER NOT NULL,
+                   {bib_type}_id INTEGER NOT NULL,
                    management_id INTEGER NOT NULL,
-                   PRIMARY KEY (bibliography_id, management_id),
-                   FOREIGN KEY (bibliography_id) REFERENCES {bib_type}(id),
+                   PRIMARY KEY ({bib_type}_id, management_id),
+                   FOREIGN KEY ({bib_type}_id) REFERENCES {bib_type}(id),
                    FOREIGN KEY (management_id) REFERENCES management(id)
                )
            """)
@@ -229,24 +234,31 @@ def create_base_tables():
            """)
 
         execute_with_normalization(cursor, f"""
-            CREATE TABLE IF NOT EXISTS journal_issue (
+              CREATE TABLE IF NOT EXISTS book_series (
                 id INTEGER PRIMARY KEY,
-                journal_id INTEGER NOT NULL,
-                title TEXT,
-                title_sort_key TEXT,
-                FOREIGN KEY (journal_id) REFERENCES journal(id)
+                title TEXT
             );
            """)
 
         execute_with_normalization(cursor, f"""
-               CREATE TABLE IF NOT EXISTS {bib_type}_management (
-                   bibliography_id INTEGER NOT NULL,
-                   management_id INTEGER NOT NULL,
-                   PRIMARY KEY (bibliography_id, management_id),
-                   FOREIGN KEY (bibliography_id) REFERENCES {bib_type}(id),
-                   FOREIGN KEY (management_id) REFERENCES management(id)
-               )
+              CREATE TABLE IF NOT EXISTS book_cluster (
+                id INTEGER PRIMARY KEY,
+                title TEXT
+            );
            """)
+        execute_with_normalization(cursor, f"""
+            CREATE TABLE IF NOT EXISTS journal_issue (
+                id INTEGER PRIMARY KEY,
+                journal_id INTEGER,
+                year TEXT,
+                number INTEGER,
+                volume INTEGER,
+                forthcoming BOOLEAN,
+                series TEXT,
+                FOREIGN KEY (journal_id) REFERENCES journal(id)
+            );
+           """)
+
 
         for entity, sqlite_table in BIBLIO_ENTITY_type.items():
             execute_with_normalization(cursor, f"""
@@ -260,7 +272,7 @@ def create_base_tables():
                        private_comment TEXT,
                        PRIMARY KEY ({entity}_id, {bib_type}_id),
                        FOREIGN KEY ({entity}_id) REFERENCES {sqlite_table}(id),
-                       FOREIGN KEY ({bib_type}_id) REFERENCES {bib_type}(id)
+                        FOREIGN KEY ({bib_type}_id) REFERENCES {bib_type}(id)
                    )
                """)
 

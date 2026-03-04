@@ -8,6 +8,7 @@ def migrate_journals():
         PRAGMA table_info(article)
     """)
     columns = [row[1] for row in cursor.fetchall()]  # column names
+
     if "journal_issue_id" not in columns:
         execute_with_normalization(cursor, """
             ALTER TABLE article
@@ -41,22 +42,17 @@ def migrate_journals():
     """)
 
     for issue_id, journal_id, year, volume, number, series, forthcoming in pg_cursor.fetchall():
-        title_parts = []
-        if year: title_parts.append(str(year))
-        if series: title_parts.append(series)
-        if volume: title_parts.append(volume)
-        if number: title_parts.append(number)
-        if forthcoming: title_parts.append("(forthcoming)")
-        issue_title = " ".join(title_parts) if title_parts else None
-
         execute_with_normalization(cursor, """
-            INSERT INTO journal_issue (id, journal_id, title, title_sort_key)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO journal_issue (id, journal_id, year, volume, number, series, forthcoming)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 journal_id = excluded.journal_id,
-                title = excluded.title,
-                title_sort_key = excluded.title_sort_key
-        """, (str(issue_id), str(journal_id), issue_title, issue_title))
+                year = excluded.year,
+                volume = excluded.volume,
+                number = excluded.number,
+                series = excluded.series,
+                forthcoming = excluded.forthcoming
+        """, (str(issue_id), str(journal_id), year, volume, number, series, forthcoming))
 
     # --- Step 3: update article → journal_issue
     pg_cursor.execute("""

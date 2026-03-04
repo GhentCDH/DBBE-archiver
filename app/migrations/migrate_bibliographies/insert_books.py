@@ -40,7 +40,13 @@ def insert_books():
                entity.created,
                entity.modified,
                entity.public_comment,
-               entity.private_comment
+               entity.private_comment,
+               biblio.year,
+               biblio.publisher,
+               biblio.editor,
+               biblio.forthcoming,
+               biblio.idcluster,
+               biblio.idseries
         FROM data.book biblio
         LEFT JOIN data.entity entity
             ON entity.identity = biblio.identity
@@ -52,10 +58,32 @@ def insert_books():
     is_public_release = get_public_release()
 
     insert_rows = []
-    for identity, created, modified, public_comment, private_comment in rows:
+    cluster_ids = set()
+    series_ids = set()
+
+    for (
+        identity,
+        created,
+        modified,
+        public_comment,
+        private_comment,
+        year,
+        publisher,
+        editor,
+        forthcoming,
+        idcluster,
+        idseries
+    ) in rows:
+
         identity_str = str(identity)
         title_data = titles_cache.get(identity_str, {})
         private_comment_val = None if is_public_release else private_comment
+
+        if idcluster is not None:
+            cluster_ids.add(idcluster)
+
+        if idseries is not None:
+            series_ids.add(idseries)
 
         insert_rows.append((
             identity_str,
@@ -64,20 +92,139 @@ def insert_books():
             created,
             modified,
             public_comment,
-            private_comment_val
+            private_comment_val,
+            year,
+            publisher,
+            editor,
+            forthcoming,
+            idcluster,
+            idseries
         ))
 
     execute_with_normalization(cursor, "BEGIN")
 
+    series_rows = []
+    if series_ids:
+        pg_cursor.execute(
+            """
+            SELECT bs.identity,
+                   dt.title
+            FROM data.book_series bs
+            LEFT JOIN data.document_title dt
+                ON dt.iddocument = bs.identity
+            WHERE bs.identity = ANY(%s)
+            """,
+            (list(series_ids),)
+        )
+        series_rows = pg_cursor.fetchall()
+
+    cluster_rows = []
+    if cluster_ids:
+        pg_cursor.execute(
+            """
+            SELECT bc.identity,
+                   dt.title
+            FROM data.book_cluster bc
+            LEFT JOIN data.document_title dt
+                ON dt.iddocument = bc.identity
+            WHERE bc.identity = ANY(%s)
+            """,
+            (list(cluster_ids),)
+        )
+        cluster_rows = pg_cursor.fetchall()
+
+    # Insert clusters with title
+    cursor.executemany(
+        "INSERT OR IGNORE INTO book_cluster (id, title) VALUES (?, ?)",
+        [
+            (cid, title if title else "")
+            for cid, title in cluster_rows
+        ]
+    )
+
+    # Insert series with title
+    cursor.executemany(
+        "INSERT OR IGNORE INTO book_series (id, title) VALUES (?, ?)",
+        [
+            (sid, title if title else "")
+            for sid, title in series_rows
+        ]
+    )
+
+    # Insert books
     cursor.executemany(
         """INSERT OR IGNORE INTO book
            (id, title, title_sort_key,
             created, modified,
-            public_comment, private_comment)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            public_comment, private_comment,
+            year, publisher, editor, forthcoming,
+            idcluster, idseries)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         insert_rows
     )
 
+    ####################################
+    # Fetch global_id rows for this person
+    pg_cursor.execute("""
+        SELECT idauthority, idsubject, identifier
+        FROM data.global_id
+        WHERE idsubject = %s
+    """, (person_id,))
+
+    for idauthority, idsubject, identifier_id in pg_cursor.fetchall():
+        pg_cursor.execute("""
+            SELECT ids, system_name
+            FROM data.identifier
+            WHERE %s = ANY(ids)
+        """, (idauthority,))
+
+        identifier_row = pg_cursor.fetchone()
+        if not identifier_row:
+            continue
+
+        ids_array, system_name = identifier_row
+
+        for identifier_value in ids_array:
+            execute_with_normalization(cursor, """
+                INSERT OR IGNORE INTO identification (type, identifier_value)
+                VALUES (?, ?)
+            """, (system_name, identifier_id))
+
+            cursor.execute("""
+                SELECT id
+                FROM identification
+                WHERE type = ? AND identifier_value = ?
+            """, (system_name, identifier_id))
+            row = cursor.fetchone()
+            if row:
+                sqlite_identification_id = row[0]
+
+                # Now link person -> identification
+                execute_with_normalization(cursor, """
+                    INSERT OR IGNORE INTO person_identification (person_id, identification_id)
+                    VALUES (?, ?)
+                """, (person_id, sqlite_identification_id))
+        ##################
+
     execute_with_normalization(cursor, "COMMIT")
+    execute_with_normalization(cursor, "BEGIN")
+
+    for identity, *_ in rows:
+        identity_str = str(identity)
+        pg_cursor.execute("""
+            SELECT em.idmanagement, m.name
+            FROM data.entity_management em
+            JOIN data.management m ON m.id = em.idmanagement
+            WHERE em.identity = %s
+        """, (identity_str,))
+        for management_id, management_name in pg_cursor.fetchall():
+            execute_with_normalization(cursor,
+                "INSERT OR IGNORE INTO management (id, name) VALUES (?, ?)",
+                (str(management_id), management_name))
+            execute_with_normalization(cursor,
+                "INSERT OR IGNORE INTO book_management (book_id, management_id) VALUES (?, ?)",
+                (identity_str, str(management_id)))
+    execute_with_normalization(cursor, "COMMIT")
+
     conn.close()
     pg_conn.close()

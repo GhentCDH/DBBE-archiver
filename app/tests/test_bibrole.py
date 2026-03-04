@@ -1,4 +1,5 @@
-
+### NOTE: This skips the person_subject role because in the original application this only exists
+### in code and in elasticsearch whereas here, we're testing postgres.
 
 from db import get_sqlite_connection, get_postgres_connection
 from utils import normalize_string
@@ -22,6 +23,7 @@ SQLITE_ROLE_TABLES = [
 def run_test():
     sqlite_conn, sqlite_cursor = get_sqlite_connection()
     pg_conn, pg_cursor = get_postgres_connection()
+    ROLES_ONLY_IN_ES = {"subject","content"}
 
     # ----------------------------
     # POSTGRES SIDE
@@ -69,17 +71,16 @@ def run_test():
 
         for document_id, person_id, role_id in rows:
             role_name = sqlite_roles.get(role_id, "")
-            sqlite_set.add(
-                (
-                    str(document_id),
-                    str(person_id),
-                    role_name
-                )
-            )
+            if role_name in ROLES_ONLY_IN_ES:
+                continue
+            sqlite_set.add((str(document_id), str(person_id), role_name))
 
-    # Build Postgres normal role set
-    pg_set = set((str(did), str(pid), rname) for did, pid, rname in pg_roles_normal)
 
+    pg_set = set(
+        (str(did), str(pid), rname)
+        for did, pid, rname in pg_roles_normal
+        if rname not in ROLES_ONLY_IN_ES
+    )
     # ----------------------------
     # Compare normal roles
     # ----------------------------

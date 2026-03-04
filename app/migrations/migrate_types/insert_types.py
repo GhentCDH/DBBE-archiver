@@ -65,10 +65,32 @@ def get_number_of_verses(pg_cursor, type_id: str):
     row = pg_cursor.fetchone()
     return row[0] if row else None
 
+def fetch_reconstructed_poem_lemmas(pg_conn):
+    pg_cursor = pg_conn.cursor()
+    pg_cursor.execute("""
+        SELECT id_reconstructed_poem, lemma
+        FROM data.reconstructed_poem_lemma
+    """)
+    rows = pg_cursor.fetchall()
+    pg_cursor.close()
+    return {str(row[0]): row[1] for row in rows}
+
+def get_translations(pg_cursor, type_id: str):
+    pg_cursor.execute("""
+        SELECT t.idtranslation, d.text_content, tr.idlanguage
+        FROM data.translation_of t
+        JOIN data.document d ON d.identity = t.idtranslation
+        LEFT JOIN data.translation tr ON tr.identity = t.idtranslation
+        WHERE t.iddocument = %s
+          AND d.text_content IS NOT NULL
+    """, (type_id,))
+    return [(str(row[0]), row[1], str(row[2]) if row[2] else None) for row in pg_cursor.fetchall()]
+
 def run_type_migration():
     es = get_es_client()
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
+    lemma_map = fetch_reconstructed_poem_lemmas(pg_conn)
 
     create_type_tables(cursor)
     
@@ -104,6 +126,8 @@ def run_type_migration():
         if not is_public_release:
             private_comment_val = source.get('private_comment')
 
+
+
         execute_with_normalization(cursor, """
         INSERT INTO type (
             id, text_stemmer, text_original, lemma, incipit,
@@ -126,7 +150,7 @@ def run_type_migration():
             type_id,
             source.get('text_stemmer'),
             source.get('text_original'),
-            source.get('lemma'),
+            lemma_map.get(type_id),
             source.get('incipit'),
             source.get('created'),
             source.get('modified'),
@@ -136,6 +160,54 @@ def run_type_migration():
             number_of_verses,
             critical_apparatus
         ))
+
+
+
+        # Fetch global_id rows for this person
+        pg_cursor.execute("""
+            SELECT idauthority, idsubject, identifier
+            FROM data.global_id
+            WHERE idsubject = %s
+        """, (type_id,))
+
+        for idauthority, idsubject, identifier_id in pg_cursor.fetchall():
+            pg_cursor.execute("""
+                SELECT ids, system_name
+                FROM data.identifier
+                WHERE %s = ANY(ids)
+            """, (idauthority,))
+
+            identifier_row = pg_cursor.fetchone()
+            if not identifier_row:
+                continue
+
+            ids_array, system_name = identifier_row
+
+            # Assuming ids is an array (Postgres array), iterate
+            for identifier_value in ids_array:
+                execute_with_normalization(cursor, """
+                    INSERT OR IGNORE INTO identification (type, identifier_value)
+                    VALUES (?, ?)
+                """, (system_name, identifier_id))
+
+                cursor.execute("""
+                    SELECT id
+                    FROM identification
+                    WHERE type = ? AND identifier_value = ?
+                """, (system_name, identifier_id))
+                row = cursor.fetchone()
+                if row:
+                    sqlite_identification_id = row[0]
+
+                    execute_with_normalization(cursor, """
+                        INSERT OR IGNORE INTO type_identification (type_id, identification_id)
+                        VALUES (?, ?)
+                    """, (type_id, sqlite_identification_id))
+        for translation_id, translation_text, language_id in get_translations(pg_cursor, type_id):
+            execute_with_normalization(cursor,
+                                       "INSERT OR IGNORE INTO type_translation (id, type_id, translation, language_id) VALUES (?, ?, ?, ?)",
+                                       (translation_id, type_id, translation_text, language_id)
+                                       )
 
         for tag in source.get('tag', []):
             tag_id = str(tag.get('id', ''))
@@ -292,6 +364,8 @@ def run_type_migration():
 
     relations = fetch_type_relations(pg_conn)
     execute_with_normalization(cursor, "BEGIN TRANSACTION")
+
+
 
     for _, _, rel_def_id, rel_code in relations:
         execute_with_normalization(cursor, """

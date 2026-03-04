@@ -19,6 +19,8 @@ def create_schema():
         ("palaeographical_info", "TEXT"),
         ("contextual_info", "TEXT"),
         ("manuscript_id", "TEXT"),
+        ("transcription_reviewed", "TEXT"),
+
         ("title", "TEXT")
     ]
 

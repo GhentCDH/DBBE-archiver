@@ -46,12 +46,26 @@ def get_subject_keyword(pg_cursor, subject_id):
     """, (subject_id,))
     return pg_cursor.fetchone()
 
+def preload_genre_descriptions(pg_cursor):
+    pg_cursor.execute("""
+        SELECT idgenre, description
+        FROM data.genre
+        WHERE description IS NOT NULL
+    """)
+    return {str(row[0]): row[1] for row in pg_cursor.fetchall()}
 
 def run_occurrence_migration():
     es = get_es_client()
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
     related_occurrence_map = preload_related_occurrence(pg_cursor)
+    genre_description_cache = preload_genre_descriptions(pg_cursor)
+    # After preload_related_occurrence, add a preload for original_poem data:
+    pg_cursor.execute("""
+        SELECT identity, transcription_reviewed
+        FROM data.original_poem
+    """)
+    transcription_reviewed_cache = {str(row[0]): row[1] for row in pg_cursor.fetchall()}
 
     execute_with_normalization(cursor, "PRAGMA foreign_keys = OFF")
     print("Foreign key constraints disabled for migration")
@@ -129,7 +143,8 @@ def run_occurrence_migration():
             created=?, modified=?, public_comment=?, private_comment=?,
             is_dbbe=?, incipit=?, text_stemmer=?, text_original=?,
             location_in_ms=?, completion_date_floor=?, completion_date_ceiling=?,
-            palaeographical_info=?, contextual_info=?, manuscript_id=?, title=?
+            palaeographical_info=?, contextual_info=?, manuscript_id=?, title=?,
+            transcription_reviewed=?
         WHERE id=?
         """, (
             source.get('created', ''),
@@ -147,6 +162,7 @@ def run_occurrence_migration():
             source.get('contextual_info', ''),
             manuscript_id,
             source.get('title_original', ''),
+            transcription_reviewed_cache.get(occ_id),
             occ_id
         ))
 
@@ -215,6 +231,27 @@ def run_occurrence_migration():
                 parent_id=occ_id,
                 **cfg
             )
+
+        for item in source.get("genre", []):
+            genre_id = str(item.get("id", ""))
+            genre_name = item.get("name", "")
+            if not genre_id or not genre_name:
+                continue
+
+            description = genre_description_cache.get(genre_id)
+
+            execute_with_normalization(cursor, """
+                INSERT INTO genre (id, name, description)
+                VALUES (?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name=excluded.name,
+                    description=excluded.description
+            """, (genre_id, genre_name, description))
+
+            execute_with_normalization(cursor, """
+                INSERT OR IGNORE INTO occurrence_genre (occurrence_id, genre_id)
+                VALUES (?, ?)
+            """, (occ_id, genre_id))
 
         ts = source.get('text_status')
         if isinstance(ts, dict):

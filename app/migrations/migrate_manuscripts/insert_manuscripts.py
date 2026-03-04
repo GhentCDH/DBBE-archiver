@@ -315,25 +315,44 @@ def run_manuscript_migration():
                 VALUES (?, ?)
             """, (manuscript_id, leaf_id))
 
-        for es_field, ident_type in MANUSCRIPT_IDENT_TYPE_MAP.items():
-            for identifier in source.get(es_field, []):
-                if not identifier:
-                    continue
-                execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO identification (type, identifier_value) VALUES (?, ?)",
-                                           (ident_type, identifier)
-                                           )
-                ident_id = cursor.lastrowid
-                if ident_id == 0:
-                    execute_with_normalization(cursor,
-                        "SELECT id FROM identification WHERE type = ? AND identifier_value = ?",
-                                               (ident_type, identifier)
-                                               )
-                    ident_id = cursor.fetchone()[0]
-                execute_with_normalization(cursor,
-                    "INSERT OR IGNORE INTO manuscript_identification (manuscript_id, identification_id) VALUES (?, ?)",
-                                           (manuscript_id, ident_id)
-                                           )
+        pg_cursor.execute("""
+            SELECT idauthority, idsubject, identifier
+            FROM data.global_id
+            WHERE idsubject = %s
+        """, (manuscript_id,))
+
+        for idauthority, idsubject, identifier_id in pg_cursor.fetchall():
+            pg_cursor.execute("""
+                SELECT ids, system_name
+                FROM data.identifier
+                WHERE %s = ANY(ids)
+            """, (idauthority,))
+
+            identifier_row = pg_cursor.fetchone()
+            if not identifier_row:
+                continue
+
+            ids_array, system_name = identifier_row
+
+            for identifier_value in ids_array:
+                execute_with_normalization(cursor, """
+                    INSERT OR IGNORE INTO identification (type, identifier_value)
+                    VALUES (?, ?)
+                """, (system_name, identifier_id))
+
+                cursor.execute("""
+                    SELECT id
+                    FROM identification
+                    WHERE type = ? AND identifier_value = ?
+                """, (system_name, identifier_id))
+                row = cursor.fetchone()
+                if row:
+                    sqlite_identification_id = row[0]
+
+                    execute_with_normalization(cursor, """
+                        INSERT OR IGNORE INTO manuscript_identification (manuscript_id, identification_id)
+                        VALUES (?, ?)
+                    """, (manuscript_id, sqlite_identification_id))
 
     execute_with_normalization(cursor, "COMMIT")
     conn.close()
@@ -341,5 +360,3 @@ def run_manuscript_migration():
     print(f"Manuscripts migration completed: {len(hits)} manuscripts inserted")
 
 
-if __name__ == "__main__":
-    migrate_manuscripts()
