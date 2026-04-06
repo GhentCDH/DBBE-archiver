@@ -66,16 +66,6 @@ def create_schema():
     )
     """)
 
-    execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS person_identification (
-        person_id INTEGER NOT NULL,
-        identification_id INTEGER NOT NULL,
-        PRIMARY KEY (person_id, identification_id),
-        FOREIGN KEY (person_id) REFERENCES person(id),
-        FOREIGN KEY (identification_id) REFERENCES identification(id)
-    )
-    """)
-
     pg_cursor.execute("SELECT id, name FROM data.self_designation")
     for sd_id, sd_name in pg_cursor.fetchall():
         execute_with_normalization(cursor, """

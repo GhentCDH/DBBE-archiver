@@ -101,6 +101,41 @@ def insert_books():
             idseries
         ))
 
+        pg_cursor.execute("""
+            SELECT idauthority, idsubject, identifier, volume
+            FROM data.global_id
+            WHERE idsubject = %s
+        """, (identity,))
+
+        for idauthority, idsubject, identifier_id, volume in pg_cursor.fetchall():
+            pg_cursor.execute("""
+                SELECT ids, system_name
+                FROM data.identifier
+                WHERE %s = ANY(ids)  
+            """, (idauthority,))
+
+            identifier_row = pg_cursor.fetchone()
+            if not identifier_row:
+                continue
+
+            ids_array, system_name = identifier_row
+
+            catalogue = system_name
+            if volume is not None:
+                catalogue_id = f"{volume}.{identifier_id}"
+            else:
+                catalogue_id = str(identifier_id)
+
+            execute_with_normalization(cursor, """
+                INSERT OR IGNORE INTO identification (
+                    catalogue,
+                    catalogue_id,
+                    entity_type,
+                    entity_id
+                )
+                VALUES (?, ?, ?, ?)
+            """, (catalogue, catalogue_id, "book", identity_str))
+
     execute_with_normalization(cursor, "BEGIN")
 
     series_rows = []

@@ -148,12 +148,3 @@ def create_schema():
             )
         """)
 
-    execute_with_normalization(cursor, """
-    CREATE TABLE IF NOT EXISTS type_identification (
-        type_id INTEGER NOT NULL,
-        identification_id INTEGER NOT NULL,
-        PRIMARY KEY (type_id, identification_id),
-        FOREIGN KEY (type_id) REFERENCES type(id),
-        FOREIGN KEY (identification_id) REFERENCES identification(id)
-    )
-    """)
