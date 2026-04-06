@@ -138,12 +138,15 @@ def create_base_tables():
             name TEXT
         );
     """)
-    
+
     execute_with_normalization(cursor, """
     CREATE TABLE IF NOT EXISTS identification (
         id INTEGER PRIMARY KEY,
-        type TEXT NOT NULL,
-        identifier_value TEXT NOT NULL
+        catalogue TEXT NOT NULL,
+        catalogue_id TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id INTEGER NOT NULL,
+        UNIQUE(catalogue, catalogue_id, entity_type, entity_id)
     )
     """)
     
