@@ -1,4 +1,4 @@
-export_data.sqlite
+dbbe_archive.sqlite
 export_data_mapping.sqlite
 *.tsv
 *.sqlite

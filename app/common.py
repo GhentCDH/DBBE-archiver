@@ -5,7 +5,7 @@ from elasticsearch import Elasticsearch
 import os
 from pathlib import Path
 BASE_DIR = Path(__file__).parent
-MAIN_DB_PATH = BASE_DIR / "data" / "export_data.sqlite"
+MAIN_DB_PATH = BASE_DIR / "data" / "dbbe_archive.sqlite"
 MAIN_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 ROLE_FIELD_TO_ROLE_NAME = {

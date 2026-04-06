@@ -374,9 +374,9 @@
                     locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
                 });
 
-                const response = await fetch('../app/data/export_data.sqlite');
+                const response = await fetch('../app/data/dbbe_archive.sqlite');
                 if (!response.ok) {
-                    throw new Error('Database file not found at app/data/export_data.sqlite');
+                    throw new Error('Database file not found at app/data/dbbe_archive.sqlite');
                 }
                 
                 const buffer = await response.arrayBuffer();
@@ -390,7 +390,7 @@
                         <i class="fas fa-exclamation-triangle"></i> 
                         Error loading database: ${error.message}
                         <br><br>
-                        Please ensure the database file exists at: <code>app/data/export_data.sqlite</code>
+                        Please ensure the database file exists at: <code>app/data/dbbe_archive.sqlite</code>
                     </div>
                 `;
             }

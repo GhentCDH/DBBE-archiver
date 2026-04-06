@@ -3,7 +3,7 @@ import psycopg2
 
 
 def get_sqlite_connection():
-    conn = sqlite3.connect('../data/export_data.sqlite')
+    conn = sqlite3.connect('../data/dbbe_archive.sqlite')
     return conn, conn.cursor()
 
 
