@@ -161,48 +161,38 @@ def run_type_migration():
             critical_apparatus
         ))
 
-
-
-        # Fetch global_id rows for this person
         pg_cursor.execute("""
-            SELECT idauthority, idsubject, identifier
+            SELECT idauthority, idsubject, identifier, volume
             FROM data.global_id
             WHERE idsubject = %s
         """, (type_id,))
 
-        for idauthority, idsubject, identifier_id in pg_cursor.fetchall():
+        for idauthority, idsubject, identifier_id, volume in pg_cursor.fetchall():
             pg_cursor.execute("""
-                SELECT ids, system_name
+                SELECT system_name
                 FROM data.identifier
                 WHERE %s = ANY(ids)
             """, (idauthority,))
 
-            identifier_row = pg_cursor.fetchone()
-            if not identifier_row:
+            row = pg_cursor.fetchone()
+            if not row:
                 continue
 
-            ids_array, system_name = identifier_row
+            catalogue = row[0]
+            if volume is not None:
+                catalogue_id = f"{volume}.{identifier_id}"
+            else:
+                catalogue_id = str(identifier_id)
 
-            # Assuming ids is an array (Postgres array), iterate
-            for identifier_value in ids_array:
-                execute_with_normalization(cursor, """
-                    INSERT OR IGNORE INTO identification (type, identifier_value)
-                    VALUES (?, ?)
-                """, (system_name, identifier_id))
-
-                cursor.execute("""
-                    SELECT id
-                    FROM identification
-                    WHERE type = ? AND identifier_value = ?
-                """, (system_name, identifier_id))
-                row = cursor.fetchone()
-                if row:
-                    sqlite_identification_id = row[0]
-
-                    execute_with_normalization(cursor, """
-                        INSERT OR IGNORE INTO type_identification (type_id, identification_id)
-                        VALUES (?, ?)
-                    """, (type_id, sqlite_identification_id))
+            execute_with_normalization(cursor, """
+                INSERT OR IGNORE INTO identification (
+                    catalogue,
+                    catalogue_id,
+                    entity_type,
+                    entity_id
+                )
+                VALUES (?, ?, ?, ?)
+            """, (catalogue, catalogue_id, "type", type_id))
         for translation_id, translation_text, language_id in get_translations(pg_cursor, type_id):
             execute_with_normalization(cursor,
                                        "INSERT OR IGNORE INTO type_translation (id, type_id, translation, language_id) VALUES (?, ?, ?, ?)",

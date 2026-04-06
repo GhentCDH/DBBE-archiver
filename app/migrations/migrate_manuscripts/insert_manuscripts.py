@@ -34,7 +34,7 @@ def create_manuscript_tables(cursor):
         ("number_of_occurrences", "INTEGER"),
         ("shelf", "TEXT"),
         ("library_id", "INTEGER"),
-        ("collection_id", "INTEGER")
+        ("collection", "TEXT")
     ]
     
     for col, col_type in manuscript_columns:
@@ -280,7 +280,15 @@ def run_manuscript_migration():
                 **cfg,
             )
 
-        insert_many_to_one(cursor, "collection", "collection", manuscript_id, source.get("collection"))
+        collection_data = source.get("collection")
+        if collection_data:
+            collection_name = collection_data.get("name")
+            if collection_name:
+                execute_with_normalization(
+                    cursor,
+                    "UPDATE manuscript SET collection = ? WHERE id = ?",
+                    (collection_name, manuscript_id)
+                )
 
         lib = get_library_for_manuscript(pg_cursor, manuscript_id)
 
@@ -316,16 +324,16 @@ def run_manuscript_migration():
             """, (manuscript_id, leaf_id))
 
         pg_cursor.execute("""
-            SELECT idauthority, idsubject, identifier
+            SELECT idauthority, idsubject, identifier, volume
             FROM data.global_id
             WHERE idsubject = %s
         """, (manuscript_id,))
 
-        for idauthority, idsubject, identifier_id in pg_cursor.fetchall():
+        for idauthority, idsubject, identifier_id, volume in pg_cursor.fetchall():
             pg_cursor.execute("""
                 SELECT ids, system_name
                 FROM data.identifier
-                WHERE %s = ANY(ids)
+                WHERE %s = ANY(ids)  AND 'manuscript' = ANY(type)
             """, (idauthority,))
 
             identifier_row = pg_cursor.fetchone()
@@ -334,25 +342,21 @@ def run_manuscript_migration():
 
             ids_array, system_name = identifier_row
 
-            for identifier_value in ids_array:
-                execute_with_normalization(cursor, """
-                    INSERT OR IGNORE INTO identification (type, identifier_value)
-                    VALUES (?, ?)
-                """, (system_name, identifier_id))
+            catalogue = system_name
+            if volume is not None:
+                catalogue_id = f"{volume}.{identifier_id}"
+            else:
+                catalogue_id = str(identifier_id)
 
-                cursor.execute("""
-                    SELECT id
-                    FROM identification
-                    WHERE type = ? AND identifier_value = ?
-                """, (system_name, identifier_id))
-                row = cursor.fetchone()
-                if row:
-                    sqlite_identification_id = row[0]
-
-                    execute_with_normalization(cursor, """
-                        INSERT OR IGNORE INTO manuscript_identification (manuscript_id, identification_id)
-                        VALUES (?, ?)
-                    """, (manuscript_id, sqlite_identification_id))
+            execute_with_normalization(cursor, """
+                INSERT OR IGNORE INTO identification (
+                    catalogue,
+                    catalogue_id,
+                    entity_type,
+                    entity_id
+                )
+                VALUES (?, ?, ?, ?)
+            """, (catalogue, catalogue_id, "manuscript", manuscript_id))
 
     execute_with_normalization(cursor, "COMMIT")
     conn.close()

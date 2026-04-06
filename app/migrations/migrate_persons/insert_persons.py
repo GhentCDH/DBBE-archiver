@@ -200,12 +200,13 @@ def run_person_migration():
 
         # Fetch global_id rows for this person
         pg_cursor.execute("""
-            SELECT idauthority, idsubject, identifier
+            SELECT idauthority, idsubject, identifier, volume
             FROM data.global_id
             WHERE idsubject = %s
         """, (person_id,))
 
-        for idauthority, idsubject, identifier_id in pg_cursor.fetchall():
+        for idauthority, idsubject, identifier_id, volume in pg_cursor.fetchall():
+
             pg_cursor.execute("""
                 SELECT ids, system_name
                 FROM data.identifier
@@ -218,27 +219,21 @@ def run_person_migration():
 
             ids_array, system_name = identifier_row
 
-            for identifier_value in ids_array:
-                execute_with_normalization(cursor, """
-                    INSERT OR IGNORE INTO identification (type, identifier_value)
-                    VALUES (?, ?)
-                """, (system_name, identifier_id))
+            catalogue = system_name
+            if volume is not None:
+                catalogue_id = f"{volume}.{identifier_id}"
+            else:
+                catalogue_id = str(identifier_id)
 
-                cursor.execute("""
-                    SELECT id
-                    FROM identification
-                    WHERE type = ? AND identifier_value = ?
-                """, (system_name, identifier_id))
-                row = cursor.fetchone()
-                if row:
-                    sqlite_identification_id = row[0]
-
-                    # Now link person -> identification
-                    execute_with_normalization(cursor, """
-                        INSERT OR IGNORE INTO person_identification (person_id, identification_id)
-                        VALUES (?, ?)
-                    """, (person_id, sqlite_identification_id))
-
+            execute_with_normalization(cursor, """
+                INSERT OR IGNORE INTO identification (
+                    catalogue,
+                    catalogue_id,
+                    entity_type,
+                    entity_id
+                )
+                VALUES (?, ?, ?, ?)
+            """, (catalogue, catalogue_id, "person", person_id))
         if orig_location_id:
             pg_cursor.execute("""
                 SELECT idregion
