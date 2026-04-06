@@ -1,3 +1,4 @@
+
 # Database of Byzantine Book Epigrams (DBBE) - Archiver
 
 This repository was developed to facilitate the periodic archival of data from the live DBBE instance to Zenodo in SQLite format. 
@@ -76,126 +77,118 @@ For a full visual of the database schema, please visit
 <!-- BEGIN DB_SCHEMA -->
 #### **1. Occurrences**
 
-Stores individual occurrence (= short epigrams or poems, literally how they've been found in a manuscript, so including marks for gaps and missing text.)
+This table stores individual Occurrences (= short epigrams or poems, literally how they have been found in a manuscript, including marks for gaps and missing text.)
 
 Columns include:
-```id, created, modified, public_comment, private_comment, incipit, text_stemmer, text_original, location_in_ms*, date_floor_year, date_ceiling_year, palaeographical_info, contextual_info, manuscript_id, title, is_dbbe.```
+```id, created, modified, public_comment, incipit, text_stemmer, text_original, location_in_ms*, completion_date_floor, completion_date_ceiling, palaeographical_info, contextual_info, manuscript_id, title```
 
-*Note that, in the current version, the location of occurrences within the manuscript is given as plain text (ex. p. 394-395 for pages or f. 18r-18v for folia (r for recto, v for verso). This was copied from the Elasticsearch, but could later be split into individual columns ('from' and 'to') based on additional information from postgres. For manuscripts that have more than 1 way of numbering pages, the alternative location is marked as f. 14r -- (alt.) p. 27. 
-
-Related tables:
-
-- ```occurrence_person_role```: Any possible role a person could play in the publication of this occurrence. Example: Scribe ( = historical person), transcriber (=modern person), contributor (=modern person)...
-- ```occurrence_genre```: genre attributed to this occurrence (Can be more than 1)
-- ```occurrence_metre```: metre attributed to this occurrence (Can be more than 1)
-- ```occurrence_management```: Internal information. For example: To do's in the processing of this occurrence
-- ```occurrence_acknowledgement```: Plain text shout out to people who helped in the publication of this occurrence. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to occurrence_person_role._
-- ```occurrence_text_status```: An occurrence text can be partially/completely (un)known
-- ```occurrence_related_occurrence``` and ```occurrence_relation_definition```: An occurrence can be related to other occurrence if they (a) some of their verses share verse groups or (b) they share type. The relationship type is defined in occurrence_relation_definition. This works in one direction: if occurrenceA --> related to --> occurrenceB is set, then occurrenceB --> related to --> occurrenceA is not set.
-- ```occurrence_keyword```: Keywords telling what the occurrence is about
-
-#### **2. Types**
-
-These are prototypes of occurrences. A lot of occurrence have a high level of similarity. DBBE proposes prototypes for every group of similar occurrence.
+*Note that, in the current version, the location of occurrences within the manuscript is given as plain text (ex. p. 394-395 for pages or f. 18r-18v for folia). For manuscripts that have more than 1 way of numbering pages, the alternative location is marked as f. 14r -- (alt.) p. 27.
 
 Related tables:
 
-- ```Type_person_role```: Any possible role a person could play in the construction and publication of this Type. 
-- ```Type_genre```: genre attributed to this Type. More than 1 Genre can be attributed, and this is not necessarily an accumulation of the genre of the linked occurrence.
-- ```Type_metre```: metre attributed to this Type. More than 1 Metre can be attributed, and this is not necessarily an accumulation of the genre of the linked occurrence.
-- ```Type_management```: Internal information. For example: To do's in the processing of this Type
-- ```Type_acknowledgement```: Plain text shout out to people who helped in the publication of this Type. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to type_person_role._
-- ```Type_text_status```: Type text can be either completely known or partially unknown
-- ```Type_related_type (linked via type_relation_definition)```: Groups of similar types. This works in one direction: if typeA --> related to --> typeB is set, then typeB --> related to --> typeA is not set.
-- ```Type_tag```:  They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). 
-- ```Type_occurrence```: occurrence linked to this type. Note that this is a many-to-many relationship: one occurrence can be linked to several types, one type can have several occurrence linked to it. 
-- ```Type_editorial_status```: editorial states for types. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
-- ```type_keyword```: Keywords telling what the type is about
+- `occurrence_person_role`: Links Occurrences to Persons, indicating which Role a Person plays in the given Occurrence. Example: Scribe ( = historical person), transcriber (=modern person), contributor (=modern person)...
+- `occurrence_genre`: genre attributed to this Occurrence (Can be more than 1)
+- `occurrence_metre`: metre attributed to this Occurrence (Can be more than 1)
+- `occurrence_management`: Internal information. For example: To do's in the processing of this Occurrence
+- `occurrence_acknowledgement`: Plain text acknowledgement of people who helped in the publication of this Occurrence.
+- `occurrence_text_status`: An Occurrence text can have statuses like partially/completely (un)known
+- `occurrence_related_occurrence` and `occurrence_relation_definition`: An Occurrence can be related to other Occurrence if (a) some of their verses share Verse Groups or (b) they share a Type. The relationship type is defined in `occurrence_relation_definition`. This works in one direction: if occurrenceA --> related to --> occurrenceB is set, then occurrenceB --> related to --> occurrenceA is not set.
+- `occurrence_keyword`: Keywords telling what the Occurrence is about
 
+#### **2. Verses**
 
+This table contains verse-level information about an Occurrence.
 
-#### **3. Manuscripts**
+Columns include `id, occurrence_id, manuscript_id, text, order_in_occurrence, verse_group_id.`
 
-Contains metadata about manuscripts.
+Verse Groups are groupings of similar verses across occurrences.
 
-Related tables:
+#### **3. Types**
 
-- ```Manuscript_acknowledgement```: Plain text shout out to people who helped in the publication of this Acknowledgement. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', and add this to manuscript_person_role._
-- ```Manuscript_content```: Explains what the manuscript is about. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
-- ```Manuscript_identification```: Links a manuscript to one or more IDs that were used in canonical works to refer to this manuscript (ex: Diktyon)
-- ```Manuscript_management```: Internal information. For example: To do's in the processing of this manuscript
-- ```Manuscript_location```: The location where the manuscript was written. Careful: Location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the location table, you could also see that Brussels is in Belgium. In the original Elasticsearch, this was named "Origins" instead of "location"
-- ```Manuscript_person_role```: Any possible role a person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator  (=historical person), contributor (=modern person)...
-
-
-
-#### **4. Persons**
-
-Contains metadata about persons involved (authors, editors, patrons, etc.).
+This table contains prototypes of Occurrences. A lot of Occurrences have a high level of similarity. DBBE proposes prototypes for every group of similar Occurrences.
 
 Related tables:
 
-- ```Person_acknowledgement```: Plain text shout out to people who helped in the publication of the information on this (historical) person. _This was stored as plain text in the original DBBE. Maybe in time we could have a role 'Acknowledged', although that would mean we'd need a person_person_role table which would be confusing._
-- ```person_identification```: Used to link persons to canonical IDs set by different authorities.
-- ```person_management```: Internal information. For example: To do's in the processing of this person
-- ```person_self_designation```: How a scribe describes himself
-- ```person_office```: the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
+- `type_person_role`: Links Types to Persons, indicating which Role a Person plays in the given Type. Example: Creator, Translitor, Editor, Contributor, ...
+- `type_genre`: genre attributed to this Type. More than 1 Genre can be attributed.
+- `type_metre`: metre attributed to this Type. More than 1 Metre can be attributed.
+- `type_management`: Internal information. For example: To do's in the processing of this Type
+- `type_acknowledgement`: Plain text acknowledgement of people who helped in the publication of this Type.
+- `type_text_status`: Type text can be either completely known or partially unknown
+- `type_related_type`: Groups of similar Types. The relationship is defined in `type_relation_definition`. This works in one direction: if typeA --> related to --> typeB is set, then typeB --> related to --> typeA is not set.
+- `type_tag`: Explains the function of the Type (ex: introducing a subject, making a comment on the content,...).
+- `type_occurrence`: Occurrences linked to this Type. Note that this is a many-to-many relationship: one occurrence can be linked to several types, one type can have several occurrence linked to it.
+- `type_editorial_status`: editorial states for types. Currently only critical text / not a critical text.
+- `type_keyword`: Keywords telling what the type is about
 
+#### **4. Manuscripts**
 
-#### **5. Bibliographies**
+This table contains metadata about manuscripts.
+
+Related tables:
+
+- `manuscript_person_role`: Any possible role a Person could play in the publication of this manuscript. Example: Patron ( = historical person), Illuminator (=historical person), contributor (=modern person)...
+- `manuscript_acknowledgement`: Plain text acknowledgement of people who helped in the publication of this Manuscript.
+- `manuscript_content`: Explains what the manuscript is about. Careful: ```content``` is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the `content` table can be used to trace the full content.
+- `manuscript_identification`: Links a manuscript to one or more IDs that were used in canonical works to refer to this manuscript (ex: Diktyon)
+- `manuscript_management`: Internal information. For example: To do's in the processing of this manuscript
+- `manuscript_location`: The location where the manuscript was written. Careful: location is a hierarchical table. If a manuscript was written in Brussels, it is linked to Brussels, but via the parent_id column of the `location` table, you could also see that Brussels is in Belgium.
+
+#### **5. Persons**
+
+This table contains metadata about persons involved (authors, editors, patrons, etc.).
+
+Related tables:
+
+- `person_acknowledgement`: Plain text acknowledgement of people who helped in the publication of the information on this (historical) person.
+- `person_identification`: Used to link persons to canonical IDs set by different authorities.
+- `person_management`: Internal information. For example: To do's in the processing of this person
+- `person_self_designation`: Used for scribes: How a scribe describes himself
+- `person_office`: Used for scribes: The official title of a person.
+
+#### **6. Bibliographies**
 
 Bibliographies are modelled as concrete entity types, rather than a single table as in the original setup.
 
-- ```article```
-- ```book```
-- ```book_chapter```
-- ```blog_post```
-- ```bib_varia```: This table is usually avoided but contains entries for which no other bibliographical type exists.
-- ```online_source```
-- ```phd```
+- `article`
+- `book`
+- `book_chapter`
+- `blog_post`
+- `bib_varia`: This table is usually avoided but contains entries for which no other bibliographical type exists.
+- `online_source`
+- `phd`
 
 Each bibliographic entity has:
-- its own table
-- a corresponding *_person_role table
-- a corresponding *_management table
-- linking tables to the item the bibliography is about:
-  - manuscripts (manuscript_*)
-  - occurrence (occurrence_*)
-  - persons (persons_*)
-  - type (type_*)
+- its own table as mentioned above
+- a corresponding `_person_role` table (ex.: article_person_role: could contain authors, contributors, reviewers, ... for a given article)
+- tables linking to the item the bibliography is about:
+  - manuscripts (ex: `manuscript_article`: contains articles about a given manuscript)
+  - occurrence (ex: `occurrence_book`: contains books about a given Occurrences)
+  - persons (ex: `person_article`: contains articles about - usually historical - persons)
+  - type (ex: `type_article`: contains articles about given Types)
 
-Additional structures:
-- journal and journal_issue: Articles may be linked to journal issues via article.journal_issue_id
+Additional structures: `journal` and `journal_issue`: Articles may be linked to journals and journal issues.
 
-Note that, for now, some of these bibliography tables were added for completeness sake: not every concept (Manuscript / Occurrence / Person / Type) has all types of bibliographies linked to it (online sources, PhDs, etc.)
-
-#### **6. Verses**
-
-Contains verse-level data for occurrence.
-
-Columns include ```id, occurrence_id, manuscript_id, text, order_in_occurrence, verse_group_id.```
-
-Verse_groups allow grouping of related verses.
+Note that, for now, some of these bibliography tables were added for completeness sake: not every concept (Manuscript / Occurrence / Person / Type) has all types of bibliographies linked to it (online sources, PhDs, etc.).
 
 ### **Lookup / Metadata Tables**
 
-- ```roles``` — defines role type for persons.
-- ```text_status``` — textual status of occurrence or type.
-- ```keywords``` — keywords for occurrence and type.
-- ```tag``` — tag for type: They seem to explain the function of the Type (ex: introducing a subject, making a comment on the content,...). From dbbe.ugent.be: More refined than "subject" and rather referring to recurring motifs, such as . Meant to enable specific thematic searches.
-- ```metre``` — metre classification.
-- ```genre``` — genre classification.
-- ```management``` — administrative metadata.
-- ```acknowledgement``` — acknowledgement linked to occurrence, manuscripts, type, or persons.
-- ```editorial_status``` — editorial states for type. Currently only ```(not) a critical text```. This might become just a boolean value but since it's not sure yet, we stored it like this
-- ```self_designation``` — how a scribe describes himself
-- ```office``` — the official title of a person. **To do**:These are currently stored entirely separate from ```self designation```, even tho a person could describe himself using his official title too...
-- ```location``` - location that could be linked to manuscripts, library, persons,... . This is based upon the postgrs 'region' table. Note that a region used to have a flag is_city in the Postgres' Region table. I want to avoid keeping this approach so for now I did not add it. We might want to consider making this cleaner. 
-- ```library``` — library name and location. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
-- ```collection``` — collection metadata. Note that a manuscript name is always ```City - library - collection - shelf``` (to be verified with dbbe)
-- ```biblio_category``` — categories for bibliographies.
-- ```content``` -  Used for storing manuscript content. Careful: This is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content. 
-- ```identification``` -canonical ways to refer to persons or manuscripts
+- `roles` — defines roles for persons (ex. Author, Scribe, Contributor, ...)
+- `text_status` — textual status of Occurrence or Type. (ex. Text completely known, text partially unknown,...)
+- `keywords` — keywords for Occurrence and Type (ex. Holy Trinity, Seven Sages, Last Judgement, ...)
+- `tag` — tag for Type: Explains the function of the Type (ex: introducing a subject, making a comment on the content,...).
+- `metre` — metre classification (ex. Dodecasyllable, Elegiacs,...)
+- `genre` — genre classification. (ex. Scribe-related epigram, Text-related epigram, Reader-related epigram)
+- `management` — administrative metadata. (ex. Bibliography to check)
+- `acknowledgement` — acknowledgement linked to occurrence, manuscripts, type, or persons. (ex. Information on the manuscript courtesy of \<person x\>)
+- `editorial_status` — editorial states for type. Currently only (not) a critical text.
+- `self_designation` — how a scribe describes himself
+- `office` — the official title of a person.
+- `location` - location that could be linked to manuscripts, library, persons,... .
+- `library` — library name and location. Note that a manuscript name is always City - library - collection - shelf
+- `collection` — collection metadata. Note that a manuscript name is always City - library - collection - shelf
+- `content` - Used for storing manuscript content. Careful: ```location``` is a hierarchical table. For example, a manuscript can be about Biblica -> Novum Testamentum. In this table, the lowest leaf (Novum Testamentum) is stored. The parent_id column of the content table can be used to trace the full content.
+- `identification` - canonical ways to refer to persons or manuscripts (ex. Diktyon identifiers)
 <!-- END DB_SCHEMA -->
 
 ----
@@ -233,8 +226,7 @@ This uses Python’s built-in HTTP server module, so no additional packages are 
 
 ---
 
+
 ## Next steps
 
 - How to keep the docs and the db schema updated: 
-- Implement GCDH feedback
-- Can we implement some sort of validation?
