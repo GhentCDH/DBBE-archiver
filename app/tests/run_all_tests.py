@@ -43,6 +43,8 @@ from test_poem import run_test as test_poem
 from test_genre import run_test as test_genre
 from test_book import run_test as test_book
 from test_library import run_test as test_library
+from test_fund import run_test as test_fund
+
 from test_identification import run_test as test_identification
 
 def print_result(name, success, table):
@@ -72,6 +74,7 @@ def main():
         # ("document_keyword", test_document_keywords),
         ("evidence", test_evidence),
         ("evidence_factoid", test_evidence_factoid),
+        ("fund", test_fund),
         ("genre", test_genre),
         ("identification", test_identification),
         ("journal", test_journals),
@@ -114,7 +117,6 @@ def main():
         # factoid
         # factoid_type
 
-        # fund
         # global_id
         # image
         # institution
