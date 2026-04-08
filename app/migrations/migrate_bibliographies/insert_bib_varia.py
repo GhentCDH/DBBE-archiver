@@ -1,3 +1,4 @@
+import os
 from app.common import (
     execute_with_normalization,
     get_db_connection,
@@ -8,7 +9,8 @@ from app.common import (
 
 
 def get_biblio_titles_from_es(biblio_ids, es):
-    index = "dbbe_dev_bibliographies"
+    prefix = os.getenv("ES_INDEX_PREFIX", "dbbe_dev")
+    index = f"{prefix}_bibliographies"
     titles = {}
     CHUNK = 500
 

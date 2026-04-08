@@ -6,10 +6,11 @@ from app.common import (
     get_public_release
 )
 from .biblio_type_enum import BiblioType
-
+import os
 
 def get_biblio_titles_from_es(biblio_ids, es):
-    index = "dbbe_dev_bibliographies"
+    prefix = os.getenv("ES_INDEX_PREFIX", "dbbe_dev")
+    index = f"{prefix}_bibliographies"
     titles = {}
     CHUNK = 500
 
