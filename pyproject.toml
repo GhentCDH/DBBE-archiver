@@ -10,7 +10,6 @@ dependencies = [
     "psycopg2-binary>=2.9.11",
     "requests>=2.32.5",
     "python-dotenv>=1.2.1",
-    "unicodedata>=14.0.0",
     "markdown"]
 
 [tool.setuptools.packages.find]
