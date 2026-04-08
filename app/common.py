@@ -77,7 +77,7 @@ def get_postgres_connection():
 
     if pg_connection_string:
         ### For some reason this is the only way we can connect via Nomad. Pg_user and password combination gives 'incorrect password' like errors.
-        pg_conn = psycopg2.connect(pg_connection_string)
+        pg_conn = psycopg2.connect(pg_connection_string,options='-c default_transaction_read_only=on')
     else:
         pg_host = os.getenv("PG_HOST", "localhost")
         pg_port = os.getenv("PG_PORT", 15432)
@@ -89,7 +89,8 @@ def get_postgres_connection():
             port=pg_port,
             dbname=pg_db,
             user=pg_user,
-            password=pg_password
+            password=pg_password,
+            options='-c default_transaction_read_only=on'
         )
     pg_cursor = pg_conn.cursor()
     return pg_conn, pg_cursor
