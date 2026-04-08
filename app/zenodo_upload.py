@@ -5,22 +5,32 @@ from datetime import date
 import re
 import subprocess
 import markdown
+import unicodedata
 SOURCE_RECORD_ID=7682523
 load_dotenv()
 ZENODO_TOKEN = os.getenv("ZENODO_TOKEN", "")
 ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
-DEPOSITION_TITLE = os.getenv("DEPOSITION_TITLE", "Database of Byzantine Book Epigrams - Archive")
+DEPOSITION_TITLE = os.getenv("DEPOSITION_TITLE", "Dataset of Byzantine Book Epigrams")
 NEW_CREATORS = [
-    {"name": "Kyriaki Giannikou", "orcid": "0000-0002-5865-0810"},
-    {"name": "Eleonora Lauro", "orcid": "0009-0008-1228-617X"},
-    {"name": "Juan Bautista Juan López", "orcid": "0000-0002-7092-5338"},
-    {"name": "Francesca Samori", "orcid": "0000-0003-1093-6980"},
-    {"name": "Joren Six", "orcid": "0000-0001-7671-1907"},
-    {"name": "Frederic Lamsens", "orcid": "0000-0002-1527-5723"},
-    {"name": "Maxime Deforche", "orcid": "0000-0002-2132-0439"},
-    {"name": "Ricarda Schier", "orcid": "0000-0002-3751-7535"},
-    {"name": "Grigory Vorobyev", "orcid": "0009-0006-3691-4746"},
-    {"name": "PIRIL US MACLENNAN", "orcid": "0000-0003-1344-1633"},
+    {"name": "Kyriaki Giannikou", "orcid": "0000-0002-5865-0810", "affiliation":"Ghent University"},
+    {"name": "Eleonora Lauro", "orcid": "0009-0008-1228-617X", "affiliation":"Ghent University"},
+    {"name": "Juan Bautista Juan López", "orcid": "0000-0002-7092-5338", "affiliation":"Ghent University"},
+    {"name": "Francesca Samorì", "orcid": "0000-0003-1093-6980", "affiliation":"Ghent University"},
+    {"name": "Paulien Lemay", "orcid": "0009-0004-2388-9233", "affiliation":"Ghent University"},
+    {"name": "Joren Six", "orcid": "0000-0001-7671-1907", "affiliation":"Ghent University"},
+    {"name": "Frederic Lamsens", "orcid": "0000-0002-1527-5723", "affiliation":"Ghent University"},
+    {"name": "Maxime Deforche", "orcid": "0000-0002-2132-0439", "affiliation":"Ghent University"},
+    {"name": "Ricarda Schier", "orcid": "0000-0002-3751-7535", "affiliation":"Ghent University"},
+    {"name": "Grigory Vorobyev", "orcid": "0009-0006-3691-4746", "affiliation":"Ghent University"},
+    {"name": "PIRIL US MACLENNAN", "orcid": "0000-0003-1344-1633", "affiliation":"Ghent University"},
+    {"name": "Floris Bernard", "orcid":"0000-0003-3041-2762", "affiliation":"Ghent University"},
+    {"name": "Marthe Nemegeer", "orcid": "0009-0001-9901-0916"},
+    {"name": "Raf Praet", "orcid": "0000-0003-4793-5308"},
+    {"name": "Lev Shadrin", "orcid": "0009-0000-9743-9981"},
+    {"name":"Sofia Belioti","orcid":"0000-0002-4760-2637"},
+    {"name": "Anna Gregoriani", "orcid":"0009-0006-0589-1588"},
+    {"name":"Evelyne Diels", "orcid":"0009-0001-8176-9019"},
+    {"name":"Quinten Goethals", "orcid":"0009-0005-5835-3110"}
 
 ]
 CONTRIBUTORS = [
@@ -38,6 +48,75 @@ CONTRIBUTORS = [
 ]
 TWO_WORD_FIRST_NAMES = {"Juan Bautista"}
 
+import unicodedata
+
+AFFILIATION_ALIASES = [
+    (["universiteit gent", "university ghent", "ugent", "ghent university", "ghent univ"], "Ghent University"),
+    (["ku leuven", "katholieke universiteit leuven", "university of leuven"], "KU Leuven"),
+    (["vrije universiteit brussel", "vub"], "Vrije Universiteit Brussel"),
+    (["université libre de bruxelles", "ulb"], "Université libre de Bruxelles"),
+]
+
+def normalize_affiliation(affiliation: str) -> str:
+    """Map known affiliation variants to a canonical name."""
+    lower = affiliation.strip().lower()
+    for variants, canonical in AFFILIATION_ALIASES:
+        if any(variant in lower for variant in variants):
+            return canonical
+    return affiliation  # return as-is if no match found
+
+def get_affiliation_from_orcid(orcid: str) -> str | None:
+    url = f"https://pub.orcid.org/v3.0/{orcid}/employments"
+    headers = {"Accept": "application/json"}
+    try:
+        r = requests.get(url, headers=headers, timeout=5)
+        r.raise_for_status()
+        data = r.json()
+
+        groups = data.get("affiliation-group", [])
+        if not groups:
+            return None
+
+        for group in groups:
+            for summary in group.get("summaries", []):
+                emp = summary.get("employment-summary", {})
+                if emp.get("end-date") is None:  # currently active
+                    name = emp.get("organization", {}).get("name")
+                    if name:
+                        return normalize_affiliation(name)
+        return None
+    except Exception as e:
+        print(f"Could not fetch affiliation for ORCID {orcid}: {e}")
+        return None
+
+def enrich_with_orcid(creator: dict) -> dict:
+    orcid = creator.get("orcid")
+    if not orcid:
+        return creator
+
+    orcid_affiliation = get_affiliation_from_orcid(orcid)
+    if not orcid_affiliation:
+        return creator
+
+    existing_affiliation = creator.get("affiliation")
+    # Also normalize the existing affiliation for comparison, so that
+    # e.g. "Ghent CDH" vs "Ghent University" is caught correctly
+    normalized_existing = normalize_affiliation(existing_affiliation) if existing_affiliation else None
+
+    if not existing_affiliation:
+        print(f"  {creator['name']}: adding affiliation from ORCID → {orcid_affiliation}")
+        return {**creator, "affiliation": orcid_affiliation}
+    elif normalized_existing != orcid_affiliation:
+        print(f"  {creator['name']}: updating affiliation {existing_affiliation!r} → {orcid_affiliation!r}")
+        return {**creator, "affiliation": orcid_affiliation}
+    else:
+        # Affiliation matches after normalization — but update the stored string
+        # to the canonical form if it wasn't already
+        if existing_affiliation != normalized_existing:
+            return {**creator, "affiliation": normalized_existing}
+        return creator
+def normalize(s):
+    return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("ascii").lower()
 
 def sort_key(creator):
     name = creator.get("name", "").strip()
@@ -45,9 +124,9 @@ def sort_key(creator):
 
     for first in TWO_WORD_FIRST_NAMES:
         if name.startswith(first):
-            return parts[2].lower()
+            return normalize(parts[2])
 
-    return parts[1].lower() if len(parts) > 1 else name.lower()
+    return normalize(parts[1]) if len(parts) > 1 else normalize(name)
 
 def get_creators_from_record(record_id: str, headers: dict) -> list:
     r = requests.get(f"https://zenodo.org/api/records/{record_id}", headers=headers)
@@ -56,24 +135,31 @@ def get_creators_from_record(record_id: str, headers: dict) -> list:
     print(f"Found {len(creators)} creators from record {record_id}")
     return creators
 
+
 def get_merged_creators(record_id: str, headers: dict, new_creators: list) -> list:
     r = requests.get(f"https://zenodo.org/api/records/{record_id}", headers=headers)
     r.raise_for_status()
     existing_creators = r.json().get("metadata", {}).get("creators", [])
     print(f"Found {len(existing_creators)} creators from record {record_id}")
 
-    existing_orcids = {c.get("orcid") for c in existing_creators if c.get("orcid")}
-    added = []
-    for creator in new_creators:
-        if creator.get("orcid") not in existing_orcids:
-            existing_creators.append(creator)
-            added.append(creator["name"])
+    new_orcids = {c.get("orcid") for c in new_creators if c.get("orcid")}
+    new_names = {normalize(c.get("name", "")) for c in new_creators}
 
-    print(f"Added {len(added)} new creators: {', '.join(added)}")
+    filtered_existing = [
+        c for c in existing_creators
+        if c.get("orcid") not in new_orcids
+        and normalize(c.get("name", "")) not in new_names
+    ]
+    overridden = len(existing_creators) - len(filtered_existing)
+    print(f"Overriding {overridden} existing creators with updated entries from NEW_CREATORS")
 
-    pinned = [c for c in existing_creators if c.get("name") == "Kristoffel Demoen"]
+    # Merge: NEW_CREATORS takes priority over existing for overlapping people,
+    # then enrich everyone with live ORCID data (only adds/updates, never removes)
+    merged = [enrich_with_orcid(c) for c in filtered_existing + new_creators]
+
+    pinned = [c for c in merged if c.get("name") == "Kristoffel Demoen"]
     rest = sorted(
-        [c for c in existing_creators if c.get("name") != "Kristoffel Demoen"],
+        [c for c in merged if c.get("name") != "Kristoffel Demoen"],
         key=sort_key
     )
 
@@ -135,10 +221,34 @@ def upload_sqlite_files_to_zenodo(folder_path, publish, deposition_id):
             "access_right": "open",
             "contributors": CONTRIBUTORS,
             "publication_date": today_str,
-            "keywords": ["Byzantine studies","Manuscript studies","Byzantium", "Digital Humanities"],
+            "keywords": ["Byzantine studies","Manuscript studies","Byzantium", "Digital humanities"],
+            "related_identifiers": [{'relation': 'isSupplementTo',
+                                     'identifier':'10.5281/zenodo.7682522',
+                                     "resource_type":"dataset",
+                                     "scheme":"doi"}],
+            "subjects":[{"term": "Digital humanities",
+                         "identifier": "https://publications.europa.eu/resource/authority/8mn/euroscivoc/0627c833-88fb-4bbd-86b4-1eb20529fb17",
+                         "scheme": "url"}],
+            "custom": {
+                "code:codeRepository": "https://github.com/GhentCDH/DBBE-archiver",
+                "code:programmingLanguage": [
+                    {
+                        "id": "python",
+                        "title": {
+                            "en": "Python"
+                        }
+                    }
+                ],
+                "code:developmentStatus": {
+                    "id": "active",
+                    "title": {
+                        "en": "Active"
+                    }
+                }
+            },
+            "language":"eng"
         }
     }
-    print(deposition_data)
     if deposition_id is None:
         print("Creating new deposition...")
         r = requests.post(ZENODO_API_URL, params={}, json=deposition_data, headers=headers)

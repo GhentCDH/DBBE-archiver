@@ -159,13 +159,14 @@ Bibliographies are modelled as concrete entity types, rather than a single table
 - `phd`
 
 Each bibliographic entity has:
+
 - its own table as mentioned above
 - a corresponding `_person_role` table (ex.: article_person_role: could contain authors, contributors, reviewers, ... for a given article)
 - tables linking to the item the bibliography is about:
-  - manuscripts (ex: `manuscript_article`: contains articles about a given manuscript)
-  - occurrence (ex: `occurrence_book`: contains books about a given Occurrences)
-  - persons (ex: `person_article`: contains articles about - usually historical - persons)
-  - type (ex: `type_article`: contains articles about given Types)
+    - manuscripts (ex: `manuscript_article`: contains articles about a given manuscript)
+    - occurrence (ex: `occurrence_book`: contains books about a given Occurrences)
+    - persons (ex: `person_article`: contains articles about - usually historical - persons)
+    - type (ex: `type_article`: contains articles about given Types)
 
 Additional structures: `journal` and `journal_issue`: Articles may be linked to journals and journal issues.
 
