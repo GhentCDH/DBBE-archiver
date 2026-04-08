@@ -4,6 +4,15 @@ def migrate_journals():
     conn, cursor = get_db_connection()
     pg_conn, pg_cursor = get_postgres_connection()
 
+    execute_with_normalization(cursor, "PRAGMA table_info(journal_issue)")
+    columns = [row[1] for row in cursor.fetchall()]
+
+    if "journal_id" not in columns:
+        execute_with_normalization(cursor, """
+            ALTER TABLE journal_issue
+            ADD COLUMN journal_id INTEGER REFERENCES journal(id)
+        """)
+
     execute_with_normalization(cursor, """
         PRAGMA table_info(article)
     """)
