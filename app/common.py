@@ -210,11 +210,18 @@ def get_or_create_role(cursor, role_name):
 
     return role_id
 
+BASE_INDICES = [
+    "types",
+    "bibliographies",
+    "verses",
+    "occurrences",
+    "manuscripts",
+    "persons",
+]
 
 def get_dbbe_indices(es):
     prefix = os.getenv("ES_INDEX_PREFIX", "dbbe_dev")
-    indices = es.cat.indices(format="json")
-    return [idx['index'] for idx in indices if idx['index'].startswith(prefix)]
+    return [f"{prefix}_{name}" for name in BASE_INDICES]
 
 def insert_many_to_many(
     cursor,
