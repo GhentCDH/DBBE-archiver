@@ -225,9 +225,3 @@ This uses Python’s built-in HTTP server module, so no additional packages are 
 , allowing you to explore the demo in your browser. The demo HTML/JavaScript loads the SQLite file directly in the browser using sql.js
 , which enables full client-side querying without a database server and is a capability essentially unique to SQLite’s single-file design. This setup is intended for testing and exploration only, not for production deployment.
 
----
-
-
-## Next steps
-
-- How to keep the docs and the db schema updated: 
