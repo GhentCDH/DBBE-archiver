@@ -57,6 +57,148 @@ AFFILIATION_ALIASES = [
     (["université libre de bruxelles", "ulb"], "Université libre de Bruxelles"),
 ]
 
+
+############################# TEST
+import sqlite3
+import tempfile
+import hashlib
+
+
+def get_latest_published_sqlite_url(source_record_id: int, headers: dict) -> str | None:
+    """Get the download URL of the sqlite file from the latest published version."""
+    r = requests.get(f"https://zenodo.org/api/records/{source_record_id}", headers=headers)
+    r.raise_for_status()
+    files = r.json().get("files", [])
+    for f in files:
+        if f.get("key", "").endswith(".sqlite"):
+            return f["links"]["self"]
+    return None
+
+
+def download_sqlite_to_temp(url: str, headers: dict) -> str:
+    """Download a sqlite file to a temp path, return the path."""
+    print(f"Downloading previous SQLite from Zenodo for comparison...")
+    r = requests.get(url, headers=headers, stream=True)
+    r.raise_for_status()
+    tmp = tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False)
+    for chunk in r.iter_content(chunk_size=8192):
+        tmp.write(chunk)
+    tmp.close()
+    print(f"  Downloaded to {tmp.name}")
+    return tmp.name
+
+
+def get_table_row_counts(db_path: str) -> dict[str, int]:
+    """Return {table_name: row_count} for all tables in a SQLite file."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+    tables = [row[0] for row in cursor.fetchall()]
+    counts = {}
+    for table in tables:
+        cursor.execute(f"SELECT COUNT(*) FROM \"{table}\"")
+        counts[table] = cursor.fetchone()[0]
+    conn.close()
+    return counts
+
+
+def compare_databases(old_path: str, new_path: str) -> dict:
+    """
+    Compare row counts between old and new SQLite.
+    Returns a dict with:
+      - 'changed': bool
+      - 'added_tables': list of new tables
+      - 'removed_tables': list of removed tables
+      - 'row_changes': {table: {'old': n, 'new': m, 'diff': d}} for tables with changes
+    """
+    old_counts = get_table_row_counts(old_path)
+    new_counts = get_table_row_counts(new_path)
+
+    old_tables = set(old_counts.keys())
+    new_tables = set(new_counts.keys())
+
+    added_tables   = sorted(new_tables - old_tables)
+    removed_tables = sorted(old_tables - new_tables)
+
+    row_changes = {}
+    for table in old_tables & new_tables:
+        old_n = old_counts[table]
+        new_n = new_counts[table]
+        if old_n != new_n:
+            row_changes[table] = {"old": old_n, "new": new_n, "diff": new_n - old_n}
+
+    changed = bool(added_tables or removed_tables or row_changes)
+    return {
+        "changed":        changed,
+        "added_tables":   added_tables,
+        "removed_tables": removed_tables,
+        "row_changes":    row_changes,
+    }
+
+
+def build_change_summary_html(diff: dict, today_str: str) -> str:
+    """Build an HTML paragraph summarising what changed since the last version."""
+    lines = [f"<h3>Changes in this version ({today_str})</h3>", "<ul>"]
+
+    for table in diff["added_tables"]:
+        lines.append(f"<li>New table added: <code>{table}</code></li>")
+
+    for table in diff["removed_tables"]:
+        lines.append(f"<li>Table removed: <code>{table}</code></li>")
+
+    for table, change in sorted(diff["row_changes"].items()):
+        diff_n = change["diff"]
+        direction = "added" if diff_n > 0 else "removed"
+        lines.append(
+            f"<li>Table <code>{table}</code>: {abs(diff_n)} "
+            f"{'row' if abs(diff_n) == 1 else 'rows'} {direction} "
+            f"({change['old']} → {change['new']})</li>"
+        )
+
+    lines.append("</ul>")
+    return "\n".join(lines)
+
+
+def check_for_changes_and_enrich_description(
+    new_sqlite_path: str,
+    source_record_id: int,
+    base_description: str,
+    today_str: str,
+) -> tuple[bool, str]:
+
+    headers = {"Authorization": f"Bearer {ZENODO_TOKEN}"}
+
+    sqlite_url = get_latest_published_sqlite_url(source_record_id, headers)
+    if not sqlite_url:
+        print("No previous SQLite found on Zenodo — treating as first upload.")
+        return True, base_description
+
+    old_path = download_sqlite_to_temp(sqlite_url, headers)
+
+    try:
+        diff = compare_databases(old_path, new_sqlite_path)
+    finally:
+        os.unlink(old_path)
+
+    if not diff["changed"]:
+        print("No changes detected in any table — skipping new version.")
+        return False, base_description
+
+    print("Changes detected:")
+    for table in diff["added_tables"]:
+        print(f"  + new table: {table}")
+    for table in diff["removed_tables"]:
+        print(f"  - removed table: {table}")
+    for table, change in sorted(diff["row_changes"].items()):
+        sign = "+" if change["diff"] > 0 else ""
+        print(f"  ~ {table}: {sign}{change['diff']} rows ({change['old']} → {change['new']})")
+
+    change_html = build_change_summary_html(diff, today_str)
+    enriched    = base_description + "\n\n" + change_html
+    return True, enriched
+
+###################### end test
+
 def normalize_affiliation(affiliation: str) -> str:
     """Map known affiliation variants to a canonical name."""
     lower = affiliation.strip().lower()
@@ -210,6 +352,27 @@ description_text = html_template.replace(
 def upload_sqlite_files_to_zenodo(folder_path, publish, deposition_id):
     headers = {"Authorization": f"Bearer {ZENODO_TOKEN}"}
     today_str = date.today().isoformat()
+
+    # ── Find the new sqlite file ──────────────────────────────────────────────
+    sqlite_files = [f for f in os.listdir(folder_path) if f.endswith(".sqlite")]
+    if not sqlite_files:
+        print("No SQLite files found in folder — aborting.")
+        return
+    new_sqlite_path = os.path.join(folder_path, sqlite_files[0])
+
+    # ── Compare against latest published version ──────────────────────────────
+    should_publish, final_description = check_for_changes_and_enrich_description(
+        new_sqlite_path=new_sqlite_path,
+        source_record_id=SOURCE_RECORD_ID,
+        base_description=description_text,
+        today_str=today_str,
+    )
+
+    if not should_publish:
+        print("Nothing to do — database unchanged since last Zenodo version.")
+        return
+    #########
+
     creators = get_merged_creators(SOURCE_RECORD_ID, headers, NEW_CREATORS)
 
     deposition_data = {
