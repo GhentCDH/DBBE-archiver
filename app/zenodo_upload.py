@@ -1,3 +1,4 @@
+import unicodedata
 import os
 import requests
 from dotenv import load_dotenv
@@ -14,6 +15,7 @@ ZENODO_TOKEN = os.getenv("ZENODO_TOKEN", "")
 ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
 DEPOSITION_TITLE = os.getenv("DEPOSITION_TITLE", "Dataset of Byzantine Book Epigrams")
 ZENODO_BASE = os.getenv("ZENODO_BASE", "https://sandbox.zenodo.org/")
+
 NEW_CREATORS = [
     {"name": "Kyriaki Giannikou", "orcid": "0000-0002-5865-0810", "affiliation":"Ghent University"},
     {"name": "Eleonora Lauro", "orcid": "0009-0008-1228-617X", "affiliation":"Ghent University"},
@@ -50,8 +52,6 @@ CONTRIBUTORS = [
     }
 ]
 TWO_WORD_FIRST_NAMES = {"Juan Bautista"}
-
-import unicodedata
 
 AFFILIATION_ALIASES = [
     (["universiteit gent", "university ghent", "ugent", "ghent university", "ghent univ"], "Ghent University"),
