@@ -129,6 +129,7 @@ def has_changes(new_sqlite_path: str, deposition_id: str, headers: dict) -> bool
     return True
 
 #######################
+
 def normalize_affiliation(affiliation: str) -> str:
     """Map known affiliation variants to a canonical name."""
     lower = affiliation.strip().lower()
@@ -282,6 +283,19 @@ description_text = html_template.replace(
 def upload_sqlite_files_to_zenodo(folder_path, publish, deposition_id):
     headers = {"Authorization": f"Bearer {ZENODO_TOKEN}"}
     today_str = date.today().isoformat()
+
+    # ── Find new sqlite ───────────────────────────────────────────────────────
+    sqlite_files = [f for f in os.listdir(folder_path) if f.endswith(".sqlite")]
+    if not sqlite_files:
+        print("No SQLite files found — aborting.")
+        return
+    new_sqlite_path = os.path.join(folder_path, sqlite_files[0])
+
+    # ── Bail out if nothing changed ───────────────────────────────────────────
+    if deposition_id is not None and not has_changes(new_sqlite_path, deposition_id, headers):
+        print("Nothing to deploy.")
+        return
+    #########################
 
     creators = get_merged_creators(SOURCE_RECORD_ID, headers, NEW_CREATORS)
 
