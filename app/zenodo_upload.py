@@ -6,11 +6,14 @@ import re
 import subprocess
 import markdown
 import unicodedata
-SOURCE_RECORD_ID=7682523
+
+
+SOURCE_RECORD_ID=os.getenv("DEPOSITION_ID", "")
 load_dotenv()
 ZENODO_TOKEN = os.getenv("ZENODO_TOKEN", "")
 ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
 DEPOSITION_TITLE = os.getenv("DEPOSITION_TITLE", "Dataset of Byzantine Book Epigrams")
+ZENODO_BASE = os.getenv("ZENODO_BASE", "https://sandbox.zenodo.org/")
 NEW_CREATORS = [
     {"name": "Kyriaki Giannikou", "orcid": "0000-0002-5865-0810", "affiliation":"Ghent University"},
     {"name": "Eleonora Lauro", "orcid": "0009-0008-1228-617X", "affiliation":"Ghent University"},
@@ -65,8 +68,7 @@ import hashlib
 
 
 def get_latest_published_sqlite_url(source_record_id: int, headers: dict) -> str | None:
-    """Get the download URL of the sqlite file from the latest published version."""
-    r = requests.get(f"https://zenodo.org/api/records/{source_record_id}", headers=headers)
+    r = requests.get(f"{ZENODO_BASE}api/records/{source_record_id}", headers=headers)
     r.raise_for_status()
     files = r.json().get("files", [])
     for f in files:
@@ -76,7 +78,6 @@ def get_latest_published_sqlite_url(source_record_id: int, headers: dict) -> str
 
 
 def download_sqlite_to_temp(url: str, headers: dict) -> str:
-    """Download a sqlite file to a temp path, return the path."""
     print(f"Downloading previous SQLite from Zenodo for comparison...")
     r = requests.get(url, headers=headers, stream=True)
     r.raise_for_status()
@@ -89,7 +90,6 @@ def download_sqlite_to_temp(url: str, headers: dict) -> str:
 
 
 def get_table_row_counts(db_path: str) -> dict[str, int]:
-    """Return {table_name: row_count} for all tables in a SQLite file."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
@@ -103,14 +103,6 @@ def get_table_row_counts(db_path: str) -> dict[str, int]:
 
 
 def compare_databases(old_path: str, new_path: str) -> dict:
-    """
-    Compare row counts between old and new SQLite.
-    Returns a dict with:
-      - 'changed': bool
-      - 'added_tables': list of new tables
-      - 'removed_tables': list of removed tables
-      - 'row_changes': {table: {'old': n, 'new': m, 'diff': d}} for tables with changes
-    """
     old_counts = get_table_row_counts(old_path)
     new_counts = get_table_row_counts(new_path)
 
@@ -137,7 +129,6 @@ def compare_databases(old_path: str, new_path: str) -> dict:
 
 
 def build_change_summary_html(diff: dict, today_str: str) -> str:
-    """Build an HTML paragraph summarising what changed since the last version."""
     lines = [f"<h3>Changes in this version ({today_str})</h3>", "<ul>"]
 
     for table in diff["added_tables"]:
@@ -412,6 +403,7 @@ def upload_sqlite_files_to_zenodo(folder_path, publish, deposition_id):
             "language":"eng"
         }
     }
+
     if deposition_id is None:
         print("Creating new deposition...")
         r = requests.post(ZENODO_API_URL, params={}, json=deposition_data, headers=headers)
@@ -422,15 +414,6 @@ def upload_sqlite_files_to_zenodo(folder_path, publish, deposition_id):
         print(f"Created new deposition ID: {new_deposition_id}")
 
     else:
-        # r = requests.get(f"{ZENODO_API_URL}/{deposition_id}", headers=headers)
-        # r.raise_for_status()
-        # details = r.json()
-        #
-        # latest_draft_url = details['links'].get('latest_draft')
-        # if latest_draft_url:
-        #     new_deposition_id = latest_draft_url.rstrip("/").split("/")[-1]
-        #     print(f"Using existing draft: {new_deposition_id}")
-        # else:
         print("Creating new version...")
         r = requests.post(f"{ZENODO_API_URL}/{deposition_id}/actions/newversion", headers=headers)
         r.raise_for_status()
