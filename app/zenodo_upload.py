@@ -60,6 +60,75 @@ AFFILIATION_ALIASES = [
     (["université libre de bruxelles", "ulb"], "Université libre de Bruxelles"),
 ]
 
+######################
+import sqlite3
+import tempfile
+
+def get_latest_sqlite_url(deposition_id: str, headers: dict) -> str | None:
+    r = requests.get(f"{ZENODO_BASE}api/records/{deposition_id}/versions/latest", headers=headers)
+    r.raise_for_status()
+    files = r.json().get("files", [])
+    for f in files:
+        if f.get("key", "").endswith(".sqlite"):
+            return f["links"]["self"]
+    return None
+
+
+def get_table_row_counts(db_path: str) -> dict:
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+    tables = [row[0] for row in cursor.fetchall()]
+    counts = {}
+    for table in tables:
+        cursor.execute(f"SELECT COUNT(*) FROM \"{table}\"")
+        counts[table] = cursor.fetchone()[0]
+    conn.close()
+    return counts
+
+
+def has_changes(new_sqlite_path: str, deposition_id: str, headers: dict) -> bool:
+    print("Checking for changes against latest published version...")
+    url = get_latest_sqlite_url(deposition_id, headers)
+    if not url:
+        print("  No previous SQLite found — treating as first upload.")
+        return True
+
+    print(f"  Downloading previous SQLite for comparison...")
+    r = requests.get(url, headers=headers, stream=True)
+    r.raise_for_status()
+    tmp = tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False)
+    for chunk in r.iter_content(chunk_size=8192):
+        tmp.write(chunk)
+    tmp.close()
+
+    try:
+        old_counts = get_table_row_counts(tmp.name)
+        new_counts = get_table_row_counts(new_sqlite_path)
+    finally:
+        os.unlink(tmp.name)
+
+    if old_counts == new_counts:
+        print("  No changes detected — skipping deployment.")
+        return False
+
+    # Log what changed
+    all_tables = sorted(set(old_counts) | set(new_counts))
+    for table in all_tables:
+        old_n = old_counts.get(table)
+        new_n = new_counts.get(table)
+        if old_n != new_n:
+            if old_n is None:
+                print(f"  + new table: {table} ({new_n} rows)")
+            elif new_n is None:
+                print(f"  - removed table: {table}")
+            else:
+                sign = "+" if new_n > old_n else ""
+                print(f"  ~ {table}: {sign}{new_n - old_n} rows ({old_n} → {new_n})")
+
+    return True
+
+#######################
 def normalize_affiliation(affiliation: str) -> str:
     """Map known affiliation variants to a canonical name."""
     lower = affiliation.strip().lower()
