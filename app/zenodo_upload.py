@@ -262,7 +262,7 @@ def sort_key(creator):
     return normalize(parts[1]) if len(parts) > 1 else normalize(name)
 
 def get_creators_from_record(record_id: str, headers: dict) -> list:
-    r = requests.get(f"https://zenodo.org/api/records/{record_id}", headers=headers)
+    r = requests.get(f"{ZENODO_BASE}api/records/{record_id}", headers=headers)
     r.raise_for_status()
     creators = r.json().get("metadata", {}).get("creators", [])
     print(f"Found {len(creators)} creators from record {record_id}")
@@ -270,7 +270,7 @@ def get_creators_from_record(record_id: str, headers: dict) -> list:
 
 
 def get_merged_creators(record_id: str, headers: dict, new_creators: list) -> list:
-    r = requests.get(f"https://zenodo.org/api/records/{record_id}", headers=headers)
+    r = requests.get(f"{ZENODO_BASE}api/records/{record_id}", headers=headers)
     r.raise_for_status()
     existing_creators = r.json().get("metadata", {}).get("creators", [])
     print(f"Found {len(existing_creators)} creators from record {record_id}")
